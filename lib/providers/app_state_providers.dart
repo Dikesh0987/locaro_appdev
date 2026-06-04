@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
 import '../models/shop_model.dart';
@@ -200,4 +201,18 @@ class BottomNavIndexNotifier extends Notifier<int> {
 
 final bottomNavIndexProvider = NotifierProvider<BottomNavIndexNotifier, int>(() {
   return BottomNavIndexNotifier();
+});
+
+// App Theme Mode Provider
+class AppThemeModeNotifier extends Notifier<ThemeMode> {
+  @override
+  ThemeMode build() => ThemeMode.light;
+
+  void setThemeMode(ThemeMode mode) {
+    state = mode;
+  }
+}
+
+final appThemeModeProvider = NotifierProvider<AppThemeModeNotifier, ThemeMode>(() {
+  return AppThemeModeNotifier();
 });

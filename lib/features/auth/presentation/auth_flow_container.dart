@@ -5,8 +5,8 @@ import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
-import '../../../core/widgets/buttons/secondary_button.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
+import '../../../core/widgets/common/scale_button.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../models/user_model.dart';
 import '../../../models/shop_model.dart';
@@ -25,15 +25,17 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   int _currentStep = 0;
   bool _isLoading = false;
 
+  // Google Account simulated state
+  String? _googleProfileImage;
+
+
   // Controllers for User flow
-  final TextEditingController _userPhoneController = TextEditingController(text: '9876543210');
-  final TextEditingController _userOtpController = TextEditingController(text: '123456');
   final TextEditingController _userNameController = TextEditingController();
+  final TextEditingController _userEmailController = TextEditingController();
+  final TextEditingController _userPhoneController = TextEditingController();
   final List<String> _selectedInterests = [];
 
   // Controllers for Shop Owner flow
-  final TextEditingController _ownerPhoneController = TextEditingController(text: '9988776655');
-  final TextEditingController _ownerOtpController = TextEditingController(text: '654321');
   final TextEditingController _shopNameController = TextEditingController();
   final TextEditingController _shopOwnerNameController = TextEditingController();
   final TextEditingController _shopAddressController = TextEditingController();
@@ -48,11 +50,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   @override
   void dispose() {
     _pageController.dispose();
-    _userPhoneController.dispose();
-    _userOtpController.dispose();
     _userNameController.dispose();
-    _ownerPhoneController.dispose();
-    _ownerOtpController.dispose();
+    _userEmailController.dispose();
+    _userPhoneController.dispose();
     _shopNameController.dispose();
     _shopOwnerNameController.dispose();
     _shopAddressController.dispose();
@@ -85,8 +85,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
       final newUser = UserModel(
         id: 'user_new',
         name: _userNameController.text.isNotEmpty ? _userNameController.text : 'New User',
-        phone: _userPhoneController.text,
-        profileImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        email: _userEmailController.text.isNotEmpty ? _userEmailController.text : 'user@nearo.com',
+        phone: _userPhoneController.text.isNotEmpty ? _userPhoneController.text : '+91 99999 88888',
+        profileImage: _googleProfileImage ?? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
         location: 'Sector 62, Noida',
         interests: _selectedInterests,
         followingShops: [],
@@ -109,8 +110,8 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
         followers: 0,
         category: _selectedCategory,
         isVerified: true,
-        phone: _ownerPhoneController.text,
-        whatsapp: _ownerPhoneController.text,
+        phone: '+91 99887 76655',
+        whatsapp: '9988776655',
         description: _shopDescController.text.isNotEmpty ? _shopDescController.text : 'A premium local establishment on Nearo.',
       );
       ref.read(databaseProvider.notifier).updateCurrentShop(newShop);
@@ -119,9 +120,152 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
+  void _showGoogleSignInDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).dividerColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(LucideIcons.globe, size: 20, color: Colors.blue),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Sign in with Google', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
+                      Text('to continue to Nearo', style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Divider(height: 1),
+              const SizedBox(height: 16),
+              Text('Choose an account', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              
+              _buildGoogleAccountTile(
+                name: 'Dikesh Sharma',
+                email: 'dikesh.sharma@gmail.com',
+                imageUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+                onTap: () => _handleSelectedGoogleAccount('Dikesh Sharma', 'dikesh.sharma@gmail.com', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'),
+              ),
+              _buildGoogleAccountTile(
+                name: 'Sarah Chen',
+                email: 'sarah.chen@gmail.com',
+                imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+                onTap: () => _handleSelectedGoogleAccount('Sarah Chen', 'sarah.chen@gmail.com', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'),
+              ),
+              _buildGoogleAccountTile(
+                name: 'Aman Verma',
+                email: 'aman.verma@gmail.com',
+                imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+                onTap: () => _handleSelectedGoogleAccount('Aman Verma', 'aman.verma@gmail.com', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'),
+              ),
+              
+              const SizedBox(height: 8),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(LucideIcons.userPlus, size: 18),
+                ),
+                title: Text('Use another account', style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
+                onTap: () => _handleSelectedGoogleAccount('Guest User', 'guest@gmail.com', ''),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGoogleAccountTile({
+    required String name,
+    required String email,
+    required String imageUrl,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: CircleAvatar(
+        radius: 20,
+        backgroundColor: Colors.grey.shade200,
+        backgroundImage: NetworkImage(imageUrl),
+      ),
+      title: Text(name, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
+      subtitle: Text(email, style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 11)),
+      onTap: onTap,
+    );
+  }
+
+  void _handleSelectedGoogleAccount(String name, String email, String imageUrl) {
+    Navigator.pop(context); // Close bottom sheet
+    setState(() {
+      _isLoading = true;
+    });
+    
+    // Simulate sign in loading
+    Future.delayed(const Duration(milliseconds: 1000), () {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _userNameController.text = name;
+          _userEmailController.text = email;
+          _googleProfileImage = imageUrl.isNotEmpty ? imageUrl : null;
+          
+          if (widget.role == 'owner') {
+            _shopOwnerNameController.text = name;
+            _shopNameController.text = '$name\'s Shop';
+          }
+        });
+        
+        // Go to next step
+        _pageController.nextPage(
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final int totalSteps = widget.role == 'user' ? 6 : 6;
+    final int totalSteps = widget.role == 'user' ? 4 : 5;
 
     return Scaffold(
       appBar: AppBar(
@@ -131,7 +275,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 onPressed: _prevPage,
               )
             : null,
-        title: Text(widget.role == 'user' ? 'User Account' : 'Shop Setup'),
+        title: Text(widget.role == 'user' ? 'Create Account' : 'Merchant Center'),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: AppSpacing.mobilePadding),
@@ -147,7 +291,6 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
       body: SafeArea(
         child: Column(
           children: [
-            // Linear Progress Indicator matching Apple style
             LinearProgressIndicator(
               value: (_currentStep + 1) / totalSteps,
               backgroundColor: AppColors.border,
@@ -175,17 +318,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   // --- USER FLOW PAGES ---
   List<Widget> _buildUserPages() {
     return [
-      // Page 1: Welcome Screen
       _buildWelcomeStep(),
-      // Page 2: Phone Login
-      _buildPhoneStep(_userPhoneController),
-      // Page 3: OTP Verification
-      _buildOtpStep(_userOtpController),
-      // Page 4: Create Profile
       _buildProfileStep(),
-      // Page 5: Select Interests
       _buildInterestsStep(),
-      // Page 6: Permission Screen
       _buildPermissionStep(),
     ];
   }
@@ -193,23 +328,15 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   // --- SHOP FLOW PAGES ---
   List<Widget> _buildShopPages() {
     return [
-      // Page 1: Phone Login
-      _buildPhoneStep(_ownerPhoneController, title: 'Shop Owner Login', sub: 'Access your merchant dashboard'),
-      // Page 2: OTP Verification
-      _buildOtpStep(_ownerOtpController),
-      // Page 3: Business Setup
+      _buildWelcomeStep(),
       _buildBusinessSetupStep(),
-      // Page 4: Shop Details
       _buildShopDetailsStep(),
-      // Page 5: Media Upload
       _buildMediaUploadStep(),
-      // Page 6: Permission Screen
       _buildPermissionStep(isShop: true),
     ];
   }
 
-  // --- STEP BUILDERS ---
-
+  // --- WELCOME STEP ---
   Widget _buildWelcomeStep() {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.mobilePadding),
@@ -218,149 +345,74 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
         children: [
           const Spacer(),
           Center(
-            child: Container(
-              height: 120,
-              width: 120,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+            child: ScaleButtonPressed(
+              onTap: _showGoogleSignInDialog,
+              child: Container(
+                height: 120,
+                width: 120,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+                ),
+                child: const Icon(LucideIcons.compass, size: 48, color: AppColors.primary),
               ),
-              child: const Icon(LucideIcons.compass, size: 48, color: AppColors.primary),
             ),
           ),
           const SizedBox(height: 32),
-          Text('Discover your neighborhood', style: AppTypography.display),
+          Text(
+            widget.role == 'user' ? 'Discover your neighborhood' : 'Grow your local business',
+            style: AppTypography.display,
+          ),
           const SizedBox(height: AppSpacing.s12),
           Text(
-            'Connect with local merchants, explore nearby fresh arrivals, and get custom discount updates in your locality.',
+            widget.role == 'user'
+                ? 'Connect with local merchants, explore nearby fresh arrivals, and get custom discount updates in your locality.'
+                : 'Publish updates, manage your product catalog, chat directly with interested buyers, and grow followers in your block.',
             style: AppTypography.body.copyWith(color: AppColors.textSecondary),
           ),
           const Spacer(),
           PrimaryButton(
-            text: 'Continue with Phone',
-            isLoading: _isLoading,
-            onPressed: _nextPage,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          SecondaryButton(
             text: 'Continue with Google',
-            onPressed: _nextPage,
-            icon: Icon(LucideIcons.globe, size: 20, color: AppColors.primary),
+            isLoading: _isLoading,
+            onPressed: _showGoogleSignInDialog,
           ),
-          const SizedBox(height: AppSpacing.s12),
-          Center(
-            child: TextButton(
-              onPressed: () {
-                ref.read(appRoleProvider.notifier).state = 'user';
-              },
-              child: Text(
-                'Continue as Guest',
-                style: AppTypography.body.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
+          if (widget.role == 'user') ...[
+            const SizedBox(height: AppSpacing.s16),
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  final guestUser = UserModel(
+                    id: 'guest_user',
+                    name: 'Guest Explorer',
+                    email: 'guest@nearo.com',
+                    phone: '+91 99999 88888',
+                    profileImage: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+                    location: 'Sector 62, Noida',
+                    interests: [],
+                    followingShops: [],
+                    savedProducts: [],
+                    createdAt: DateTime.now(),
+                  );
+                  ref.read(databaseProvider.notifier).updateCurrentUser(guestUser);
+                  ref.read(appRoleProvider.notifier).state = 'user';
+                },
+                child: Text(
+                  'Continue as Guest',
+                  style: AppTypography.body.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
           const SizedBox(height: AppSpacing.s8),
         ],
       ),
     );
   }
 
-  Widget _buildPhoneStep(TextEditingController controller, {String title = 'Enter Phone Number', String sub = 'Verify your phone to start searching'}) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.mobilePadding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: AppSpacing.s24),
-          Text(title, style: AppTypography.heading),
-          const SizedBox(height: AppSpacing.s8),
-          Text(sub, style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
-          const SizedBox(height: AppSpacing.s32),
-          Row(
-            children: [
-              // Mock Country Picker
-              Container(
-                height: 52,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
-                  border: Border.all(color: AppColors.border),
-                ),
-                alignment: Alignment.center,
-                child: Row(
-                  children: [
-                    Text('🇮🇳 +91', style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
-                    const SizedBox(width: AppSpacing.s4),
-                    const Icon(LucideIcons.chevronDown, size: 16),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: AppTextField(
-                  controller: controller,
-                  hintText: 'Phone number',
-                  keyboardType: TextInputType.phone,
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-          PrimaryButton(
-            text: 'Continue',
-            isLoading: _isLoading,
-            onPressed: _nextPage,
-          ),
-          const SizedBox(height: AppSpacing.s16),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOtpStep(TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.mobilePadding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: AppSpacing.s24),
-          Text('Verify OTP', style: AppTypography.heading),
-          const SizedBox(height: AppSpacing.s8),
-          Text('We sent a 6-digit code to your mobile number', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
-          const SizedBox(height: AppSpacing.s32),
-          AppTextField(
-            controller: controller,
-            hintText: '6-digit OTP code',
-            keyboardType: TextInputType.number,
-            obscureText: false,
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Didn't receive code?", style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
-              TextButton(
-                onPressed: () {},
-                child: Text('Resend OTP', style: AppTypography.label.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
-              ),
-            ],
-          ),
-          const Spacer(),
-          PrimaryButton(
-            text: 'Verify & Continue',
-            isLoading: _isLoading,
-            onPressed: _nextPage,
-          ),
-          const SizedBox(height: AppSpacing.s16),
-        ],
-      ),
-    );
-  }
-
+  // --- USER PROFILE STEP ---
   Widget _buildProfileStep() {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.mobilePadding),
@@ -371,7 +423,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
             const SizedBox(height: AppSpacing.s24),
             Text('Create Profile', style: AppTypography.heading),
             const SizedBox(height: AppSpacing.s8),
-            Text('Tell us a bit about yourself', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+            Text('Verify and complete your profile details', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
             const SizedBox(height: AppSpacing.s32),
             Center(
               child: Stack(
@@ -379,10 +431,10 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                   CircleAvatar(
                     radius: 50,
                     backgroundColor: AppColors.border,
-                    backgroundImage: _userNameController.text.isNotEmpty
-                        ? const NetworkImage('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150')
+                    backgroundImage: _googleProfileImage != null
+                        ? NetworkImage(_googleProfileImage!)
                         : null,
-                    child: _userNameController.text.isEmpty
+                    child: _googleProfileImage == null
                         ? const Icon(LucideIcons.user, size: 40, color: AppColors.textSecondary)
                         : null,
                   ),
@@ -395,7 +447,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                         color: AppColors.primary,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(LucideIcons.camera, size: 16, color: AppColors.surface),
+                      child: const Icon(LucideIcons.camera, size: 16, color: Colors.white),
                     ),
                   ),
                 ],
@@ -406,7 +458,19 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
               controller: _userNameController,
               hintText: 'Full Name',
             ),
-            const SizedBox(height: 120),
+            const SizedBox(height: AppSpacing.s16),
+            AppTextField(
+              controller: _userEmailController,
+              hintText: 'Email Address',
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            AppTextField(
+              controller: _userPhoneController,
+              hintText: 'Phone Number (Optional)',
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 80),
             PrimaryButton(
               text: 'Continue',
               isLoading: _isLoading,
@@ -414,6 +478,10 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 if (_userNameController.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Please enter your name')),
+                  );
+                } else if (_userEmailController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please enter your email')),
                   );
                 } else {
                   _nextPage();
@@ -427,6 +495,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
     );
   }
 
+  // --- INTERESTS STEP ---
   Widget _buildInterestsStep() {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.mobilePadding),
@@ -443,7 +512,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
             runSpacing: AppSpacing.s8,
             children: _availableInterests.map((interest) {
               final isSelected = _selectedInterests.contains(interest);
-              return GestureDetector(
+              return ScaleButtonPressed(
                 onTap: () {
                   setState(() {
                     if (isSelected) {
@@ -456,16 +525,16 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary : AppColors.surface,
+                    color: isSelected ? AppColors.primary : Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(100),
                     border: Border.all(
-                      color: isSelected ? AppColors.primary : AppColors.border,
+                      color: isSelected ? AppColors.primary : Theme.of(context).dividerColor,
                     ),
                   ),
                   child: Text(
                     interest,
                     style: AppTypography.caption.copyWith(
-                      color: isSelected ? AppColors.surface : AppColors.textPrimary,
+                      color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -493,6 +562,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
     );
   }
 
+  // --- PERMISSION STEP ---
   Widget _buildPermissionStep({bool isShop = false}) {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.mobilePadding),
@@ -540,8 +610,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
     );
   }
 
-  // --- SHOP FLOW SPECIFIC STEPS ---
-
+  // --- BUSINESS SETUP STEP ---
   Widget _buildBusinessSetupStep() {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.mobilePadding),
@@ -595,6 +664,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
     );
   }
 
+  // --- SHOP DETAILS STEP ---
   Widget _buildShopDetailsStep() {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.mobilePadding),
@@ -619,21 +689,21 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
               runSpacing: AppSpacing.s8,
               children: _availableCategories.map((cat) {
                 final isSelected = _selectedCategory == cat;
-                return GestureDetector(
+                return ScaleButtonPressed(
                   onTap: () => setState(() => _selectedCategory = cat),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary : AppColors.surface,
+                      color: isSelected ? AppColors.primary : Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(100),
                       border: Border.all(
-                        color: isSelected ? AppColors.primary : AppColors.border,
+                        color: isSelected ? AppColors.primary : Theme.of(context).dividerColor,
                       ),
                     ),
                     child: Text(
                       cat,
                       style: AppTypography.caption.copyWith(
-                        color: isSelected ? AppColors.surface : AppColors.textPrimary,
+                        color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -662,6 +732,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
     );
   }
 
+  // --- MEDIA UPLOAD STEP ---
   Widget _buildMediaUploadStep() {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.mobilePadding),
@@ -674,10 +745,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           Text('Visual assets build trust with customers', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
           const SizedBox(height: AppSpacing.s32),
           
-          // Logo Upload Simulation
           Row(
             children: [
-              GestureDetector(
+              ScaleButtonPressed(
                 onTap: () {
                   setState(() => _logoUrl = 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=100');
                 },
@@ -711,8 +781,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           ),
           const SizedBox(height: AppSpacing.s24),
 
-          // Banner Upload Simulation
-          GestureDetector(
+          ScaleButtonPressed(
             onTap: () {
               setState(() => _bannerUrl = 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600');
             },
