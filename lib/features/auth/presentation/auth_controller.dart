@@ -11,10 +11,10 @@ class AuthController extends Notifier<AuthState> {
     return const AuthInitial();
   }
 
-  Future<void> signInWithGoogle(String selectedRole) async {
+  Future<void> signInWithGoogle() async {
     state = const AuthLoading();
     try {
-      await _authService.handleGoogleSignIn(selectedRole);
+      await _authService.handleGoogleSignIn();
       state = const AuthSuccess();
     } catch (e) {
       state = AuthFailure(e.toString());

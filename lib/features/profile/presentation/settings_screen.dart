@@ -76,7 +76,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   // Privacy States
   bool _isPrivateAccount = false;
-  List<String> _blockedUsers = ['John Doe', 'Spam Bot 404', 'Irritating Merchant'];
+  final List<String> _blockedUsers = ['John Doe', 'Spam Bot 404', 'Irritating Merchant'];
   
   // Language State
   String _selectedLanguage = 'English';
@@ -451,7 +451,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade50.withOpacity(0.1),
+                  color: Colors.red.shade50.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
                   border: Border.all(color: Colors.red.shade300),
                 ),
@@ -485,7 +485,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Theme.of(context).dividerColor.withOpacity(0.05),
+          color: isSelected ? AppColors.primary : Theme.of(context).dividerColor.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(100),
           border: Border.all(
             color: isSelected ? AppColors.primary : Theme.of(context).dividerColor,

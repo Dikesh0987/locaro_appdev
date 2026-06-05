@@ -352,7 +352,7 @@ class ProfileScreen extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
+                          color: Colors.black.withValues(alpha: 0.5),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(LucideIcons.camera, size: 16, color: Colors.white),
@@ -1016,7 +1016,7 @@ class ProfileScreen extends ConsumerWidget {
         height: 52,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.red.shade50.withOpacity(0.1),
+          color: Colors.red.shade50.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
           border: Border.all(color: AppColors.error),
         ),

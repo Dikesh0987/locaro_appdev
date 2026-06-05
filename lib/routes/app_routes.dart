@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../features/shell/presentation/shell_screen.dart';
+import '../features/auth/presentation/auth_guard.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -7,6 +7,6 @@ class AppRoutes {
   static const String initial = '/';
 
   static Map<String, WidgetBuilder> get routes => {
-        initial: (context) => const ShellScreen(),
+        initial: (context) => const AuthGuard(),
       };
 }

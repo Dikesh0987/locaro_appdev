@@ -16,7 +16,7 @@ import '../data/auth_repository.dart';
 
 
 class AuthFlowContainer extends ConsumerStatefulWidget {
-  final String role; // 'user' or 'owner'
+  final String role; // fallback/initial role
 
   const AuthFlowContainer({super.key, required this.role});
 
@@ -28,6 +28,8 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   final PageController _pageController = PageController();
   int _currentStep = 0;
   bool _isLoading = false;
+
+  late String _role; // mutable role state chosen at Step 0
 
   // Google Account simulated state
   String? _googleProfileImage;
@@ -50,6 +52,22 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
 
   final List<String> _availableCategories = ['Cafe', 'Groceries', 'Electronics', 'Fashion', 'Bakery'];
   final List<String> _availableInterests = ['Coffee', 'Fresh Produce', 'Electronics', 'Fashion', 'Bakery', 'Organic Food', 'Tech Gadgets', 'Desserts'];
+
+  @override
+  void initState() {
+    super.initState();
+    _role = widget.role;
+
+    // Prefill controllers with Google profile data from active session
+    final user = ref.read(databaseProvider).currentUser;
+    if (!user.isGuest) {
+      _userNameController.text = user.name;
+      _userEmailController.text = user.email;
+      _googleProfileImage = user.photoUrl.isNotEmpty ? user.photoUrl : null;
+      _shopOwnerNameController.text = user.name;
+      _shopNameController.text = '${user.name}\'s Shop';
+    }
+  }
 
   @override
   void dispose() {
@@ -95,9 +113,10 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
         interests: _selectedInterests,
         location: 'Sector 62, Noida', // default block
         photoUrl: _googleProfileImage ?? '',
+        role: _role,
       );
 
-      if (widget.role == 'owner') {
+      if (_role == 'shop_owner') {
         final newShop = ShopModel(
           id: 'shop_${user.uid}',
           ownerUid: user.uid,
@@ -123,65 +142,11 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
       }
 
       await ref.read(authServiceProvider).completeOnboarding(updatedUser);
-      if (mounted) {
-        setState(() => _isLoading = false);
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Onboarding setup failed: ${e.toString()}')),
-        );
-      }
-    }
-  }
-
-  Future<void> _handleGoogleSignIn() async {
-    setState(() => _isLoading = true);
-    try {
-      final user = await ref.read(authServiceProvider).handleGoogleSignIn(widget.role);
-      if (mounted) {
-        setState(() => _isLoading = false);
-        if (user.isOnboardingCompleted) {
-          Navigator.of(context).popUntil((route) => route.isFirst);
-        } else {
-          // New User: Populate controllers with Google data
-          _userNameController.text = user.name;
-          _userEmailController.text = user.email;
-          _googleProfileImage = user.photoUrl.isNotEmpty ? user.photoUrl : null;
-          
-          if (widget.role == 'owner') {
-            _shopOwnerNameController.text = user.name;
-            _shopNameController.text = '${user.name}\'s Shop';
-          }
-          
-          _nextPage();
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Sign-in failed: ${e.toString()}')),
-        );
-      }
-    }
-  }
-
-  Future<void> _handleGuestSignIn() async {
-    setState(() => _isLoading = true);
-    try {
-      await ref.read(authServiceProvider).handleGuestSignIn();
-      if (mounted) {
-        setState(() => _isLoading = false);
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Guest login failed: ${e.toString()}')),
         );
       }
     }
@@ -235,7 +200,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
 
   @override
   Widget build(BuildContext context) {
-    final int totalSteps = widget.role == 'user' ? 4 : 5;
+    final int totalSteps = _role == 'user' ? 4 : 5;
 
     return Scaffold(
       appBar: AppBar(
@@ -245,7 +210,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 onPressed: _prevPage,
               )
             : null,
-        title: Text(widget.role == 'user' ? 'Create Account' : 'Merchant Center'),
+        title: Text(_role == 'user' ? 'Create Account' : 'Merchant Center'),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: AppSpacing.mobilePadding),
@@ -274,7 +239,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 onPageChanged: (page) {
                   setState(() => _currentStep = page);
                 },
-                children: widget.role == 'user'
+                children: _role == 'user'
                     ? _buildUserPages()
                     : _buildShopPages(),
               ),
@@ -288,7 +253,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   // --- USER FLOW PAGES ---
   List<Widget> _buildUserPages() {
     return [
-      _buildWelcomeStep(),
+      _buildRoleSelectionStep(),
       _buildProfileStep(),
       _buildInterestsStep(),
       _buildPermissionStep(),
@@ -298,7 +263,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   // --- SHOP FLOW PAGES ---
   List<Widget> _buildShopPages() {
     return [
-      _buildWelcomeStep(),
+      _buildRoleSelectionStep(),
       _buildBusinessSetupStep(),
       _buildShopDetailsStep(),
       _buildMediaUploadStep(),
@@ -306,61 +271,127 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
     ];
   }
 
-  // --- WELCOME STEP ---
-  Widget _buildWelcomeStep() {
+  // --- ROLE SELECTION STEP ---
+  Widget _buildRoleSelectionStep() {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.mobilePadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Spacer(),
-          Center(
-            child: ScaleButtonPressed(
-              onTap: _handleGoogleSignIn,
-              child: Container(
-                height: 120,
-                width: 120,
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+          const SizedBox(height: AppSpacing.s24),
+          Text(
+            'Choose account type',
+            style: AppTypography.heading.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          Text(
+            'Tell us how you plan to use Nearo',
+            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.s32),
+          
+          // User Card
+          ScaleButtonPressed(
+            onTap: () => setState(() => _role = 'user'),
+            child: Container(
+              padding: const EdgeInsets.all(AppSpacing.s20),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+                border: Border.all(
+                  color: _role == 'user' ? AppColors.primary : Theme.of(context).dividerColor,
+                  width: 2,
                 ),
-                child: const Icon(LucideIcons.compass, size: 48, color: AppColors.primary),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.s12),
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(LucideIcons.user, color: AppColors.primary),
+                  ),
+                  const SizedBox(width: AppSpacing.s16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('User', style: AppTypography.body.copyWith(fontWeight: FontWeight.w700)),
+                        const SizedBox(height: AppSpacing.s4),
+                        Text(
+                          'Discover products and offers around you',
+                          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: 32),
-          Text(
-            widget.role == 'user' ? 'Discover your neighborhood' : 'Grow your local business',
-            style: AppTypography.display,
+          const SizedBox(height: AppSpacing.s16),
+          
+          // Shop Owner Card
+          ScaleButtonPressed(
+            onTap: () => setState(() => _role = 'shop_owner'),
+            child: Container(
+              padding: const EdgeInsets.all(AppSpacing.s20),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+                border: Border.all(
+                  color: _role == 'shop_owner' ? AppColors.primary : Theme.of(context).dividerColor,
+                  width: 2,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.s12),
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(LucideIcons.store, color: AppColors.primary),
+                  ),
+                  const SizedBox(width: AppSpacing.s16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Shop Owner', style: AppTypography.body.copyWith(fontWeight: FontWeight.w700)),
+                        const SizedBox(height: AppSpacing.s4),
+                        Text(
+                          'Promote products and grow followers',
+                          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(height: AppSpacing.s12),
-          Text(
-            widget.role == 'user'
-                ? 'Connect with local merchants, explore nearby fresh arrivals, and get custom discount updates in your locality.'
-                : 'Publish updates, manage your product catalog, chat directly with interested buyers, and grow followers in your block.',
-            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
-          ),
+          
           const Spacer(),
           PrimaryButton(
-            text: 'Continue with Google',
-            isLoading: _isLoading,
-            onPressed: _handleGoogleSignIn,
+            text: 'Continue',
+            onPressed: () {
+              // Pre-fill merchant names if they switched to shop owner
+              if (_role == 'shop_owner') {
+                final user = ref.read(databaseProvider).currentUser;
+                if (_shopOwnerNameController.text.isEmpty) {
+                  _shopOwnerNameController.text = user.name;
+                }
+                if (_shopNameController.text.isEmpty) {
+                  _shopNameController.text = "${user.name}'s Shop";
+                }
+              }
+              _nextPage();
+            },
           ),
-          if (widget.role == 'user') ...[
-            const SizedBox(height: AppSpacing.s16),
-            Center(
-              child: TextButton(
-                onPressed: _handleGuestSignIn,
-                child: Text(
-                  'Continue as Guest',
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ],
           const SizedBox(height: AppSpacing.s8),
         ],
       ),

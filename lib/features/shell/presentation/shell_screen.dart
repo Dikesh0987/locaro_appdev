@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/widgets/navigation/bottom_nav_bar.dart';
 import '../../../providers/app_state_providers.dart';
-import '../../auth/presentation/role_selection_screen.dart';
 import '../../home/presentation/home_screen.dart';
 import '../../discover/presentation/discover_screen.dart';
 import '../../map/presentation/map_screen.dart';
@@ -12,6 +11,7 @@ import '../../dashboard/presentation/dashboard_screen.dart';
 import '../../products/presentation/product_management_screen.dart';
 import '../../posts/presentation/post_management_screen.dart';
 import '../../leads/presentation/leads_screen.dart';
+import '../../auth/presentation/splash_screen.dart';
 
 class ShellScreen extends ConsumerWidget {
   const ShellScreen({super.key});
@@ -21,9 +21,9 @@ class ShellScreen extends ConsumerWidget {
     final role = ref.watch(appRoleProvider);
     final currentIndex = ref.watch(bottomNavIndexProvider);
 
-    // If no role is selected, show role selection screen
+    // Guard if role hasn't synced yet
     if (role == null) {
-      return const RoleSelectionScreen();
+      return const SplashScreen();
     }
 
     final List<Widget> screens = role == 'user'

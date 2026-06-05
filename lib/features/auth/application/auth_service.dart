@@ -7,6 +7,7 @@ import 'package:lucide_flutter/lucide_flutter.dart';
 import '../data/auth_repository.dart';
 import '../../../models/user_model.dart';
 import '../../../providers/app_state_providers.dart';
+import '../../../providers/auth_provider.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
@@ -18,7 +19,7 @@ class AuthService {
   AuthService(this._repository, this._ref);
 
   // Sign In with Google
-  Future<UserModel> handleGoogleSignIn(String selectedRole) async {
+  Future<UserModel> handleGoogleSignIn() async {
     final credential = await _repository.signInWithGoogle();
     final fbUser = credential.user;
     if (fbUser == null) {
@@ -61,7 +62,7 @@ class AuthService {
         email: fbUser.email ?? '',
         phone: fbUser.phoneNumber ?? '',
         photoUrl: fbUser.photoURL ?? '',
-        role: selectedRole,
+        role: 'user',
         isGuest: false,
         interests: [],
         location: '',
@@ -89,7 +90,7 @@ class AuthService {
       final mapData = newUser.toMap();
       mapData['loginCount'] = 1;
       mapData['platform'] = Platform.isAndroid ? 'Android' : 'iOS';
-      mapData['accountType'] = selectedRole;
+      mapData['accountType'] = 'user';
       
       await _repository.setUserDoc(fbUser.uid, mapData);
 
@@ -97,7 +98,6 @@ class AuthService {
       _ref.read(databaseProvider.notifier).setCurrentUser(newUser);
       
       // Role is not set in shell until onboarding is finished!
-      // This forces the app to remain on the onboarding screen until completion.
       _ref.read(appRoleProvider.notifier).state = null; 
 
       return newUser;
@@ -201,6 +201,7 @@ class AuthService {
       'email': finalUser.email,
       'phone': finalUser.phone,
       'photoUrl': finalUser.photoUrl,
+      'role': finalUser.role,
       'interests': finalUser.interests,
       'location': finalUser.location,
       'isOnboardingCompleted': true,
@@ -211,6 +212,7 @@ class AuthService {
     // Update state
     _ref.read(databaseProvider.notifier).setCurrentUser(finalUser);
     _ref.read(appRoleProvider.notifier).state = finalUser.role;
+    _ref.read(authUserProvider.notifier).refresh();
   }
 
   // Save Theme Preference
