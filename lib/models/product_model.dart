@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class ProductModel {
   final String id;
   final String shopId;
@@ -55,5 +57,49 @@ class ProductModel {
       views: views ?? this.views,
       createdAt: createdAt ?? this.createdAt,
     );
+  }
+
+  factory ProductModel.fromMap(Map<String, dynamic> map) {
+    DateTime parseDateTime(dynamic val) {
+      if (val is Timestamp) {
+        return val.toDate();
+      } else if (val is String) {
+        return DateTime.parse(val);
+      } else {
+        return DateTime.now();
+      }
+    }
+
+    return ProductModel(
+      id: map['productId'] ?? map['id'] ?? '',
+      shopId: map['shopId'] ?? '',
+      name: map['name'] ?? '',
+      images: List<String>.from(map['images'] ?? []),
+      description: map['description'] ?? '',
+      price: (map['price'] as num?)?.toDouble() ?? 0.0,
+      discountPrice: (map['discountPrice'] as num?)?.toDouble(),
+      stock: map['stock'] ?? 0,
+      category: map['category'] ?? '',
+      likes: map['likes'] ?? 0,
+      views: map['views'] ?? 0,
+      createdAt: parseDateTime(map['createdAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'productId': id,
+      'shopId': shopId,
+      'name': name,
+      'images': images,
+      'description': description,
+      'price': price,
+      'discountPrice': discountPrice,
+      'stock': stock,
+      'category': category,
+      'likes': likes,
+      'views': views,
+      'createdAt': Timestamp.fromDate(createdAt),
+    };
   }
 }

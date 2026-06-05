@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
@@ -8,8 +10,10 @@ import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../../core/widgets/common/scale_button.dart';
 import '../../../providers/app_state_providers.dart';
-import '../../../models/user_model.dart';
 import '../../../models/shop_model.dart';
+import '../application/auth_service.dart';
+import '../data/auth_repository.dart';
+
 
 class AuthFlowContainer extends ConsumerStatefulWidget {
   final String role; // 'user' or 'owner'
@@ -80,187 +84,153 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
     );
   }
 
-  void _completeAuth() {
-    if (widget.role == 'user') {
-      final newUser = UserModel(
-        id: 'user_new',
-        name: _userNameController.text.isNotEmpty ? _userNameController.text : 'New User',
-        email: _userEmailController.text.isNotEmpty ? _userEmailController.text : 'user@nearo.com',
-        phone: _userPhoneController.text.isNotEmpty ? _userPhoneController.text : '+91 99999 88888',
-        profileImage: _googleProfileImage ?? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        location: 'Sector 62, Noida',
+  Future<void> _completeAuth() async {
+    setState(() => _isLoading = true);
+    try {
+      final user = ref.read(databaseProvider).currentUser;
+      final updatedUser = user.copyWith(
+        name: _userNameController.text.trim(),
+        email: _userEmailController.text.trim(),
+        phone: _userPhoneController.text.trim(),
         interests: _selectedInterests,
-        followingShops: [],
-        savedProducts: [],
-        createdAt: DateTime.now(),
+        location: 'Sector 62, Noida', // default block
+        photoUrl: _googleProfileImage ?? '',
       );
-      ref.read(databaseProvider.notifier).updateCurrentUser(newUser);
-      ref.read(appRoleProvider.notifier).state = 'user';
-    } else {
-      final newShop = ShopModel(
-        id: 'shop_new',
-        shopName: _shopNameController.text.isNotEmpty ? _shopNameController.text : 'My Business',
-        ownerName: _shopOwnerNameController.text.isNotEmpty ? _shopOwnerNameController.text : 'Owner',
-        logo: _logoUrl ?? 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=100',
-        banner: _bannerUrl ?? 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600',
-        address: _shopAddressController.text.isNotEmpty ? _shopAddressController.text : 'Sector 62, Noida',
-        latitude: 28.6273,
-        longitude: 77.3725,
-        rating: 5.0,
-        followers: 0,
-        category: _selectedCategory,
-        isVerified: true,
-        phone: '+91 99887 76655',
-        whatsapp: '9988776655',
-        description: _shopDescController.text.isNotEmpty ? _shopDescController.text : 'A premium local establishment on Nearo.',
-      );
-      ref.read(databaseProvider.notifier).updateCurrentShop(newShop);
-      ref.read(appRoleProvider.notifier).state = 'owner';
-    }
-    Navigator.of(context).popUntil((route) => route.isFirst);
-  }
 
-  void _showGoogleSignInDialog() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).dividerColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).dividerColor.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(LucideIcons.globe, size: 20, color: Colors.blue),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Sign in with Google', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
-                      Text('to continue to Nearo', style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              const Divider(height: 1),
-              const SizedBox(height: 16),
-              Text('Choose an account', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              
-              _buildGoogleAccountTile(
-                name: 'Dikesh Sharma',
-                email: 'dikesh.sharma@gmail.com',
-                imageUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
-                onTap: () => _handleSelectedGoogleAccount('Dikesh Sharma', 'dikesh.sharma@gmail.com', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'),
-              ),
-              _buildGoogleAccountTile(
-                name: 'Sarah Chen',
-                email: 'sarah.chen@gmail.com',
-                imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-                onTap: () => _handleSelectedGoogleAccount('Sarah Chen', 'sarah.chen@gmail.com', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'),
-              ),
-              _buildGoogleAccountTile(
-                name: 'Aman Verma',
-                email: 'aman.verma@gmail.com',
-                imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-                onTap: () => _handleSelectedGoogleAccount('Aman Verma', 'aman.verma@gmail.com', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'),
-              ),
-              
-              const SizedBox(height: 8),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).dividerColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(LucideIcons.userPlus, size: 18),
-                ),
-                title: Text('Use another account', style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
-                onTap: () => _handleSelectedGoogleAccount('Guest User', 'guest@gmail.com', ''),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
+      if (widget.role == 'owner') {
+        final newShop = ShopModel(
+          id: 'shop_${user.uid}',
+          ownerUid: user.uid,
+          shopName: _shopNameController.text.trim(),
+          ownerName: _userNameController.text.trim(),
+          logoUrl: _logoUrl ?? 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=100',
+          bannerUrl: _bannerUrl ?? 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600',
+          address: _shopAddressController.text.trim(),
+          latitude: 28.6273,
+          longitude: 77.3725,
+          rating: 5.0,
+          followers: 0,
+          category: _selectedCategory,
+          isVerified: true,
+          phone: _userPhoneController.text.trim(),
+          whatsapp: _userPhoneController.text.trim(),
+          description: _shopDescController.text.trim(),
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
         );
-      },
-    );
-  }
-
-  Widget _buildGoogleAccountTile({
-    required String name,
-    required String email,
-    required String imageUrl,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        radius: 20,
-        backgroundColor: Colors.grey.shade200,
-        backgroundImage: NetworkImage(imageUrl),
-      ),
-      title: Text(name, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
-      subtitle: Text(email, style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 11)),
-      onTap: onTap,
-    );
-  }
-
-  void _handleSelectedGoogleAccount(String name, String email, String imageUrl) {
-    Navigator.pop(context); // Close bottom sheet
-    setState(() {
-      _isLoading = true;
-    });
-    
-    // Simulate sign in loading
-    Future.delayed(const Duration(milliseconds: 1000), () {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _userNameController.text = name;
-          _userEmailController.text = email;
-          _googleProfileImage = imageUrl.isNotEmpty ? imageUrl : null;
-          
-          if (widget.role == 'owner') {
-            _shopOwnerNameController.text = name;
-            _shopNameController.text = '$name\'s Shop';
-          }
-        });
         
-        // Go to next step
-        _pageController.nextPage(
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeInOut,
+        await ref.read(databaseProvider.notifier).updateCurrentShop(newShop);
+      }
+
+      await ref.read(authServiceProvider).completeOnboarding(updatedUser);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Onboarding setup failed: ${e.toString()}')),
         );
       }
-    });
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      final user = await ref.read(authServiceProvider).handleGoogleSignIn(widget.role);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        if (user.isOnboardingCompleted) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        } else {
+          // New User: Populate controllers with Google data
+          _userNameController.text = user.name;
+          _userEmailController.text = user.email;
+          _googleProfileImage = user.photoUrl.isNotEmpty ? user.photoUrl : null;
+          
+          if (widget.role == 'owner') {
+            _shopOwnerNameController.text = user.name;
+            _shopNameController.text = '${user.name}\'s Shop';
+          }
+          
+          _nextPage();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sign-in failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleGuestSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(authServiceProvider).handleGuestSignIn();
+      if (mounted) {
+        setState(() => _isLoading = false);
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Guest login failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _pickLogo() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (image != null) {
+      setState(() => _isLoading = true);
+      try {
+        final currentUser = ref.read(databaseProvider).currentUser;
+        final url = await ref.read(authRepositoryProvider).uploadShopAsset(
+          'shop_${currentUser.uid}',
+          'logo',
+          File(image.path)
+        );
+        setState(() => _logoUrl = url);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload logo: ${e.toString()}')),
+        );
+      } finally {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _pickBanner() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
+    if (image != null) {
+      setState(() => _isLoading = true);
+      try {
+        final currentUser = ref.read(databaseProvider).currentUser;
+        final url = await ref.read(authRepositoryProvider).uploadShopAsset(
+          'shop_${currentUser.uid}',
+          'banner',
+          File(image.path)
+        );
+        setState(() => _bannerUrl = url);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload banner: ${e.toString()}')),
+        );
+      } finally {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -346,7 +316,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           const Spacer(),
           Center(
             child: ScaleButtonPressed(
-              onTap: _showGoogleSignInDialog,
+              onTap: _handleGoogleSignIn,
               child: Container(
                 height: 120,
                 width: 120,
@@ -374,28 +344,13 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           PrimaryButton(
             text: 'Continue with Google',
             isLoading: _isLoading,
-            onPressed: _showGoogleSignInDialog,
+            onPressed: _handleGoogleSignIn,
           ),
           if (widget.role == 'user') ...[
             const SizedBox(height: AppSpacing.s16),
             Center(
               child: TextButton(
-                onPressed: () {
-                  final guestUser = UserModel(
-                    id: 'guest_user',
-                    name: 'Guest Explorer',
-                    email: 'guest@nearo.com',
-                    phone: '+91 99999 88888',
-                    profileImage: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
-                    location: 'Sector 62, Noida',
-                    interests: [],
-                    followingShops: [],
-                    savedProducts: [],
-                    createdAt: DateTime.now(),
-                  );
-                  ref.read(databaseProvider.notifier).updateCurrentUser(guestUser);
-                  ref.read(appRoleProvider.notifier).state = 'user';
-                },
+                onPressed: _handleGuestSignIn,
                 child: Text(
                   'Continue as Guest',
                   style: AppTypography.body.copyWith(
@@ -748,9 +703,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           Row(
             children: [
               ScaleButtonPressed(
-                onTap: () {
-                  setState(() => _logoUrl = 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=100');
-                },
+                onTap: _pickLogo,
                 child: Container(
                   height: 80,
                   width: 80,
@@ -773,7 +726,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
               const SizedBox(width: AppSpacing.s16),
               Expanded(
                 child: Text(
-                  _logoUrl != null ? 'Logo uploaded' : 'Tap to simulate uploading shop logo',
+                  _logoUrl != null ? 'Logo uploaded' : 'Tap to upload shop logo',
                   style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
                 ),
               ),
@@ -782,9 +735,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           const SizedBox(height: AppSpacing.s24),
 
           ScaleButtonPressed(
-            onTap: () {
-              setState(() => _bannerUrl = 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600');
-            },
+            onTap: _pickBanner,
             child: Container(
               height: 160,
               width: double.infinity,
@@ -800,7 +751,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                       children: [
                         Icon(LucideIcons.image, size: 32, color: AppColors.textSecondary),
                         SizedBox(height: AppSpacing.s4),
-                        Text('Tap to simulate uploading store banner image', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                        Text('Tap to upload store banner image', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                       ],
                     )
                   : null,

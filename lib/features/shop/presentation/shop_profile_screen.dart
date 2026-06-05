@@ -11,6 +11,7 @@ import '../../products/presentation/product_details_screen.dart';
 import '../../../models/product_model.dart';
 import '../../../models/offer_model.dart';
 import '../../../models/post_model.dart';
+import '../../auth/application/auth_service.dart';
 
 
 class ShopProfileScreen extends ConsumerStatefulWidget {
@@ -130,7 +131,9 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                             ? SecondaryButton(
                                 text: 'Following',
                                 onPressed: () {
-                                  ref.read(databaseProvider.notifier).toggleFollowShop(shop.id);
+                                  ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
+                                    ref.read(databaseProvider.notifier).toggleFollowShop(shop.id);
+                                  });
                                 },
                               )
                             : ElevatedButton(
@@ -142,7 +145,9 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                                   padding: EdgeInsets.zero,
                                 ),
                                 onPressed: () {
-                                  ref.read(databaseProvider.notifier).toggleFollowShop(shop.id);
+                                  ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
+                                    ref.read(databaseProvider.notifier).toggleFollowShop(shop.id);
+                                  });
                                 },
                                 child: const Text(
                                   'Follow',

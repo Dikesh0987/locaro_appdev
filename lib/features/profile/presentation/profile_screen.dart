@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
@@ -13,6 +15,8 @@ import '../../../models/user_model.dart';
 import '../../../models/shop_model.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
 import '../../products/presentation/product_details_screen.dart';
+import '../../auth/application/auth_service.dart';
+import '../../auth/data/auth_repository.dart';
 import 'settings_screen.dart';
 
 
@@ -91,13 +95,32 @@ class ProfileScreen extends ConsumerWidget {
                         child: child,
                       );
                     },
-                    child: CircleAvatar(
-                      radius: 36,
-                      backgroundColor: AppColors.border,
-                      backgroundImage: user.profileImage.isNotEmpty ? NetworkImage(user.profileImage) : null,
-                      child: user.profileImage.isEmpty
-                          ? const Icon(LucideIcons.user, size: 24)
-                          : null,
+                    child: ScaleButtonPressed(
+                      onTap: () => _changePhoto(context, ref),
+                      child: Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 36,
+                            backgroundColor: AppColors.border,
+                            backgroundImage: user.profileImage.isNotEmpty ? NetworkImage(user.profileImage) : null,
+                            child: user.profileImage.isEmpty
+                                ? const Icon(LucideIcons.user, size: 24)
+                                : null,
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(LucideIcons.camera, size: 10, color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.s16),
@@ -310,23 +333,61 @@ class ProfileScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Banner Image
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.cardRadius - 1)),
-                child: Image.network(
-                  shop.banner,
-                  height: 140,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.cardRadius - 1)),
+                    child: Image.network(
+                      shop.banner,
+                      height: 140,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: ScaleButtonPressed(
+                      onTap: () => _changeShopBanner(context, ref, shop),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(LucideIcons.camera, size: 16, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               Padding(
                 padding: const EdgeInsets.all(AppSpacing.s16),
                 child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor: AppColors.border,
-                      backgroundImage: NetworkImage(shop.logo),
+                    Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 30,
+                          backgroundColor: AppColors.border,
+                          backgroundImage: NetworkImage(shop.logo),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: ScaleButtonPressed(
+                            onTap: () => _changeShopLogo(context, ref, shop),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(LucideIcons.camera, size: 10, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(width: AppSpacing.s16),
                     Expanded(
@@ -942,9 +1003,14 @@ class ProfileScreen extends ConsumerWidget {
 
   Widget _buildLogoutButton(BuildContext context, WidgetRef ref) {
     return ScaleButtonPressed(
-      onTap: () {
-        ref.read(appRoleProvider.notifier).state = null;
-        ref.read(bottomNavIndexProvider.notifier).state = 0;
+      onTap: () async {
+        try {
+          await ref.read(authServiceProvider).handleSignOut();
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Sign out failed: ${e.toString()}')),
+          );
+        }
       },
       child: Container(
         height: 52,
@@ -962,6 +1028,69 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _changePhoto(BuildContext context, WidgetRef ref) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (image != null) {
+      try {
+        await ref.read(authServiceProvider).changeProfilePhoto(File(image.path));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile photo updated successfully.')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update photo: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _changeShopLogo(BuildContext context, WidgetRef ref, ShopModel shop) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (image != null) {
+      try {
+        final url = await ref.read(authRepositoryProvider).uploadShopAsset(
+          shop.id,
+          'logo',
+          File(image.path),
+        );
+        final updatedShop = shop.copyWith(logoUrl: url);
+        await ref.read(databaseProvider.notifier).updateCurrentShop(updatedShop);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Shop logo updated successfully.')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update logo: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _changeShopBanner(BuildContext context, WidgetRef ref, ShopModel shop) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
+    if (image != null) {
+      try {
+        final url = await ref.read(authRepositoryProvider).uploadShopAsset(
+          shop.id,
+          'banner',
+          File(image.path),
+        );
+        final updatedShop = shop.copyWith(bannerUrl: url);
+        await ref.read(databaseProvider.notifier).updateCurrentShop(updatedShop);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Shop banner updated successfully.')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update banner: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   void _navigateToSettings(BuildContext context) {

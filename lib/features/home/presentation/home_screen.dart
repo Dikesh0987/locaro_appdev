@@ -10,6 +10,7 @@ import '../../../models/post_model.dart';
 import '../../../models/lead_model.dart';
 import '../../../models/product_model.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
+import '../../auth/application/auth_service.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -141,38 +142,42 @@ class _FeedCardState extends ConsumerState<_FeedCard> with SingleTickerProviderS
   }
 
   void _triggerLike() {
-    setState(() => _isLiked = !_isLiked);
-    if (_isLiked) {
-      _likeController.forward(from: 0.0);
-      ref.read(databaseProvider.notifier).toggleLikePost(widget.post.id);
-    }
+    ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
+      setState(() => _isLiked = !_isLiked);
+      if (_isLiked) {
+        _likeController.forward(from: 0.0);
+        ref.read(databaseProvider.notifier).toggleLikePost(widget.post.id);
+      }
+    });
   }
 
   void _generateLead(LeadType type, String typeLabel) {
     if (widget.linkedProduct == null) return;
     
-    final dbState = ref.read(databaseProvider);
-    final newLead = LeadModel(
-      id: 'lead_${DateTime.now().millisecondsSinceEpoch}',
-      userId: dbState.currentUser.id,
-      userName: dbState.currentUser.name,
-      userPhone: dbState.currentUser.phone,
-      productId: widget.linkedProduct!.id,
-      productName: widget.linkedProduct!.name,
-      shopId: widget.post.shopId,
-      type: type,
-      status: 'New',
-      createdAt: DateTime.now(),
-    );
+    ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
+      final dbState = ref.read(databaseProvider);
+      final newLead = LeadModel(
+        id: 'lead_${DateTime.now().millisecondsSinceEpoch}',
+        userId: dbState.currentUser.id,
+        userName: dbState.currentUser.name,
+        userPhone: dbState.currentUser.phone,
+        productId: widget.linkedProduct!.id,
+        productName: widget.linkedProduct!.name,
+        shopId: widget.post.shopId,
+        type: type,
+        status: 'New',
+        createdAt: DateTime.now(),
+      );
 
-    ref.read(databaseProvider.notifier).addLead(newLead);
+      ref.read(databaseProvider.notifier).addLead(newLead);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Simulated Lead: $typeLabel generated for ${widget.shopName}'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Simulated Lead: $typeLabel generated for ${widget.shopName}'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    });
   }
 
   @override
@@ -311,10 +316,12 @@ class _FeedCardState extends ConsumerState<_FeedCard> with SingleTickerProviderS
                     color: isSaved ? AppColors.primary : AppColors.textSecondary,
                   ),
                   onPressed: () {
-                    ref.read(databaseProvider.notifier).toggleSaveProduct(widget.linkedProduct!.id);
-                    if (!isSaved) {
-                      _generateLead(LeadType.saved, 'Product Saved');
-                    }
+                    ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
+                      ref.read(databaseProvider.notifier).toggleSaveProduct(widget.linkedProduct!.id);
+                      if (!isSaved) {
+                        _generateLead(LeadType.saved, 'Product Saved');
+                      }
+                    });
                   },
                 ),
             ],

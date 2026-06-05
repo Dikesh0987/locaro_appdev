@@ -12,7 +12,20 @@
           "package_name": "com.example.nearo"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "437900110124-9fg06f9m3941hcuak102mbo0i1d8379s.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.nearo",
+            "certificate_hash": "1518fe8ca2c139c7e1af6f234fb407332f6b7c18"
+          }
+        },
+        {
+          "client_id": "437900110124-pfbruqpups3qvvaafulpp0pa9im9mq7o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCyVy442OQa4uQW-Kb0Xqu7IfO0eR7vALs"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "437900110124-pfbruqpups3qvvaafulpp0pa9im9mq7o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

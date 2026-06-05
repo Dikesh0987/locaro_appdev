@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 enum LeadType { interested, saved, discountRequest, whatsappClick, callClick }
 
 class LeadModel {
@@ -49,5 +51,61 @@ class LeadModel {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
     );
+  }
+
+  factory LeadModel.fromMap(Map<String, dynamic> map) {
+    DateTime parseDateTime(dynamic val) {
+      if (val is Timestamp) {
+        return val.toDate();
+      } else if (val is String) {
+        return DateTime.parse(val);
+      } else {
+        return DateTime.now();
+      }
+    }
+
+    LeadType parseLeadType(String typeStr) {
+      switch (typeStr) {
+        case 'interested':
+          return LeadType.interested;
+        case 'saved':
+          return LeadType.saved;
+        case 'discountRequest':
+          return LeadType.discountRequest;
+        case 'whatsappClick':
+          return LeadType.whatsappClick;
+        case 'callClick':
+        default:
+          return LeadType.callClick;
+      }
+    }
+
+    return LeadModel(
+      id: map['leadId'] ?? map['id'] ?? '',
+      userId: map['userId'] ?? '',
+      userName: map['userName'] ?? '',
+      userPhone: map['userPhone'] ?? '',
+      productId: map['productId'] ?? '',
+      productName: map['productName'] ?? '',
+      shopId: map['shopId'] ?? '',
+      type: parseLeadType(map['type'] ?? 'interested'),
+      status: map['status'] ?? 'New',
+      createdAt: parseDateTime(map['createdAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'leadId': id,
+      'userId': userId,
+      'userName': userName,
+      'userPhone': userPhone,
+      'productId': productId,
+      'productName': productName,
+      'shopId': shopId,
+      'type': type.name,
+      'status': status,
+      'createdAt': Timestamp.fromDate(createdAt),
+    };
   }
 }

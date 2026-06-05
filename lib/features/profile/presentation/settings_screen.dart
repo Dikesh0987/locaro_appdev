@@ -6,6 +6,7 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/common/scale_button.dart';
 import '../../../providers/app_state_providers.dart';
+import '../../auth/application/auth_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -20,6 +21,58 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _offerNotifications = true;
   bool _nearbyDealsNotifications = true;
   bool _marketingNotifications = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final user = ref.read(databaseProvider).currentUser;
+        setState(() {
+          _pushNotifications = user.notificationEnabled;
+          _offerNotifications = user.notificationSettings['offers'] ?? true;
+          _nearbyDealsNotifications = user.notificationSettings['nearbyDeals'] ?? true;
+          _marketingNotifications = user.notificationSettings['marketing'] ?? false;
+          _selectedLanguage = user.language;
+        });
+      }
+    });
+  }
+
+  Future<void> _updateNotifications({
+    bool? push,
+    bool? offers,
+    bool? nearby,
+    bool? marketing,
+  }) async {
+    final user = ref.read(databaseProvider).currentUser;
+    final newPush = push ?? _pushNotifications;
+    final newOffers = offers ?? _offerNotifications;
+    final newNearby = nearby ?? _nearbyDealsNotifications;
+    final newMarketing = marketing ?? _marketingNotifications;
+
+    setState(() {
+      _pushNotifications = newPush;
+      _offerNotifications = newOffers;
+      _nearbyDealsNotifications = newNearby;
+      _marketingNotifications = newMarketing;
+    });
+
+    if (!user.isGuest) {
+      final newSettings = Map<String, bool>.from(user.notificationSettings);
+      newSettings['offers'] = newOffers;
+      newSettings['nearbyDeals'] = newNearby;
+      newSettings['marketing'] = newMarketing;
+
+      await ref.read(authServiceProvider).updateNotificationSettings(newSettings);
+      
+      final updatedUser = user.copyWith(
+        notificationEnabled: newPush,
+        notificationSettings: newSettings,
+      );
+      await ref.read(databaseProvider.notifier).updateCurrentUser(updatedUser);
+    }
+  }
 
   // Privacy States
   bool _isPrivateAccount = false;
@@ -48,13 +101,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 value: lang,
                 groupValue: _selectedLanguage,
                 activeColor: AppColors.primary,
-                onChanged: (val) {
+                onChanged: (val) async {
                   if (val != null) {
                     setState(() => _selectedLanguage = val);
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Language changed to $val'), duration: const Duration(seconds: 1)),
-                    );
+                    
+                    final user = ref.read(databaseProvider).currentUser;
+                    if (!user.isGuest) {
+                      final updatedUser = user.copyWith(language: val);
+                      await ref.read(databaseProvider.notifier).updateCurrentUser(updatedUser);
+                    }
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Language changed to $val'), duration: const Duration(seconds: 1)),
+                      );
+                    }
                   }
                 },
               );
@@ -158,14 +219,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             TextButton(
               child: const Text('Delete', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Close settings screen
-                ref.read(appRoleProvider.notifier).state = null; // Logout
-                ref.read(bottomNavIndexProvider.notifier).state = 0;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Account successfully deleted.'), backgroundColor: Colors.red),
-                );
+                try {
+                  await ref.read(authServiceProvider).handleDeleteAccount();
+                  if (mounted) {
+                    Navigator.pop(context); // Close settings screen
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Account successfully deleted.'), backgroundColor: Colors.red),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to delete account: ${e.toString()}')),
+                    );
+                  }
+                }
               },
             ),
           ],
@@ -230,7 +300,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         child: _buildThemeOptionButton(
                           label: 'Light',
                           isSelected: activeThemeMode == ThemeMode.light,
-                          onTap: () => ref.read(appThemeModeProvider.notifier).setThemeMode(ThemeMode.light),
+                          onTap: () => ref.read(authServiceProvider).updateThemeMode('light'),
                           icon: LucideIcons.sun,
                         ),
                       ),
@@ -239,7 +309,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         child: _buildThemeOptionButton(
                           label: 'Dark',
                           isSelected: activeThemeMode == ThemeMode.dark,
-                          onTap: () => ref.read(appThemeModeProvider.notifier).setThemeMode(ThemeMode.dark),
+                          onTap: () => ref.read(authServiceProvider).updateThemeMode('dark'),
                           icon: LucideIcons.moon,
                         ),
                       ),
@@ -248,7 +318,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         child: _buildThemeOptionButton(
                           label: 'System',
                           isSelected: activeThemeMode == ThemeMode.system,
-                          onTap: () => ref.read(appThemeModeProvider.notifier).setThemeMode(ThemeMode.system),
+                          onTap: () => ref.read(authServiceProvider).updateThemeMode('system'),
                           icon: LucideIcons.laptop,
                         ),
                       ),
@@ -274,28 +344,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     label: 'Push Notifications',
                     icon: LucideIcons.bell,
                     val: _pushNotifications,
-                    onChanged: (v) => setState(() => _pushNotifications = v),
+                    onChanged: (v) => _updateNotifications(push: v),
                   ),
                   const Divider(height: 1, indent: 48),
                   _buildSwitchTile(
                     label: 'Offer Alerts',
                     icon: LucideIcons.tag,
                     val: _offerNotifications,
-                    onChanged: (v) => setState(() => _offerNotifications = v),
+                    onChanged: (v) => _updateNotifications(offers: v),
                   ),
                   const Divider(height: 1, indent: 48),
                   _buildSwitchTile(
                     label: 'Nearby Deals',
                     icon: LucideIcons.navigation,
                     val: _nearbyDealsNotifications,
-                    onChanged: (v) => setState(() => _nearbyDealsNotifications = v),
+                    onChanged: (v) => _updateNotifications(nearby: v),
                   ),
                   const Divider(height: 1, indent: 48),
                   _buildSwitchTile(
                     label: 'Marketing & Promos',
                     icon: LucideIcons.megaphone,
                     val: _marketingNotifications,
-                    onChanged: (v) => setState(() => _marketingNotifications = v),
+                    onChanged: (v) => _updateNotifications(marketing: v),
                   ),
                 ],
               ),

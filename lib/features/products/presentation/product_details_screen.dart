@@ -8,6 +8,7 @@ import '../../../core/widgets/cards/base_card.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../models/lead_model.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
+import '../../auth/application/auth_service.dart';
 
 class ProductDetailsScreen extends ConsumerStatefulWidget {
   final String productId;
@@ -22,28 +23,30 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
   int _activeImageIndex = 0;
 
   void _generateLead(LeadType type, String typeLabel, String shopId, String productName) {
-    final dbState = ref.read(databaseProvider);
-    final newLead = LeadModel(
-      id: 'lead_${DateTime.now().millisecondsSinceEpoch}',
-      userId: dbState.currentUser.id,
-      userName: dbState.currentUser.name,
-      userPhone: dbState.currentUser.phone,
-      productId: widget.productId,
-      productName: productName,
-      shopId: shopId,
-      type: type,
-      status: 'New',
-      createdAt: DateTime.now(),
-    );
+    ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
+      final dbState = ref.read(databaseProvider);
+      final newLead = LeadModel(
+        id: 'lead_${DateTime.now().millisecondsSinceEpoch}',
+        userId: dbState.currentUser.id,
+        userName: dbState.currentUser.name,
+        userPhone: dbState.currentUser.phone,
+        productId: widget.productId,
+        productName: productName,
+        shopId: shopId,
+        type: type,
+        status: 'New',
+        createdAt: DateTime.now(),
+      );
 
-    ref.read(databaseProvider.notifier).addLead(newLead);
+      ref.read(databaseProvider.notifier).addLead(newLead);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Simulated Lead: $typeLabel generated for this product!'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Simulated Lead: $typeLabel generated for this product!'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    });
   }
 
   @override
@@ -135,10 +138,12 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                           ),
                           GestureDetector(
                             onTap: () {
-                              ref.read(databaseProvider.notifier).toggleSaveProduct(product.id);
-                              if (!isSaved) {
-                                _generateLead(LeadType.saved, 'Product Saved', product.shopId, product.name);
-                              }
+                              ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
+                                ref.read(databaseProvider.notifier).toggleSaveProduct(product.id);
+                                if (!isSaved) {
+                                  _generateLead(LeadType.saved, 'Product Saved', product.shopId, product.name);
+                                }
+                              });
                             },
                             child: Container(
                               padding: const EdgeInsets.all(8),
