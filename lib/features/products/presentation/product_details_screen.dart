@@ -5,6 +5,7 @@ import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/cards/base_card.dart';
+import '../../../core/widgets/common/fallback_image.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../models/lead_model.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
@@ -86,8 +87,8 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                           setState(() => _activeImageIndex = index);
                         },
                         itemBuilder: (context, index) {
-                          return Image.network(
-                            product.images[index],
+                          return FallbackImage(
+                            imageUrl: product.images[index],
                             fit: BoxFit.cover,
                             width: double.infinity,
                           );
@@ -243,9 +244,10 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                           padding: const EdgeInsets.all(AppSpacing.s16),
                           child: Row(
                             children: [
-                              CircleAvatar(
+                              FallbackAvatar(
+                                imageUrl: shop.logo,
                                 radius: 20,
-                                backgroundImage: NetworkImage(shop.logo),
+                                fallbackIcon: LucideIcons.store,
                               ),
                               const SizedBox(width: AppSpacing.s12),
                               Expanded(

@@ -63,7 +63,7 @@ class NearoDatabaseNotifier extends Notifier<NearoDataState> {
   @override
   NearoDataState build() {
     _listenToFirestore();
-    _seedDatabaseIfNeeded();
+    // _seedDatabaseIfNeeded(); // Disabled to use only real user data
 
     // Clean up streams when provider is disposed
     ref.onDispose(() {
@@ -123,56 +123,6 @@ class NearoDatabaseNotifier extends Notifier<NearoDataState> {
     });
   }
 
-  Future<void> _seedDatabaseIfNeeded() async {
-    try {
-      final firestore = FirebaseFirestore.instance;
-
-      // Seed Shops
-      final shopsSnapshot = await firestore.collection('shops').limit(1).get();
-      if (shopsSnapshot.docs.isEmpty) {
-        for (final shop in NearoDatabase.initialShops) {
-          // Map mock shopId owner field to placeholder or user id for convenience
-          final newShopMap = shop.toMap();
-          newShopMap['ownerUid'] = 'u1'; // Default placeholder
-          await firestore.collection('shops').doc(shop.id).set(newShopMap);
-        }
-      }
-
-      // Seed Products
-      final productsSnapshot = await firestore.collection('products').limit(1).get();
-      if (productsSnapshot.docs.isEmpty) {
-        for (final p in NearoDatabase.initialProducts) {
-          await firestore.collection('products').doc(p.id).set(p.toMap());
-        }
-      }
-
-      // Seed Offers
-      final offersSnapshot = await firestore.collection('offers').limit(1).get();
-      if (offersSnapshot.docs.isEmpty) {
-        for (final o in NearoDatabase.initialOffers) {
-          await firestore.collection('offers').doc(o.id).set(o.toMap());
-        }
-      }
-
-      // Seed Posts
-      final postsSnapshot = await firestore.collection('posts').limit(1).get();
-      if (postsSnapshot.docs.isEmpty) {
-        for (final post in NearoDatabase.initialPosts) {
-          await firestore.collection('posts').doc(post.id).set(post.toMap());
-        }
-      }
-
-      // Seed Leads
-      final leadsSnapshot = await firestore.collection('leads').limit(1).get();
-      if (leadsSnapshot.docs.isEmpty) {
-        for (final lead in NearoDatabase.initialLeads) {
-          await firestore.collection('leads').doc(lead.id).set(lead.toMap());
-        }
-      }
-    } catch (_) {
-      // Ignore seeding errors in offline or restricted permission environments
-    }
-  }
 
   // Update current user locally
   void setCurrentUser(UserModel user) {

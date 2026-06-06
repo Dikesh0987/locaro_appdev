@@ -6,6 +6,7 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/cards/base_card.dart';
 import '../../../core/widgets/navigation/top_app_bar.dart';
+import '../../../core/widgets/common/fallback_image.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../models/lead_model.dart';
 
@@ -43,13 +44,10 @@ class DashboardScreen extends ConsumerWidget {
             // MERCHANT HEADER (matches User Profile style)
             Row(
               children: [
-                CircleAvatar(
+                FallbackAvatar(
+                  imageUrl: shop.logo,
                   radius: 44,
-                  backgroundColor: AppColors.border,
-                  backgroundImage: shop.logo.isNotEmpty ? NetworkImage(shop.logo) : null,
-                  child: shop.logo.isEmpty
-                      ? const Icon(LucideIcons.store, size: 32, color: AppColors.primary)
-                      : null,
+                  fallbackIcon: LucideIcons.store,
                 ),
                 const SizedBox(width: 20),
                 Expanded(
@@ -103,15 +101,15 @@ class DashboardScreen extends ConsumerWidget {
                   icon: LucideIcons.users,
                   title: 'Followers',
                   value: shop.followers.toString(),
-                  subtitle: '+24 today',
+                  subtitle: 'Total followers',
                   color: Colors.pink.shade50,
                   iconColor: Colors.pink.shade700,
                 ),
                 _buildMetricActionCard(
                   icon: LucideIcons.eye,
                   title: 'Profile Views',
-                  value: '1,420',
-                  subtitle: '+12% this week',
+                  value: '0',
+                  subtitle: 'Total views',
                   color: Colors.blue.shade50,
                   iconColor: Colors.blue.shade700,
                 ),
@@ -126,8 +124,8 @@ class DashboardScreen extends ConsumerWidget {
                 _buildMetricActionCard(
                   icon: LucideIcons.percent,
                   title: 'Offer Clicks',
-                  value: '298',
-                  subtitle: '+45% engagement',
+                  value: '0',
+                  subtitle: 'Total clicks',
                   color: Colors.purple.shade50,
                   iconColor: Colors.purple.shade700,
                 ),
@@ -351,7 +349,14 @@ class DashboardScreen extends ConsumerWidget {
         border: Border.all(color: AppColors.border),
       ),
       child: Center(
-        child: Text(msg, style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(LucideIcons.inbox, size: 40, color: AppColors.border),
+            const SizedBox(height: 12),
+            Text(msg, style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+          ],
+        ),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/navigation/bottom_nav_bar.dart';
+import '../../../core/widgets/common/fallback_image.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../home/presentation/home_screen.dart';
 import '../../discover/presentation/discover_screen.dart';
@@ -73,14 +74,10 @@ class ShellScreen extends ConsumerWidget {
                 decoration: const BoxDecoration(
                   color: AppColors.primary,
                 ),
-                currentAccountPicture: CircleAvatar(
-                  backgroundColor: AppColors.surface,
-                  backgroundImage: role == 'user'
-                      ? (user.photoUrl.isNotEmpty ? NetworkImage(user.photoUrl) : null)
-                      : (shop.logo.isNotEmpty ? NetworkImage(shop.logo) : null),
-                  child: (role == 'user' ? user.photoUrl.isEmpty : shop.logo.isEmpty)
-                      ? const Icon(LucideIcons.user, color: AppColors.primary, size: 32)
-                      : null,
+                currentAccountPicture: FallbackAvatar(
+                  imageUrl: role == 'user' ? user.photoUrl : shop.logo,
+                  radius: 32,
+                  fallbackIcon: role == 'user' ? LucideIcons.user : LucideIcons.store,
                 ),
                 accountName: Text(
                   role == 'user' ? user.name : shop.shopName,

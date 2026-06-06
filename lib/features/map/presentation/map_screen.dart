@@ -8,6 +8,7 @@ import '../../../core/widgets/cards/base_card.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../models/shop_model.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
+import '../../../core/widgets/common/fallback_image.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -163,8 +164,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              _selectedShop!.logo,
+                            child: FallbackImage(
+                              imageUrl: _selectedShop!.logo,
                               width: 50,
                               height: 50,
                               fit: BoxFit.cover,

@@ -53,6 +53,33 @@ class UserModel {
     this.longitude = 77.3725,
   });
 
+  factory UserModel.empty() {
+    return UserModel(
+      uid: '',
+      name: '',
+      email: '',
+      phone: '',
+      photoUrl: '',
+      role: 'user',
+      isGuest: true,
+      interests: [],
+      location: '',
+      createdAt: DateTime.now(),
+      lastLoginAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      isOnboardingCompleted: false,
+      isProfileCompleted: false,
+      notificationEnabled: false,
+      language: 'English',
+      themeMode: 'system',
+      followingShops: [],
+      savedProducts: [],
+      notificationSettings: {},
+      latitude: 0.0,
+      longitude: 0.0,
+    );
+  }
+
   // Backward compatibility getters
   String get id => uid;
   String get profileImage => photoUrl;

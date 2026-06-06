@@ -41,6 +41,29 @@ class ShopModel {
     required this.updatedAt,
   });
 
+  factory ShopModel.empty() {
+    return ShopModel(
+      id: '',
+      ownerUid: '',
+      shopName: '',
+      ownerName: '',
+      logoUrl: '',
+      bannerUrl: '',
+      category: '',
+      address: '',
+      phone: '',
+      whatsapp: '',
+      latitude: 0.0,
+      longitude: 0.0,
+      followers: 0,
+      rating: 0.0,
+      isVerified: false,
+      description: '',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+  }
+
   // Backward compatibility getters
   String get logo => logoUrl;
   String get banner => bannerUrl;

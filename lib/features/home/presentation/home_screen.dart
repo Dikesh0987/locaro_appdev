@@ -7,6 +7,7 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/common/offer_badge.dart';
 import '../../../core/widgets/navigation/top_app_bar.dart';
+import '../../../core/widgets/common/fallback_image.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../models/post_model.dart';
 import '../../../models/lead_model.dart';
@@ -131,11 +132,21 @@ class HomeScreen extends ConsumerWidget {
       appBar: const TopAppBar(),
       body: feedItems.isEmpty
           ? Center(
-              child: Text(
-                'No updates in your area yet.',
-                style: AppTypography.body.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(LucideIcons.newspaper, size: 64, color: AppColors.border),
+                  const SizedBox(height: AppSpacing.s16),
+                  Text(
+                    'No Updates Yet',
+                    style: AppTypography.heading.copyWith(color: AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
+                  Text(
+                    'Follow shops to see their updates here.',
+                    style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                  ),
+                ],
               ),
             )
           : RefreshIndicator(
@@ -339,10 +350,10 @@ class _FeedCardState extends ConsumerState<_FeedCard>
             children: [
               GestureDetector(
                 onTap: widget.onShopTap,
-                child: CircleAvatar(
+                child: FallbackAvatar(
+                  imageUrl: widget.shopLogo,
                   radius: 18,
-                  backgroundColor: AppColors.border,
-                  backgroundImage: NetworkImage(widget.shopLogo),
+                  fallbackIcon: LucideIcons.store,
                 ),
               ),
               const SizedBox(width: AppSpacing.s12),
@@ -395,22 +406,10 @@ class _FeedCardState extends ConsumerState<_FeedCard>
             children: [
               AspectRatio(
                 aspectRatio: 1.1,
-                child: Image.network(
-                  widget.post.image,
+                child: FallbackImage(
+                  imageUrl: widget.post.image,
                   fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      color: AppColors.border,
-                      child: const Center(
-                        child: SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                    );
-                  },
+                  fallbackIcon: LucideIcons.image,
                 ),
               ),
               if (widget.post.type == PostType.offer)
@@ -703,10 +702,10 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard>
             children: [
               GestureDetector(
                 onTap: widget.onShopTap,
-                child: CircleAvatar(
+                child: FallbackAvatar(
+                  imageUrl: widget.shopLogo,
                   radius: 18,
-                  backgroundColor: AppColors.border,
-                  backgroundImage: NetworkImage(widget.shopLogo),
+                  fallbackIcon: LucideIcons.store,
                 ),
               ),
               const SizedBox(width: AppSpacing.s12),
@@ -759,22 +758,10 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard>
             children: [
               AspectRatio(
                 aspectRatio: 1.1,
-                child: Image.network(
-                  widget.product.images.first,
+                child: FallbackImage(
+                  imageUrl: widget.product.images.isNotEmpty ? widget.product.images.first : '',
                   fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      color: AppColors.border,
-                      child: const Center(
-                        child: SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                    );
-                  },
+                  fallbackIcon: LucideIcons.image,
                 ),
               ),
               Positioned(
@@ -1083,10 +1070,10 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
             children: [
               GestureDetector(
                 onTap: widget.onShopTap,
-                child: CircleAvatar(
+                child: FallbackAvatar(
+                  imageUrl: widget.shopLogo,
                   radius: 18,
-                  backgroundColor: AppColors.border,
-                  backgroundImage: NetworkImage(widget.shopLogo),
+                  fallbackIcon: LucideIcons.store,
                 ),
               ),
               const SizedBox(width: AppSpacing.s12),
@@ -1139,22 +1126,10 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
             children: [
               AspectRatio(
                 aspectRatio: 1.1,
-                child: Image.network(
-                  widget.offer.banner,
+                child: FallbackImage(
+                  imageUrl: widget.offer.banner,
                   fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      color: AppColors.border,
-                      child: const Center(
-                        child: SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                    );
-                  },
+                  fallbackIcon: LucideIcons.image,
                 ),
               ),
               Positioned(

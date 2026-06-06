@@ -1,14 +1,18 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/cards/base_card.dart';
+import '../../../core/widgets/common/fallback_image.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../models/product_model.dart';
+import '../../auth/data/auth_repository.dart';
 
 class ProductManagementScreen extends ConsumerWidget {
   const ProductManagementScreen({super.key});
@@ -50,7 +54,7 @@ class ProductManagementScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(LucideIcons.shoppingBag, size: 48, color: AppColors.textSecondary),
+                  const Icon(LucideIcons.shoppingBag, size: 48, color: AppColors.border),
                   const SizedBox(height: AppSpacing.s12),
                   Text(
                     'No products in your catalog yet.',
@@ -80,8 +84,8 @@ class ProductManagementScreen extends ConsumerWidget {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            p.images.first,
+                          child: FallbackImage(
+                            imageUrl: p.images.isNotEmpty ? p.images.first : '',
                             width: 60,
                             height: 60,
                             fit: BoxFit.cover,
@@ -157,6 +161,8 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
   late TextEditingController _stockController;
   late String _selectedCategory;
   String? _imageUrl;
+  File? _selectedImageFile;
+  bool _isUploading = false;
 
   final List<String> _categories = ['Cafe', 'Groceries', 'Electronics', 'Fashion', 'Bakery'];
 
@@ -170,7 +176,7 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
         text: widget.product?.discountPrice != null ? widget.product!.discountPrice.toString() : '');
     _stockController = TextEditingController(text: widget.product?.stock.toString() ?? '10');
     _selectedCategory = widget.product?.category ?? 'Cafe';
-    _imageUrl = widget.product?.images.first;
+    _imageUrl = widget.product?.images.isNotEmpty == true ? widget.product?.images.first : null;
   }
 
   @override
@@ -183,46 +189,82 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
     super.dispose();
   }
 
-  void _saveProduct() {
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
+    if (image != null) {
+      setState(() {
+        _selectedImageFile = File(image.path);
+        _imageUrl = null; // Clear network image since we have local file now
+      });
+    }
+  }
+
+  Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
-
-    final shop = ref.read(databaseProvider).currentShop;
-
-    if (widget.product == null) {
-      // Add logic
-      final newProduct = ProductModel(
-        id: 'p_${DateTime.now().millisecondsSinceEpoch}',
-        shopId: shop.id,
-        name: _nameController.text,
-        images: [_imageUrl ?? 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500'],
-        description: _descController.text,
-        price: double.parse(_priceController.text),
-        discountPrice: _discountController.text.isNotEmpty ? double.parse(_discountController.text) : null,
-        stock: int.parse(_stockController.text),
-        category: _selectedCategory,
-        likes: 0,
-        views: 0,
-        createdAt: DateTime.now(),
-      );
-      ref.read(databaseProvider.notifier).addProduct(newProduct);
-    } else {
-      // Edit logic
-      final updatedProduct = widget.product!.copyWith(
-        name: _nameController.text,
-        images: [_imageUrl ?? widget.product!.images.first],
-        description: _descController.text,
-        price: double.parse(_priceController.text),
-        discountPrice: _discountController.text.isNotEmpty ? double.parse(_discountController.text) : null,
-        stock: int.parse(_stockController.text),
-        category: _selectedCategory,
-      );
-      ref.read(databaseProvider.notifier).editProduct(updatedProduct);
+    
+    if (_imageUrl == null && _selectedImageFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a product image.')));
+      return;
     }
 
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(widget.product == null ? 'Product added successfully' : 'Product updated successfully')),
-    );
+    setState(() => _isUploading = true);
+
+    try {
+      final shop = ref.read(databaseProvider).currentShop;
+      String finalImageUrl = _imageUrl ?? '';
+      final productId = widget.product?.id ?? 'p_${DateTime.now().millisecondsSinceEpoch}';
+
+      if (_selectedImageFile != null) {
+        finalImageUrl = await ref.read(authRepositoryProvider).uploadShopAsset(shop.id, 'product_$productId', _selectedImageFile!);
+      }
+
+      if (widget.product == null) {
+        final newProduct = ProductModel(
+          id: productId,
+          shopId: shop.id,
+          name: _nameController.text,
+          images: [finalImageUrl],
+          description: _descController.text,
+          price: double.parse(_priceController.text),
+          discountPrice: _discountController.text.isNotEmpty ? double.parse(_discountController.text) : null,
+          stock: int.parse(_stockController.text),
+          category: _selectedCategory,
+          likes: 0,
+          views: 0,
+          createdAt: DateTime.now(),
+        );
+        ref.read(databaseProvider.notifier).addProduct(newProduct);
+      } else {
+        final updatedProduct = widget.product!.copyWith(
+          name: _nameController.text,
+          images: [finalImageUrl],
+          description: _descController.text,
+          price: double.parse(_priceController.text),
+          discountPrice: _discountController.text.isNotEmpty ? double.parse(_discountController.text) : null,
+          stock: int.parse(_stockController.text),
+          category: _selectedCategory,
+        );
+        ref.read(databaseProvider.notifier).editProduct(updatedProduct);
+      }
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(widget.product == null ? 'Product added successfully' : 'Product updated successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving product: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
   }
 
   @override
@@ -247,27 +289,26 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
               ),
               const SizedBox(height: AppSpacing.s24),
 
-              // Image Mock Input
               GestureDetector(
-                onTap: () {
-                  setState(() => _imageUrl = 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500');
-                },
+                onTap: _isUploading ? null : _pickImage,
                 child: Container(
                   height: 120,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: AppColors.border,
                     borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                    image: _imageUrl != null ? DecorationImage(image: NetworkImage(_imageUrl!), fit: BoxFit.cover) : null,
+                    image: _selectedImageFile != null
+                        ? DecorationImage(image: FileImage(_selectedImageFile!), fit: BoxFit.cover)
+                        : (_imageUrl != null ? DecorationImage(image: NetworkImage(_imageUrl!), fit: BoxFit.cover) : null),
                   ),
                   alignment: Alignment.center,
-                  child: _imageUrl == null
+                  child: _selectedImageFile == null && _imageUrl == null
                       ? const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(LucideIcons.image, size: 28),
                             SizedBox(height: 4),
-                            Text('Tap to simulate adding product photo', style: TextStyle(fontSize: 10)),
+                            Text('Tap to add product photo', style: TextStyle(fontSize: 10)),
                           ],
                         )
                       : null,
@@ -353,8 +394,8 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
               const SizedBox(height: AppSpacing.s24),
 
               PrimaryButton(
-                text: widget.product == null ? 'Create Product' : 'Save Changes',
-                onPressed: _saveProduct,
+                text: _isUploading ? 'Uploading...' : (widget.product == null ? 'Create Product' : 'Save Changes'),
+                onPressed: _isUploading ? () {} : _saveProduct,
               ),
             ],
           ),

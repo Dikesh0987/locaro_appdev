@@ -6,6 +6,7 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/cards/base_card.dart';
 import '../../../core/widgets/common/offer_badge.dart';
+import '../../../core/widgets/common/fallback_image.dart';
 import '../../../core/widgets/navigation/top_app_bar.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
@@ -54,9 +55,12 @@ class DiscoverScreen extends ConsumerWidget {
 
             // Trending Products
             _buildSectionHeader(context, 'Trending Products', () {}),
-            SizedBox(
-              height: 220,
-              child: ListView.separated(
+            if (products.isEmpty)
+              _buildEmptyState('No Products Available', LucideIcons.packageOpen)
+            else
+              SizedBox(
+                height: 220,
+                child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
                 scrollDirection: Axis.horizontal,
                 itemCount: products.length,
@@ -80,8 +84,8 @@ class DiscoverScreen extends ConsumerWidget {
                           Expanded(
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                              child: Image.network(
-                                p.images.first,
+                              child: FallbackImage(
+                                imageUrl: p.images.isNotEmpty ? p.images.first : '',
                                 width: 140,
                                 fit: BoxFit.cover,
                               ),
@@ -113,9 +117,12 @@ class DiscoverScreen extends ConsumerWidget {
 
             // Nearby Shops
             _buildSectionHeader(context, 'Nearby Shops', () {}),
-            SizedBox(
-              height: 180,
-              child: ListView.separated(
+            if (shops.isEmpty)
+              _buildEmptyState('No Shops Nearby', LucideIcons.store)
+            else
+              SizedBox(
+                height: 180,
+                child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
                 scrollDirection: Axis.horizontal,
                 itemCount: shops.length,
@@ -139,8 +146,8 @@ class DiscoverScreen extends ConsumerWidget {
                           Expanded(
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                              child: Image.network(
-                                s.banner,
+                              child: FallbackImage(
+                                imageUrl: s.banner,
                                 width: 200,
                                 fit: BoxFit.cover,
                               ),
@@ -178,7 +185,10 @@ class DiscoverScreen extends ConsumerWidget {
 
             // Popular Offers
             _buildSectionHeader(context, 'Popular Offers', () {}),
-            ListView.separated(
+            if (offers.isEmpty)
+              _buildEmptyState('No Offers Available', LucideIcons.tag)
+            else
+              ListView.separated(
               physics: const NeverScrollableScrollPhysics(),
               shrinkWrap: true,
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
@@ -203,8 +213,8 @@ class DiscoverScreen extends ConsumerWidget {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(AppSpacing.cardRadius - 4),
-                          child: Image.network(
-                            o.banner,
+                          child: FallbackImage(
+                            imageUrl: o.banner,
                             width: 80,
                             height: 80,
                             fit: BoxFit.cover,
@@ -251,9 +261,12 @@ class DiscoverScreen extends ConsumerWidget {
 
             // New in Town
             _buildSectionHeader(context, 'New in Town', () {}),
-            SizedBox(
-              height: 180,
-              child: ListView.separated(
+            if (shops.isEmpty)
+              _buildEmptyState('No New Shops', LucideIcons.store)
+            else
+              SizedBox(
+                height: 180,
+                child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
                 scrollDirection: Axis.horizontal,
                 itemCount: shops.reversed.length,
@@ -277,8 +290,8 @@ class DiscoverScreen extends ConsumerWidget {
                           Expanded(
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                              child: Image.network(
-                                s.banner,
+                              child: FallbackImage(
+                                imageUrl: s.banner,
                                 width: 140,
                                 fit: BoxFit.cover,
                               ),
@@ -326,6 +339,26 @@ class DiscoverScreen extends ConsumerWidget {
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String message, IconData icon) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s32),
+      child: Column(
+        children: [
+          Icon(icon, size: 48, color: AppColors.border),
+          const SizedBox(height: AppSpacing.s12),
+          Text(
+            message,
+            style: AppTypography.body.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],

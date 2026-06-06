@@ -5,6 +5,7 @@ import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/cards/base_card.dart';
+import '../../../core/widgets/common/fallback_image.dart';
 import '../../../providers/notification_providers.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
@@ -130,8 +131,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
           // Notifications List
           Expanded(
-            child: filteredNotifications.isEmpty
-                ? _buildEmptyState()
+            child: notifications.isEmpty 
+                ? _buildEmptyState('No notifications yet', 'You have no new notifications right now.')
+                : filteredNotifications.isEmpty
+                ? _buildEmptyState('No notifications found', 'Change your filters or search options.')
                 : RefreshIndicator(
                     onRefresh: () async {
                       await Future.delayed(const Duration(milliseconds: 600));
@@ -166,15 +169,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                   const SizedBox(width: 16),
 
                                 // Sender Avatar
-                                CircleAvatar(
+                                FallbackAvatar(
+                                  imageUrl: notification.logoUrl,
                                   radius: 22,
-                                  backgroundColor: AppColors.border,
-                                  backgroundImage: notification.logoUrl.isNotEmpty
-                                      ? NetworkImage(notification.logoUrl)
-                                      : null,
-                                  child: notification.logoUrl.isEmpty
-                                      ? const Icon(LucideIcons.sparkles, size: 18, color: AppColors.primary)
-                                      : null,
+                                  fallbackIcon: LucideIcons.sparkles,
                                 ),
                                 const SizedBox(width: AppSpacing.s12),
 
@@ -245,7 +243,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(String title, String subtitle) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -260,12 +258,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No notifications found',
+            title,
             style: AppTypography.body.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
-            'Change your filters or search options.',
+            subtitle,
             style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
           ),
         ],

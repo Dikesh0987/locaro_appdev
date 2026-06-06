@@ -10,6 +10,7 @@ import '../../../core/widgets/cards/base_card.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/navigation/top_app_bar.dart';
+import '../../../core/widgets/common/fallback_image.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../models/user_model.dart';
 import '../../../models/shop_model.dart';
@@ -83,13 +84,10 @@ class ProfileScreen extends ConsumerWidget {
                 onTap: () => _changePhoto(context, ref),
                 child: Stack(
                   children: [
-                    CircleAvatar(
+                    FallbackAvatar(
+                      imageUrl: user.profileImage,
                       radius: 44,
-                      backgroundColor: AppColors.border,
-                      backgroundImage: user.profileImage.isNotEmpty ? NetworkImage(user.profileImage) : null,
-                      child: user.profileImage.isEmpty
-                          ? const Icon(LucideIcons.user, size: 32, color: AppColors.primary)
-                          : null,
+                      fallbackIcon: LucideIcons.user,
                     ),
                     Positioned(
                       bottom: 0,
@@ -357,13 +355,10 @@ class ProfileScreen extends ConsumerWidget {
                 onTap: () => _changeShopLogo(context, ref, shop),
                 child: Stack(
                   children: [
-                    CircleAvatar(
+                    FallbackAvatar(
+                      imageUrl: shop.logo,
                       radius: 44,
-                      backgroundColor: AppColors.border,
-                      backgroundImage: shop.logo.isNotEmpty ? NetworkImage(shop.logo) : null,
-                      child: shop.logo.isEmpty
-                          ? const Icon(LucideIcons.store, size: 32, color: AppColors.primary)
-                          : null,
+                      fallbackIcon: LucideIcons.store,
                     ),
                     Positioned(
                       bottom: 0,
@@ -955,12 +950,24 @@ class ProfileScreen extends ConsumerWidget {
               const Divider(height: 24),
               Expanded(
                 child: products.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No saved products.',
-                          style: AppTypography.body.copyWith(color: AppColors.textSecondary),
-                        ),
-                      )
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(LucideIcons.bookmark, size: 48, color: AppColors.border),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No Saved Products',
+                                style: AppTypography.heading.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Products you save will appear here.',
+                                style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                              ),
+                            ],
+                          ),
+                        )
                     : GridView.builder(
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
@@ -985,7 +992,11 @@ class ProfileScreen extends ConsumerWidget {
                                 Expanded(
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
-                                    child: Image.network(p.images.first, fit: BoxFit.cover, width: double.infinity),
+                                    child: FallbackImage(
+                                      imageUrl: p.images.isNotEmpty ? p.images.first : '',
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(height: 8),

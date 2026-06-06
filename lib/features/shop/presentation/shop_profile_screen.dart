@@ -7,6 +7,7 @@ import '../../../core/theme/typography.dart';
 import '../../../core/widgets/buttons/secondary_button.dart';
 import '../../../core/widgets/cards/base_card.dart';
 import '../../../providers/app_state_providers.dart';
+import '../../../core/widgets/common/fallback_image.dart';
 import '../../products/presentation/product_details_screen.dart';
 import '../../../models/product_model.dart';
 import '../../../models/offer_model.dart';
@@ -67,8 +68,8 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                 SizedBox(
                   height: 180,
                   width: double.infinity,
-                  child: Image.network(
-                    shop.banner,
+                  child: FallbackImage(
+                    imageUrl: shop.banner,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -98,9 +99,10 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                       color: AppColors.background,
                       shape: BoxShape.circle,
                     ),
-                    child: CircleAvatar(
+                    child: FallbackAvatar(
+                      imageUrl: shop.logo,
                       radius: 35,
-                      backgroundImage: NetworkImage(shop.logo),
+                      fallbackIcon: LucideIcons.store,
                     ),
                   ),
                 ),
@@ -242,7 +244,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
 
   Widget _buildProductsTab(BuildContext context, List<ProductModel> products) {
     if (products.isEmpty) {
-      return _buildEmptyTab('No active products posted by this merchant.');
+      return _buildEmptyTab('No active products posted by this merchant.', LucideIcons.packageOpen);
     }
     return GridView.builder(
       shrinkWrap: true,
@@ -272,8 +274,8 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
               Expanded(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                  child: Image.network(
-                    p.images.first,
+                  child: FallbackImage(
+                    imageUrl: p.images.isNotEmpty ? p.images.first : '',
                     fit: BoxFit.cover,
                     width: double.infinity,
                   ),
@@ -300,7 +302,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
 
   Widget _buildOffersTab(BuildContext context, List<OfferModel> offers) {
     if (offers.isEmpty) {
-      return _buildEmptyTab('No custom discount offers currently running.');
+      return _buildEmptyTab('No custom discount offers currently running.', LucideIcons.tag);
     }
     return ListView.separated(
       shrinkWrap: true,
@@ -351,7 +353,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
 
   Widget _buildPostsTab(BuildContext context, List<PostModel> posts) {
     if (posts.isEmpty) {
-      return _buildEmptyTab('No updates shared yet.');
+      return _buildEmptyTab('No updates shared yet.', LucideIcons.newspaper);
     }
     return ListView.separated(
       shrinkWrap: true,
@@ -366,7 +368,12 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-              child: Image.network(post.image, fit: BoxFit.cover, width: double.infinity, height: 200),
+              child: FallbackImage(
+                imageUrl: post.image,
+                fit: BoxFit.cover, 
+                width: double.infinity, 
+                height: 200,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -388,55 +395,69 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
   }
 
   Widget _buildReviewsTab(BuildContext context) {
-    final List<Map<String, dynamic>> mockReviews = [
-      {'name': 'Ramesh Kumar', 'rating': 5, 'text': 'Amazing service, friendly staff. Highly recommended!'},
-      {'name': 'Preeti Sen', 'rating': 4, 'text': 'Great quality organic products, slightly priced but worth it.'},
-    ];
-
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(AppSpacing.mobilePadding),
-      itemCount: mockReviews.length,
-      separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.s12),
-      itemBuilder: (context, index) {
-        final r = mockReviews[index];
-        return BaseCard(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.s16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(r['name'], style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold)),
-                    Row(
-                      children: List.generate(
-                        r['rating'],
-                        (index) => const Icon(LucideIcons.star, size: 12, color: Colors.amber),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(r['text'], style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
-              ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: AppSpacing.mobilePadding),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.border.withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                LucideIcons.messageSquare,
+                size: 40,
+                color: AppColors.secondary,
+              ),
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 16),
+            Text(
+              'No reviews yet',
+              style: AppTypography.body.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Customers haven\'t left any reviews for this shop yet.',
+              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildEmptyTab(String msg) {
+  Widget _buildEmptyTab(String msg, [IconData? icon]) {
     return Padding(
-      padding: const EdgeInsets.all(40.0),
+      padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: AppSpacing.mobilePadding),
       child: Center(
-        child: Text(
-          msg,
-          textAlign: TextAlign.center,
-          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (icon != null) ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.border.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: 40,
+                  color: AppColors.secondary,
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            Text(
+              msg,
+              textAlign: TextAlign.center,
+              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+            ),
+          ],
         ),
       ),
     );

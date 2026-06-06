@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
@@ -7,6 +9,7 @@ import '../../../core/theme/typography.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../models/post_model.dart';
+import '../../auth/data/auth_repository.dart';
 
 class PostManagementScreen extends ConsumerStatefulWidget {
   const PostManagementScreen({super.key});
@@ -21,51 +24,83 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
   PostType _selectedType = PostType.product;
   String? _imageUrl;
 
+  File? _selectedImageFile;
+  bool _isUploading = false;
+
   @override
   void dispose() {
     _captionController.dispose();
     super.dispose();
   }
 
-  void _submitPost() {
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
+    if (image != null) {
+      setState(() {
+        _selectedImageFile = File(image.path);
+        _imageUrl = null; // Clear network image
+      });
+    }
+  }
+
+  Future<void> _submitPost() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_imageUrl == null) {
+    if (_imageUrl == null && _selectedImageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select or upload a post photo')),
       );
       return;
     }
 
-    final shop = ref.read(databaseProvider).currentShop;
+    setState(() => _isUploading = true);
 
-    final newPost = PostModel(
-      id: 'post_${DateTime.now().millisecondsSinceEpoch}',
-      shopId: shop.id,
-      type: _selectedType,
-      caption: _captionController.text,
-      image: _imageUrl!,
-      likes: 0,
-      comments: 0,
-      createdAt: DateTime.now(),
-    );
+    try {
+      final shop = ref.read(databaseProvider).currentShop;
+      String finalImageUrl = _imageUrl ?? '';
+      final postId = 'post_${DateTime.now().millisecondsSinceEpoch}';
 
-    ref.read(databaseProvider.notifier).addPost(newPost);
+      if (_selectedImageFile != null) {
+        finalImageUrl = await ref.read(authRepositoryProvider).uploadShopAsset(shop.id, 'post_$postId', _selectedImageFile!);
+      }
 
-    // Reset Form
-    _captionController.clear();
-    setState(() {
-      _imageUrl = null;
-      _selectedType = PostType.product;
-    });
+      final newPost = PostModel(
+        id: postId,
+        shopId: shop.id,
+        type: _selectedType,
+        caption: _captionController.text,
+        image: finalImageUrl,
+        likes: 0,
+        comments: 0,
+        createdAt: DateTime.now(),
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Post published successfully to local Feed!')),
-    );
-    
-    // Jump user to home tab (which corresponds to Dashboard, or if they want they can see it in feed when logging back as user)
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Switch role in Profile tab to see it on User Home Feed!')),
-    );
+      ref.read(databaseProvider.notifier).addPost(newPost);
+
+      // Reset Form
+      if (mounted) {
+        _captionController.clear();
+        setState(() {
+          _imageUrl = null;
+          _selectedImageFile = null;
+          _selectedType = PostType.product;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Post published successfully to local Feed!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error publishing post: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
   }
 
   @override
@@ -106,33 +141,25 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
 
               // Image simulation picker
               GestureDetector(
-                onTap: () {
-                  setState(() {
-                    if (_selectedType == PostType.offer) {
-                      _imageUrl = 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600';
-                    } else if (_selectedType == PostType.product) {
-                      _imageUrl = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600';
-                    } else {
-                      _imageUrl = 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600';
-                    }
-                  });
-                },
+                onTap: _isUploading ? null : _pickImage,
                 child: Container(
                   height: 180,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: AppColors.border,
                     borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                    image: _imageUrl != null ? DecorationImage(image: NetworkImage(_imageUrl!), fit: BoxFit.cover) : null,
+                    image: _selectedImageFile != null
+                        ? DecorationImage(image: FileImage(_selectedImageFile!), fit: BoxFit.cover)
+                        : (_imageUrl != null ? DecorationImage(image: NetworkImage(_imageUrl!), fit: BoxFit.cover) : null),
                   ),
                   alignment: Alignment.center,
-                  child: _imageUrl == null
+                  child: _selectedImageFile == null && _imageUrl == null
                       ? const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(LucideIcons.image, size: 36, color: AppColors.textSecondary),
                             SizedBox(height: 8),
-                            Text('Tap to simulate choosing photo', style: TextStyle(color: AppColors.textSecondary)),
+                            Text('Tap to choose photo', style: TextStyle(color: AppColors.textSecondary)),
                           ],
                         )
                       : null,
@@ -154,8 +181,8 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
               const SizedBox(height: 32),
 
               PrimaryButton(
-                text: 'Publish Post',
-                onPressed: _submitPost,
+                text: _isUploading ? 'Publishing...' : 'Publish Post',
+                onPressed: _isUploading ? () {} : _submitPost,
               ),
             ],
           ),

@@ -7,6 +7,7 @@ import '../../../core/theme/typography.dart';
 import '../../../core/widgets/cards/base_card.dart';
 import '../../../core/widgets/common/offer_badge.dart';
 import '../../../core/widgets/navigation/top_app_bar.dart';
+import '../../../core/widgets/common/fallback_image.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../models/shop_model.dart';
 import '../../../models/offer_model.dart';
@@ -252,10 +253,10 @@ class _ShopAvatarCard extends ConsumerWidget {
           children: [
             Stack(
               children: [
-                CircleAvatar(
+                FallbackAvatar(
+                  imageUrl: shop.logo,
                   radius: 30,
-                  backgroundColor: AppColors.border,
-                  backgroundImage: NetworkImage(shop.logo),
+                  fallbackIcon: LucideIcons.store,
                 ),
                 // Small unfollow button
                 Positioned(
@@ -358,8 +359,8 @@ class _OfferCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(AppSpacing.cardRadius - 4),
-              child: Image.network(
-                offer.banner,
+              child: FallbackImage(
+                imageUrl: offer.banner,
                 width: 70,
                 height: 70,
                 fit: BoxFit.cover,
@@ -430,9 +431,10 @@ class _PostCardState extends ConsumerState<_PostCard> {
           // Header
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            leading: CircleAvatar(
+            leading: FallbackAvatar(
+              imageUrl: widget.shop.logo,
               radius: 16,
-              backgroundImage: NetworkImage(widget.shop.logo),
+              fallbackIcon: LucideIcons.store,
             ),
             title: Text(
               widget.shop.shopName,
@@ -452,8 +454,8 @@ class _PostCardState extends ConsumerState<_PostCard> {
           // Image
           AspectRatio(
             aspectRatio: 1.5,
-            child: Image.network(
-              widget.post.image,
+            child: FallbackImage(
+              imageUrl: widget.post.image,
               fit: BoxFit.cover,
             ),
           ),
