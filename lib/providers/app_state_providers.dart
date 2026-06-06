@@ -190,6 +190,14 @@ class NearoDatabaseNotifier extends Notifier<NearoDataState> {
         .collection('products')
         .doc(product.id)
         .set(product.toMap());
+
+    // Send notifications to followers in real time
+    await _notifyFollowers(
+      shopId: product.shopId,
+      title: state.currentShop.shopName,
+      body: 'New Product Added: ${product.name} - Check it out now!',
+      category: 'Offers',
+    );
   }
 
   Future<void> editProduct(ProductModel updatedProduct) async {
@@ -209,6 +217,81 @@ class NearoDatabaseNotifier extends Notifier<NearoDataState> {
         .collection('posts')
         .doc(post.id)
         .set(post.toMap());
+
+    // If post is an offer, also write to the offers collection so it shows up in Offers tab/feed
+    if (post.type == PostType.offer) {
+      final offerId = 'offer_${post.id}';
+      final newOffer = OfferModel(
+        id: offerId,
+        shopId: post.shopId,
+        title: 'Special Offer',
+        description: post.caption,
+        discount: 'Deal',
+        expiryDate: DateTime.now().add(const Duration(days: 7)),
+        banner: post.image,
+        createdAt: DateTime.now(),
+      );
+      await FirebaseFirestore.instance
+          .collection('offers')
+          .doc(offerId)
+          .set(newOffer.toMap());
+    }
+
+    // Send notifications to followers in real time
+    String notifBody = 'Published a new update!';
+    if (post.type == PostType.offer) {
+      notifBody = 'New Offer: ${post.caption}';
+    } else if (post.type == PostType.product) {
+      notifBody = 'New Product Update: ${post.caption}';
+    } else {
+      notifBody = 'New announcement: ${post.caption}';
+    }
+
+    await _notifyFollowers(
+      shopId: post.shopId,
+      title: state.currentShop.shopName,
+      body: notifBody,
+      category: post.type == PostType.offer ? 'Offers' : 'System',
+    );
+  }
+
+  Future<void> _notifyFollowers({
+    required String shopId,
+    required String title,
+    required String body,
+    required String category,
+  }) async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      
+      // Get all users who follow this shop
+      final usersSnapshot = await firestore
+          .collection('users')
+          .where('followingShops', arrayContains: shopId)
+          .get();
+      
+      final batch = firestore.batch();
+      for (final doc in usersSnapshot.docs) {
+        final userId = doc.id;
+        final notificationId = 'notif_${DateTime.now().millisecondsSinceEpoch}_$userId';
+        final newNotification = {
+          'id': notificationId,
+          'userId': userId,
+          'title': title,
+          'body': body,
+          'time': 'Just now',
+          'createdAt': FieldValue.serverTimestamp(),
+          'logoUrl': state.currentShop.logoUrl,
+          'isUnread': true,
+          'category': category,
+        };
+        final docRef = firestore.collection('notifications').doc(notificationId);
+        batch.set(docRef, newNotification);
+      }
+      await batch.commit();
+    } catch (e) {
+      // ignore
+    }
   }
 
   // Lead Generation writes to Firestore
@@ -217,6 +300,26 @@ class NearoDatabaseNotifier extends Notifier<NearoDataState> {
         .collection('leads')
         .doc(lead.id)
         .set(lead.toMap());
+
+    // Notify the shop owner in real time
+    try {
+      final shop = state.shops.firstWhere((s) => s.id == lead.shopId);
+      final notificationId = 'notif_${DateTime.now().millisecondsSinceEpoch}_owner_lead';
+      await FirebaseFirestore.instance
+          .collection('notifications')
+          .doc(notificationId)
+          .set({
+            'id': notificationId,
+            'userId': shop.ownerUid,
+            'title': 'New Lead: ${lead.userName}',
+            'body': 'Interested in ${lead.productName} (${lead.type.name})',
+            'time': 'Just now',
+            'createdAt': FieldValue.serverTimestamp(),
+            'logoUrl': state.currentUser.photoUrl,
+            'isUnread': true,
+            'category': 'Followers',
+          });
+    } catch (_) {}
   }
 
   // Toggle user follow shop
@@ -247,6 +350,27 @@ class NearoDatabaseNotifier extends Notifier<NearoDataState> {
       await FirebaseFirestore.instance.collection('shops').doc(shopId).update({
         'followers': newFollowers,
       });
+
+      // Notify owner if they started following
+      if (following.contains(shopId)) {
+        try {
+          final notificationId = 'notif_${DateTime.now().millisecondsSinceEpoch}_follow';
+          await FirebaseFirestore.instance
+              .collection('notifications')
+              .doc(notificationId)
+              .set({
+                'id': notificationId,
+                'userId': shop.ownerUid,
+                'title': user.name,
+                'body': 'Started following your shop updates.',
+                'time': 'Just now',
+                'createdAt': FieldValue.serverTimestamp(),
+                'logoUrl': user.photoUrl,
+                'isUnread': true,
+                'category': 'Followers',
+              });
+        } catch (_) {}
+      }
     }
   }
 
@@ -269,6 +393,29 @@ class NearoDatabaseNotifier extends Notifier<NearoDataState> {
     await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
       'savedProducts': saved,
     });
+
+    // Notify owner if saved
+    if (saved.contains(productId)) {
+      try {
+        final product = state.products.firstWhere((p) => p.id == productId);
+        final shop = state.shops.firstWhere((s) => s.id == product.shopId);
+        final notificationId = 'notif_${DateTime.now().millisecondsSinceEpoch}_save';
+        await FirebaseFirestore.instance
+            .collection('notifications')
+            .doc(notificationId)
+            .set({
+              'id': notificationId,
+              'userId': shop.ownerUid,
+              'title': 'Product Saved',
+              'body': '${user.name} bookmarked ${product.name}.',
+              'time': 'Just now',
+              'createdAt': FieldValue.serverTimestamp(),
+              'logoUrl': user.photoUrl,
+              'isUnread': true,
+              'category': 'System',
+            });
+      } catch (_) {}
+    }
   }
 
   // Like a product
@@ -279,6 +426,26 @@ class NearoDatabaseNotifier extends Notifier<NearoDataState> {
       await FirebaseFirestore.instance.collection('products').doc(productId).update({
         'likes': product.likes + 1,
       });
+
+      // Notify owner of the product like
+      try {
+        final shop = state.shops.firstWhere((s) => s.id == product.shopId);
+        final notificationId = 'notif_${DateTime.now().millisecondsSinceEpoch}_like';
+        await FirebaseFirestore.instance
+            .collection('notifications')
+            .doc(notificationId)
+            .set({
+              'id': notificationId,
+              'userId': shop.ownerUid,
+              'title': 'Product Liked',
+              'body': '${state.currentUser.name} liked ${product.name}.',
+              'time': 'Just now',
+              'createdAt': FieldValue.serverTimestamp(),
+              'logoUrl': state.currentUser.photoUrl,
+              'isUnread': true,
+              'category': 'System',
+            });
+      } catch (_) {}
     }
   }
 

@@ -18,6 +18,8 @@ class UserModel {
   final bool notificationEnabled;
   final String language;
   final String themeMode; // 'light', 'dark', 'system'
+  final double latitude;
+  final double longitude;
 
   // Backward compatibility fields for followed shops and saved products
   final List<String> followingShops;
@@ -47,6 +49,8 @@ class UserModel {
     required this.followingShops,
     required this.savedProducts,
     required this.notificationSettings,
+    this.latitude = 28.6273,
+    this.longitude = 77.3725,
   });
 
   // Backward compatibility getters
@@ -74,6 +78,8 @@ class UserModel {
     List<String>? followingShops,
     List<String>? savedProducts,
     Map<String, bool>? notificationSettings,
+    double? latitude,
+    double? longitude,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -96,6 +102,8 @@ class UserModel {
       followingShops: followingShops ?? this.followingShops,
       savedProducts: savedProducts ?? this.savedProducts,
       notificationSettings: notificationSettings ?? this.notificationSettings,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
     );
   }
 
@@ -138,6 +146,8 @@ class UserModel {
         'announcements': true,
         'marketing': false,
       }),
+      latitude: (map['latitude'] as num?)?.toDouble() ?? 28.6273,
+      longitude: (map['longitude'] as num?)?.toDouble() ?? 77.3725,
     );
   }
 
@@ -163,6 +173,8 @@ class UserModel {
       'followingShops': followingShops,
       'savedProducts': savedProducts,
       'notificationSettings': notificationSettings,
+      'latitude': latitude,
+      'longitude': longitude,
     };
   }
 }

@@ -34,6 +34,8 @@ class NearoDatabase {
       'announcements': true,
       'marketing': false,
     },
+    latitude: 28.6273,
+    longitude: 77.3725,
   );
 
   static final ShopModel defaultShop = ShopModel(
@@ -343,6 +345,7 @@ class NearoDatabase {
       discount: '20% OFF',
       expiryDate: DateTime.now().add(const Duration(days: 3)),
       banner: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?w=500',
+      createdAt: DateTime.now().subtract(const Duration(hours: 4)),
     ),
     OfferModel(
       id: 'o2',
@@ -352,6 +355,7 @@ class NearoDatabase {
       discount: 'BOGO',
       expiryDate: DateTime.now().add(const Duration(days: 2)),
       banner: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500',
+      createdAt: DateTime.now().subtract(const Duration(hours: 10)),
     ),
     OfferModel(
       id: 'o3',
@@ -361,6 +365,7 @@ class NearoDatabase {
       discount: '15% OFF',
       expiryDate: DateTime.now().add(const Duration(days: 5)),
       banner: 'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=500',
+      createdAt: DateTime.now().subtract(const Duration(days: 1)),
     ),
     OfferModel(
       id: 'o4',
@@ -370,6 +375,7 @@ class NearoDatabase {
       discount: 'SAVE ₹100',
       expiryDate: DateTime.now().add(const Duration(days: 4)),
       banner: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500',
+      createdAt: DateTime.now().subtract(const Duration(days: 2)),
     ),
     OfferModel(
       id: 'o5',
@@ -379,6 +385,7 @@ class NearoDatabase {
       discount: 'FESTIVAL',
       expiryDate: DateTime.now().add(const Duration(days: 7)),
       banner: 'https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=500',
+      createdAt: DateTime.now().subtract(const Duration(days: 3)),
     ),
     OfferModel(
       id: 'o6',
@@ -388,6 +395,7 @@ class NearoDatabase {
       discount: 'UP TO 30%',
       expiryDate: DateTime.now().add(const Duration(days: 10)),
       banner: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500',
+      createdAt: DateTime.now().subtract(const Duration(days: 5)),
     ),
   ];
 

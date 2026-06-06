@@ -85,6 +85,8 @@ class BottomNavBar extends StatelessWidget {
         backgroundColor: AppColors.surface,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.secondary,
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
         selectedLabelStyle: AppTypography.label.copyWith(fontWeight: FontWeight.w600),
         unselectedLabelStyle: AppTypography.label,
         elevation: 0,

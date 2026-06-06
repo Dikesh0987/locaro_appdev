@@ -8,6 +8,7 @@ class OfferModel {
   final String discount; // e.g. "20% OFF", "BOGO"
   final DateTime expiryDate;
   final String banner;
+  final DateTime createdAt;
 
   OfferModel({
     required this.id,
@@ -17,6 +18,7 @@ class OfferModel {
     required this.discount,
     required this.expiryDate,
     required this.banner,
+    required this.createdAt,
   });
 
   OfferModel copyWith({
@@ -27,6 +29,7 @@ class OfferModel {
     String? discount,
     DateTime? expiryDate,
     String? banner,
+    DateTime? createdAt,
   }) {
     return OfferModel(
       id: id ?? this.id,
@@ -36,6 +39,7 @@ class OfferModel {
       discount: discount ?? this.discount,
       expiryDate: expiryDate ?? this.expiryDate,
       banner: banner ?? this.banner,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
@@ -58,6 +62,7 @@ class OfferModel {
       discount: map['discount'] ?? '',
       expiryDate: parseDateTime(map['expiryDate']),
       banner: map['banner'] ?? '',
+      createdAt: map['createdAt'] != null ? parseDateTime(map['createdAt']) : DateTime.now(),
     );
   }
 
@@ -70,6 +75,7 @@ class OfferModel {
       'discount': discount,
       'expiryDate': Timestamp.fromDate(expiryDate),
       'banner': banner,
+      'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 }

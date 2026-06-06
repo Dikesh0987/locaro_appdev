@@ -1,9 +1,44 @@
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/notification_model.dart';
+import 'app_state_providers.dart';
 
 class NotificationsNotifier extends Notifier<List<NotificationModel>> {
+  StreamSubscription? _subscription;
+
   @override
   List<NotificationModel> build() {
+    final userState = ref.watch(databaseProvider);
+    final userUid = userState.currentUser.uid;
+
+    _subscription?.cancel();
+
+    if (userUid.isEmpty) {
+      return _getMockNotifications();
+    }
+
+    _subscription = FirebaseFirestore.instance
+        .collection('notifications')
+        .where('userId', isEqualTo: userUid)
+        .snapshots()
+        .listen((snapshot) {
+          final dbNotifications = snapshot.docs.map((doc) => NotificationModel.fromMap(doc.data())).toList();
+          // Sort descending (newest first)
+          dbNotifications.sort((a, b) => b.id.compareTo(a.id));
+
+          // Prepend database notifications to the mock notifications list to have a full feed
+          state = [...dbNotifications, ..._getMockNotifications()];
+        });
+
+    ref.onDispose(() {
+      _subscription?.cancel();
+    });
+
+    return _getMockNotifications();
+  }
+
+  List<NotificationModel> _getMockNotifications() {
     return [
       NotificationModel(
         id: 'n1',
@@ -53,17 +88,49 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
     ];
   }
 
-  void markAllRead() {
+  Future<void> markAllRead() async {
+    final userState = ref.read(databaseProvider);
+    final userUid = userState.currentUser.uid;
+    
+    // Toggle local state (mock ones)
     state = state.map((n) => n.copyWith(isUnread: false)).toList();
+
+    // Toggle database ones
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('userId', isEqualTo: userUid)
+          .where('isUnread', isEqualTo: true)
+          .get();
+
+      final batch = FirebaseFirestore.instance.batch();
+      for (var doc in query.docs) {
+        batch.update(doc.reference, {'isUnread': false});
+      }
+      await batch.commit();
+    } catch (_) {}
   }
 
-  void toggleUnread(String id) {
-    state = state.map((n) {
-      if (n.id == id) {
-        return n.copyWith(isUnread: !n.isUnread);
-      }
-      return n;
-    }).toList();
+  Future<void> toggleUnread(String id) async {
+    // Check if it's a mock notification
+    if (id.startsWith('n') && id.length <= 2) {
+      state = state.map((n) {
+        if (n.id == id) {
+          return n.copyWith(isUnread: !n.isUnread);
+        }
+        return n;
+      }).toList();
+      return;
+    }
+
+    // Otherwise, update in database
+    try {
+      final notif = state.firstWhere((n) => n.id == id);
+      await FirebaseFirestore.instance
+          .collection('notifications')
+          .doc(id)
+          .update({'isUnread': !notif.isUnread});
+    } catch (_) {}
   }
 }
 
