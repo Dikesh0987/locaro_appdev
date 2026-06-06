@@ -98,7 +98,7 @@ class WelcomeScreen extends ConsumerWidget {
                 text: 'Continue with Google',
                 isLoading: isLoading,
                 onPressed: () {
-                  ref.read(authControllerProvider.notifier).signInWithGoogle();
+                  ref.read(authControllerProvider.notifier).signInWithGoogle('user');
                 },
               ),
               const SizedBox(height: AppSpacing.s16),

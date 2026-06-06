@@ -185,7 +185,7 @@ class NearoDatabase {
       shopName: 'Fresh Fruits Market',
       ownerName: 'Karan Mehra',
       logoUrl: 'https://images.unsplash.com/photo-1619546813926-a78fa6372cd2?w=100',
-      bannerUrl: 'https://images.unsplash.com/photo-1610832958506-ee56336191d1?w=600',
+      bannerUrl: 'https://images.unsplash.com/photo-1619546813926-a78fa6372cd2?w=600',
       address: 'Booth 12, Sector 62, Noida',
       latitude: 28.6300,
       longitude: 77.3740,

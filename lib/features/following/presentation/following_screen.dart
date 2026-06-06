@@ -1,0 +1,527 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
+import '../../../core/theme/colors.dart';
+import '../../../core/theme/spacing.dart';
+import '../../../core/theme/typography.dart';
+import '../../../core/widgets/cards/base_card.dart';
+import '../../../core/widgets/common/offer_badge.dart';
+import '../../../core/widgets/navigation/top_app_bar.dart';
+import '../../../providers/app_state_providers.dart';
+import '../../../models/shop_model.dart';
+import '../../../models/offer_model.dart';
+import '../../../models/post_model.dart';
+import '../../shop/presentation/shop_profile_screen.dart';
+
+class FollowingScreen extends ConsumerWidget {
+  const FollowingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dbState = ref.watch(databaseProvider);
+    final user = dbState.currentUser;
+    
+    // Followed shops
+    final followedShops = dbState.shops.where((s) => user.followingShops.contains(s.id)).toList();
+    
+    // Sort recently followed (we can treat the reverse order of user.followingShops as recently followed)
+    final recentlyFollowed = followedShops.reversed.toList();
+
+    // Offers from followed shops
+    final offers = dbState.offers.where((o) => user.followingShops.contains(o.shopId)).toList();
+
+    // Posts from followed shops (sorted by date descending)
+    final posts = dbState.posts.where((p) => user.followingShops.contains(p.shopId)).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    return Scaffold(
+      appBar: const TopAppBar(),
+      body: followedShops.isEmpty
+          ? _buildEmptyState(context, ref)
+          : RefreshIndicator(
+              onRefresh: () async {
+                await Future.delayed(const Duration(milliseconds: 600));
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Screen Title
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Following',
+                            style: AppTypography.display.copyWith(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 28,
+                              letterSpacing: -0.8,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Updates and exclusive offers from your favorite shops.',
+                            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sectionGap),
+
+                    // SECTION 1: Followed Shops (Recently Followed)
+                    _buildSectionHeader('Shops You Follow', '${followedShops.length} shops'),
+                    const SizedBox(height: AppSpacing.s12),
+                    SizedBox(
+                      height: 105,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: recentlyFollowed.length,
+                        separatorBuilder: (context, index) => const SizedBox(width: AppSpacing.s16),
+                        itemBuilder: (context, index) {
+                          final shop = recentlyFollowed[index];
+                          return _ShopAvatarCard(shop: shop);
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sectionGap),
+
+                    // SECTION 2: Latest Offers from Followed Shops
+                    if (offers.isNotEmpty) ...[
+                      _buildSectionHeader('Exclusive Offers', '${offers.length} active'),
+                      const SizedBox(height: AppSpacing.s12),
+                      SizedBox(
+                        height: 140,
+                        child: ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
+                          scrollDirection: Axis.horizontal,
+                          itemCount: offers.length,
+                          separatorBuilder: (context, index) => const SizedBox(width: AppSpacing.s16),
+                          itemBuilder: (context, index) {
+                            final offer = offers[index];
+                            final shop = followedShops.firstWhere((s) => s.id == offer.shopId);
+                            return _OfferCard(offer: offer, shop: shop);
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sectionGap),
+                    ],
+
+                    // SECTION 3: New Posts Feed
+                    _buildSectionHeader('Recent Updates', '${posts.length} posts'),
+                    const SizedBox(height: AppSpacing.s12),
+                    posts.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
+                            child: _buildSimplePlaceholder('No recent updates or posts from these shops.'),
+                          )
+                        : ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
+                            itemCount: posts.length,
+                            separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.s16),
+                            itemBuilder: (context, index) {
+                              final post = posts[index];
+                              final shop = followedShops.firstWhere((s) => s.id == post.shopId);
+                              return _PostCard(post: post, shop: shop);
+                            },
+                          ),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, String count) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: AppTypography.subheading.copyWith(
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.4,
+            ),
+          ),
+          Text(
+            count,
+            style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSimplePlaceholder(String text) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Center(
+        child: Text(
+          text,
+          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.s24),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.border.withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                LucideIcons.heart,
+                size: 48,
+                color: AppColors.secondary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No Followed Shops Yet',
+              style: AppTypography.heading.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Follow local shops to get their latest updates, products, and exclusive offers right here.',
+              style: AppTypography.body.copyWith(color: AppColors.textSecondary, height: 1.4),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              icon: const Icon(LucideIcons.compass, size: 16, color: Colors.white),
+              label: const Text('Discover Local Shops', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(100),
+                ),
+              ),
+              onPressed: () {
+                // Switch tab to Discover
+                ref.read(bottomNavIndexProvider.notifier).state = 1;
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Circular Shop Avatar Card with Unfollow action overlay or longpress
+class _ShopAvatarCard extends ConsumerWidget {
+  final ShopModel shop;
+  const _ShopAvatarCard({required this.shop});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ShopProfileScreen(shopId: shop.id)),
+        );
+      },
+      child: SizedBox(
+        width: 75,
+        child: Column(
+          children: [
+            Stack(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: AppColors.border,
+                  backgroundImage: NetworkImage(shop.logo),
+                ),
+                // Small unfollow button
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: GestureDetector(
+                    onTap: () => _showUnfollowConfirmation(context, ref),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: AppColors.surface,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 3,
+                            offset: Offset(0, 1),
+                          )
+                        ],
+                      ),
+                      child: const Icon(
+                        LucideIcons.heartHandshake,
+                        size: 10,
+                        color: AppColors.error,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              shop.shopName,
+              style: AppTypography.label.copyWith(fontWeight: FontWeight.bold),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showUnfollowConfirmation(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Unfollow ${shop.shopName}?'),
+        content: Text('You will no longer receive their latest posts and offers in your Following feed.'),
+        actions: [
+          TextButton(
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            onPressed: () => Navigator.pop(context),
+          ),
+          TextButton(
+            child: const Text('Unfollow', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
+            onPressed: () {
+              ref.read(databaseProvider.notifier).toggleFollowShop(shop.id);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Unfollowed ${shop.shopName}'),
+                  action: SnackBarAction(
+                    label: 'Undo',
+                    onPressed: () {
+                      ref.read(databaseProvider.notifier).toggleFollowShop(shop.id);
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Offers Card
+class _OfferCard extends StatelessWidget {
+  final OfferModel offer;
+  final ShopModel shop;
+
+  const _OfferCard({required this.offer, required this.shop});
+
+  @override
+  Widget build(BuildContext context) {
+    return BaseCard(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ShopProfileScreen(shopId: shop.id)),
+        );
+      },
+      child: Container(
+        width: 260,
+        padding: const EdgeInsets.all(AppSpacing.s12),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppSpacing.cardRadius - 4),
+              child: Image.network(
+                offer.banner,
+                width: 70,
+                height: 70,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          offer.title,
+                          style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      OfferBadge(text: offer.discount),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    shop.shopName,
+                    style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    offer.description,
+                    style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Compact Post Card for feed
+class _PostCard extends ConsumerStatefulWidget {
+  final PostModel post;
+  final ShopModel shop;
+
+  const _PostCard({required this.post, required this.shop});
+
+  @override
+  ConsumerState<_PostCard> createState() => _PostCardState();
+}
+
+class _PostCardState extends ConsumerState<_PostCard> {
+  bool _isLiked = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return BaseCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            leading: CircleAvatar(
+              radius: 16,
+              backgroundImage: NetworkImage(widget.shop.logo),
+            ),
+            title: Text(
+              widget.shop.shopName,
+              style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+              widget.shop.category,
+              style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10),
+            ),
+            trailing: IconButton(
+              icon: const Icon(LucideIcons.heartOff, size: 16, color: AppColors.textSecondary),
+              tooltip: 'Unfollow Shop',
+              onPressed: () => _confirmUnfollow(context),
+            ),
+          ),
+          
+          // Image
+          AspectRatio(
+            aspectRatio: 1.5,
+            child: Image.network(
+              widget.post.image,
+              fit: BoxFit.cover,
+            ),
+          ),
+          
+          // Actions
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: Icon(
+                    _isLiked ? LucideIcons.heart : LucideIcons.heart,
+                    color: _isLiked ? AppColors.error : AppColors.primary,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    setState(() => _isLiked = !_isLiked);
+                    ref.read(databaseProvider.notifier).toggleLikePost(widget.post.id);
+                  },
+                ),
+                Text(
+                  '${widget.post.likes + (_isLiked ? 1 : 0)}',
+                  style: AppTypography.label.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 16),
+                const Icon(LucideIcons.messageCircle, size: 20, color: AppColors.primary),
+                const SizedBox(width: 4),
+                Text(
+                  '${widget.post.comments}',
+                  style: AppTypography.label.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+          
+          // Caption
+          Padding(
+            padding: const EdgeInsets.only(left: 12, right: 12, bottom: 16),
+            child: Text(
+              widget.post.caption,
+              style: AppTypography.caption.copyWith(height: 1.3),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmUnfollow(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Unfollow ${widget.shop.shopName}?'),
+        content: Text('You will no longer receive updates from this shop in your Following tab.'),
+        actions: [
+          TextButton(
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            onPressed: () => Navigator.pop(context),
+          ),
+          TextButton(
+            child: const Text('Unfollow', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
+            onPressed: () {
+              ref.read(databaseProvider.notifier).toggleFollowShop(widget.shop.id);
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}

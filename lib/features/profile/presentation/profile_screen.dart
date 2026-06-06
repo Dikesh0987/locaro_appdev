@@ -8,20 +8,27 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/cards/base_card.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
-import '../../../core/widgets/common/scale_button.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
+import '../../../core/widgets/navigation/top_app_bar.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../models/user_model.dart';
 import '../../../models/shop_model.dart';
-import '../../shop/presentation/shop_profile_screen.dart';
+import '../../../models/product_model.dart';
 import '../../products/presentation/product_details_screen.dart';
 import '../../auth/application/auth_service.dart';
 import '../../auth/data/auth_repository.dart';
 import 'settings_screen.dart';
 
-
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
+
+  String _formatMemberSince(DateTime dt) {
+    final months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return 'Member since ${months[dt.month - 1]} ${dt.year}';
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,32 +36,10 @@ class ProfileScreen extends ConsumerWidget {
     final state = ref.watch(databaseProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(role == 'user' ? 'My Profile' : 'Merchant Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(LucideIcons.settings),
-            onPressed: () {
-              Navigator.of(context).push(
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) => const SettingsScreen(),
-                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                    const begin = Offset(1.0, 0.0);
-                    const end = Offset.zero;
-                    const curve = Curves.easeInOut;
-                    var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-                    var offsetAnimation = animation.drive(tween);
-                    return SlideTransition(position: offsetAnimation, child: child);
-                  },
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: AppSpacing.s8),
-        ],
-      ),
+      appBar: const TopAppBar(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding, vertical: AppSpacing.s12),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding, vertical: AppSpacing.s16),
         child: role == 'user'
             ? _buildUserProfile(context, ref, state)
             : _buildOwnerProfile(context, ref, state),
@@ -73,241 +58,267 @@ class ProfileScreen extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Top Profile Card
-        Container(
-          padding: const EdgeInsets.all(AppSpacing.s16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-            border: Border.all(color: Theme.of(context).dividerColor),
-          ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  TweenAnimationBuilder<double>(
-                    tween: Tween<double>(begin: 0.8, end: 1.0),
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOutBack,
-                    builder: (context, scale, child) {
-                      return Transform.scale(
-                        scale: scale,
-                        child: child,
-                      );
-                    },
-                    child: ScaleButtonPressed(
-                      onTap: () => _changePhoto(context, ref),
-                      child: Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 36,
-                            backgroundColor: AppColors.border,
-                            backgroundImage: user.profileImage.isNotEmpty ? NetworkImage(user.profileImage) : null,
-                            child: user.profileImage.isEmpty
-                                ? const Icon(LucideIcons.user, size: 24)
-                                : null,
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: AppColors.primary,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(LucideIcons.camera, size: 10, color: Colors.white),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.s16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(user.name, style: AppTypography.heading.copyWith(fontWeight: FontWeight.w800)),
-                        const SizedBox(height: 2),
-                        Text(user.email, style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(LucideIcons.mapPin, size: 10, color: AppColors.textSecondary),
-                            const SizedBox(width: 4),
-                            Text(user.location, style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 11)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(LucideIcons.edit2, size: 14),
-                      label: const Text('Edit Profile'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                      ),
-                      onPressed: () => _showEditProfileSheet(context, ref, user),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+        // Title
+        Text(
+          'Profile',
+          style: AppTypography.display.copyWith(
+            fontWeight: FontWeight.w900,
+            fontSize: 28,
+            letterSpacing: -0.8,
           ),
         ),
-        const SizedBox(height: AppSpacing.sectionGap),
+        const SizedBox(height: 20),
 
-        // My Saved Catalog Section
-        _buildSectionHeader('Saved Products', '${savedProducts.length} items'),
-        const SizedBox(height: AppSpacing.s12),
-        savedProducts.isEmpty
-            ? _buildEmptyState('No saved products yet.')
-            : GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: AppSpacing.s16,
-                  crossAxisSpacing: AppSpacing.s16,
-                  childAspectRatio: 0.8,
+        // PROFILE HEADER
+        Row(
+          children: [
+            TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0.8, end: 1.0),
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutBack,
+              builder: (context, scale, child) {
+                return Transform.scale(scale: scale, child: child);
+              },
+              child: GestureDetector(
+                onTap: () => _changePhoto(context, ref),
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 44,
+                      backgroundColor: AppColors.border,
+                      backgroundImage: user.profileImage.isNotEmpty ? NetworkImage(user.profileImage) : null,
+                      child: user.profileImage.isEmpty
+                          ? const Icon(LucideIcons.user, size: 32, color: AppColors.primary)
+                          : null,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(LucideIcons.camera, size: 12, color: Colors.white),
+                      ),
+                    ),
+                  ],
                 ),
-                itemCount: savedProducts.length,
-                itemBuilder: (context, index) {
-                  final p = savedProducts[index];
-                  return ScaleButtonPressed(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => ProductDetailsScreen(productId: p.id)),
-                      );
-                    },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                            child: Image.network(p.images.first, fit: BoxFit.cover, width: double.infinity),
-                          ),
+              ),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user.name,
+                    style: AppTypography.heading.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    user.email,
+                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(LucideIcons.calendar, size: 12, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatMemberSince(user.createdAt),
+                        style: AppTypography.label.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
                         ),
-                        const SizedBox(height: 8),
-                        Text(p.name, style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-                        Text('₹${p.discountPrice?.toStringAsFixed(0) ?? p.price.toStringAsFixed(0)}', style: AppTypography.label),
-                      ],
-                    ),
-                  );
-                },
-              ),
-        const SizedBox(height: AppSpacing.sectionGap),
-
-        // Followed Shops Section
-        _buildSectionHeader('Followed Shops', '${followedShops.length} shops'),
-        const SizedBox(height: AppSpacing.s12),
-        followedShops.isEmpty
-            ? _buildEmptyState('No followed shops yet.')
-            : ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: followedShops.length,
-                separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.s12),
-                itemBuilder: (context, index) {
-                  final s = followedShops[index];
-                  return BaseCard(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => ShopProfileScreen(shopId: s.id)),
-                      );
-                    },
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundImage: NetworkImage(s.logo),
                       ),
-                      title: Text(s.shopName, style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
-                      subtitle: Text(s.category, style: AppTypography.caption),
-                      trailing: const Icon(LucideIcons.chevronRight, size: 16),
-                    ),
-                  );
-                },
+                    ],
+                  ),
+                ],
               ),
-        const SizedBox(height: AppSpacing.sectionGap),
-
-        // Settings & Preferences Section
-        Text('Settings & Preferences', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-            border: Border.all(color: Theme.of(context).dividerColor),
-          ),
-          child: Column(
-            children: [
-              _buildMenuRow(context, LucideIcons.languages, 'Language', () => _navigateToSettings(context)),
-              const Divider(height: 1, indent: 48),
-              _buildMenuRow(context, LucideIcons.bell, 'Notifications', () => _navigateToSettings(context)),
-              const Divider(height: 1, indent: 48),
-              _buildMenuRow(context, LucideIcons.palette, 'Appearance', () => _navigateToSettings(context)),
-              const Divider(height: 1, indent: 48),
-              _buildMenuRow(context, LucideIcons.shieldAlert, 'Privacy & Security', () => _navigateToSettings(context)),
-            ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        
+        // Edit Profile Button
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            icon: const Icon(LucideIcons.edit2, size: 14, color: AppColors.textPrimary),
+            label: const Text('Edit Profile', style: TextStyle(color: AppColors.textPrimary)),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              side: const BorderSide(color: AppColors.border),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+            ),
+            onPressed: () => _showEditProfileSheet(context, ref, user),
           ),
         ),
-        const SizedBox(height: AppSpacing.sectionGap),
+        const SizedBox(height: 28),
 
-        // Support & About Info Blocks
-        Text('App Information', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-            border: Border.all(color: Theme.of(context).dividerColor),
-          ),
-          child: Column(
-            children: [
-              _buildMenuRow(context, LucideIcons.helpCircle, 'Help & Support', () => _showHelpSupportSheet(context)),
-              const Divider(height: 1, indent: 48),
-              _buildMenuRow(context, LucideIcons.fileText, 'Terms & Conditions', () => _showDocumentSheet(context, 'Terms & Conditions', _dummyTerms)),
-              const Divider(height: 1, indent: 48),
-              _buildMenuRow(context, LucideIcons.lock, 'Privacy Policy', () => _showDocumentSheet(context, 'Privacy Policy', _dummyPrivacyPolicy)),
-              const Divider(height: 1, indent: 48),
-              _buildMenuRow(context, LucideIcons.info, 'About Nearo', () => _showDocumentSheet(context, 'About Nearo', _dummyAboutNearo)),
-            ],
-          ),
+        // QUICK ACTIONS SECTION
+        _buildSectionTitle('QUICK ACTIONS'),
+        const SizedBox(height: 10),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.4,
+          children: [
+            _buildQuickActionCard(
+              context,
+              icon: LucideIcons.bookmark,
+              title: 'Saved Products',
+              subtitle: '${savedProducts.length} items',
+              color: Colors.blue.shade50,
+              iconColor: Colors.blue.shade700,
+              onTap: () => _showSavedProductsSheet(context, savedProducts),
+            ),
+            _buildQuickActionCard(
+              context,
+              icon: LucideIcons.heart,
+              title: 'Followed Shops',
+              subtitle: '${followedShops.length} shops',
+              color: Colors.pink.shade50,
+              iconColor: Colors.pink.shade700,
+              onTap: () {
+                // Navigate to Following tab index
+                ref.read(bottomNavIndexProvider.notifier).state = 3;
+              },
+            ),
+            _buildQuickActionCard(
+              context,
+              icon: LucideIcons.bell,
+              title: 'Notification Config',
+              subtitle: 'Manage alerts',
+              color: Colors.amber.shade50,
+              iconColor: Colors.amber.shade700,
+              onTap: () => _navigateToSettings(context),
+            ),
+            _buildQuickActionCard(
+              context,
+              icon: LucideIcons.palette,
+              title: 'Appearance',
+              subtitle: 'Theme & style',
+              color: Colors.purple.shade50,
+              iconColor: Colors.purple.shade700,
+              onTap: () => _navigateToSettings(context),
+            ),
+          ],
         ),
-        const SizedBox(height: AppSpacing.sectionGap),
+        const SizedBox(height: 28),
 
-        // User Feedback Actions
-        Text('Feedback & Sharing', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-            border: Border.all(color: Theme.of(context).dividerColor),
-          ),
-          child: Column(
-            children: [
-              _buildMenuRow(context, LucideIcons.star, 'Rate App', () => _showRatingDialog(context)),
-              const Divider(height: 1, indent: 48),
-              _buildMenuRow(context, LucideIcons.share2, 'Share App', () => _showShareSheet(context)),
-            ],
-          ),
+        // PREFERENCES SECTION
+        _buildSectionTitle('PREFERENCES'),
+        const SizedBox(height: 10),
+        _buildSectionCard(
+          context,
+          children: [
+            _buildThemeSelectionRow(context, ref),
+            const Divider(height: 1, indent: 48),
+            _buildSwitchRow(
+              context,
+              icon: LucideIcons.bell,
+              label: 'Push Notifications',
+              val: user.notificationEnabled,
+              onChanged: (v) async {
+                final updatedUser = user.copyWith(notificationEnabled: v);
+                await ref.read(databaseProvider.notifier).updateCurrentUser(updatedUser);
+              },
+            ),
+            const Divider(height: 1, indent: 48),
+            _buildSwitchRow(
+              context,
+              icon: LucideIcons.mapPin,
+              label: 'Share Current Location',
+              val: true, // Mock location permission toggle
+              onChanged: (v) {},
+            ),
+          ],
         ),
-        const SizedBox(height: AppSpacing.sectionGap * 2),
+        const SizedBox(height: 28),
 
-        // Logout
-        _buildLogoutButton(context, ref),
-        const SizedBox(height: 32),
+        // ACCOUNT SECTION
+        _buildSectionTitle('ACCOUNT SECTION'),
+        const SizedBox(height: 10),
+        _buildSectionCard(
+          context,
+          children: [
+            _buildMenuRow(
+              context,
+              icon: LucideIcons.languages,
+              label: 'Language',
+              trailingText: user.language,
+              onTap: () => _navigateToSettings(context),
+            ),
+            const Divider(height: 1, indent: 48),
+            _buildMenuRow(
+              context,
+              icon: LucideIcons.shieldAlert,
+              label: 'Privacy & Security',
+              onTap: () => _navigateToSettings(context),
+            ),
+            const Divider(height: 1, indent: 48),
+            _buildMenuRow(
+              context,
+              icon: LucideIcons.helpCircle,
+              label: 'Help & Support',
+              onTap: () => _showHelpSupportSheet(context),
+            ),
+            const Divider(height: 1, indent: 48),
+            _buildMenuRow(
+              context,
+              icon: LucideIcons.fileText,
+              label: 'Terms & Conditions',
+              onTap: () => _showDocumentSheet(context, 'Terms & Conditions', _dummyTerms),
+            ),
+            const Divider(height: 1, indent: 48),
+            _buildMenuRow(
+              context,
+              icon: LucideIcons.lock,
+              label: 'Privacy Policy',
+              onTap: () => _showDocumentSheet(context, 'Privacy Policy', _dummyPrivacyPolicy),
+            ),
+          ],
+        ),
+        const SizedBox(height: 28),
+
+        // DANGER ZONE
+        _buildSectionTitle('DANGER ZONE'),
+        const SizedBox(height: 10),
+        _buildSectionCard(
+          context,
+          borderColor: Colors.red.shade100,
+          children: [
+            _buildMenuRow(
+              context,
+              icon: LucideIcons.logOut,
+              label: 'Log Out',
+              textColor: AppColors.error,
+              iconColor: AppColors.error,
+              showChevron: false,
+              onTap: () => _handleLogout(context, ref),
+            ),
+            const Divider(height: 1, indent: 48),
+            _buildMenuRow(
+              context,
+              icon: LucideIcons.trash2,
+              label: 'Delete Account',
+              textColor: AppColors.error,
+              iconColor: AppColors.error,
+              showChevron: false,
+              onTap: () => _showDeleteAccountDialog(context, ref),
+            ),
+          ],
+        ),
+        const SizedBox(height: 48),
       ],
     );
   }
@@ -317,221 +328,459 @@ class ProfileScreen extends ConsumerWidget {
   // ==========================================
   Widget _buildOwnerProfile(BuildContext context, WidgetRef ref, NearoDataState dbState) {
     final shop = dbState.currentShop;
-    final shopLeads = dbState.leads.where((l) => l.shopId == shop.id).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Shop Banner and Logo Stack
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-            border: Border.all(color: Theme.of(context).dividerColor),
+        // Title
+        Text(
+          'Merchant Profile',
+          style: AppTypography.display.copyWith(
+            fontWeight: FontWeight.w900,
+            fontSize: 28,
+            letterSpacing: -0.8,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Banner Image
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.cardRadius - 1)),
-                    child: Image.network(
-                      shop.banner,
-                      height: 140,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
+        ),
+        const SizedBox(height: 20),
+
+        // PROFILE HEADER
+        Row(
+          children: [
+            TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0.8, end: 1.0),
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutBack,
+              builder: (context, scale, child) {
+                return Transform.scale(scale: scale, child: child);
+              },
+              child: GestureDetector(
+                onTap: () => _changeShopLogo(context, ref, shop),
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 44,
+                      backgroundColor: AppColors.border,
+                      backgroundImage: shop.logo.isNotEmpty ? NetworkImage(shop.logo) : null,
+                      child: shop.logo.isEmpty
+                          ? const Icon(LucideIcons.store, size: 32, color: AppColors.primary)
+                          : null,
                     ),
-                  ),
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: ScaleButtonPressed(
-                      onTap: () => _changeShopBanner(context, ref, shop),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
                       child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.5),
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: AppColors.primary,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(LucideIcons.camera, size: 16, color: Colors.white),
+                        child: const Icon(LucideIcons.camera, size: 12, color: Colors.white),
                       ),
                     ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          shop.shopName,
+                          style: AppTypography.heading.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (shop.isVerified) ...[
+                        const SizedBox(width: 6),
+                        const Icon(LucideIcons.checkCircle, size: 16, color: AppColors.success),
+                      ]
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Owner: ${shop.ownerName}',
+                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(LucideIcons.store, size: 12, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${shop.category} • Verified Partner',
+                        style: AppTypography.label.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.s16),
-                child: Row(
-                  children: [
-                    Stack(
-                      children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor: AppColors.border,
-                          backgroundImage: NetworkImage(shop.logo),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: ScaleButtonPressed(
-                            onTap: () => _changeShopLogo(context, ref, shop),
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: AppColors.primary,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(LucideIcons.camera, size: 10, color: Colors.white),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(width: AppSpacing.s16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(shop.shopName, style: AppTypography.heading.copyWith(fontWeight: FontWeight.w800)),
-                              if (shop.isVerified) ...[
-                                const SizedBox(width: 6),
-                                const Icon(LucideIcons.checkCircle, size: 16, color: AppColors.success),
-                              ]
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text('Owner: ${shop.ownerName}', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              const Icon(LucideIcons.store, size: 10, color: AppColors.textSecondary),
-                              const SizedBox(width: 4),
-                              Text(shop.category, style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 11)),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(LucideIcons.edit3, size: 14),
-                        label: const Text('Edit Shop Details'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                        ),
-                        onPressed: () => _showEditShopSheet(context, ref, shop),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Edit Shop Details Button
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            icon: const Icon(LucideIcons.edit3, size: 14, color: AppColors.textPrimary),
+            label: const Text('Edit Shop Details', style: TextStyle(color: AppColors.textPrimary)),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              side: const BorderSide(color: AppColors.border),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+            ),
+            onPressed: () => _showEditShopSheet(context, ref, shop),
           ),
         ),
-        const SizedBox(height: AppSpacing.sectionGap),
+        const SizedBox(height: 28),
 
-        // Shop Analytics Overview
-        Text('Business Performance', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(AppSpacing.s16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-            border: Border.all(color: Theme.of(context).dividerColor),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildAnalyticsMetric('Views', '4,210', '+12%'),
-                  _buildAnalyticsMetric('Leads', '${shopLeads.length}', '+8%'),
-                  _buildAnalyticsMetric('Followers', '${shop.followers}', '+15%'),
-                ],
-              ),
-              const SizedBox(height: 20),
-              const Text('Conversion Analytics', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              const SizedBox(height: 12),
-              _buildConversionProgressBar('WhatsApp Clicks', 0.65, '96 clicks'),
-              const SizedBox(height: 8),
-              _buildConversionProgressBar('Discount Requests', 0.25, '36 requests'),
-              const SizedBox(height: 8),
-              _buildConversionProgressBar('Product Saves', 0.40, '58 saves'),
-            ],
-          ),
+        // QUICK ACTIONS SECTION
+        _buildSectionTitle('QUICK ACTIONS'),
+        const SizedBox(height: 10),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.4,
+          children: [
+            _buildQuickActionCard(
+              context,
+              icon: LucideIcons.layoutDashboard,
+              title: 'Merchant Center',
+              subtitle: 'Go to Dashboard',
+              color: Colors.blue.shade50,
+              iconColor: Colors.blue.shade700,
+              onTap: () {
+                ref.read(bottomNavIndexProvider.notifier).state = 0;
+              },
+            ),
+            _buildQuickActionCard(
+              context,
+              icon: LucideIcons.plusCircle,
+              title: 'Add Product',
+              subtitle: 'Launch a product',
+              color: Colors.pink.shade50,
+              iconColor: Colors.pink.shade700,
+              onTap: () {
+                ref.read(bottomNavIndexProvider.notifier).state = 1;
+              },
+            ),
+            _buildQuickActionCard(
+              context,
+              icon: LucideIcons.camera,
+              title: 'Shop Cover Banner',
+              subtitle: 'Change cover image',
+              color: Colors.amber.shade50,
+              iconColor: Colors.amber.shade700,
+              onTap: () => _changeShopBanner(context, ref, shop),
+            ),
+            _buildQuickActionCard(
+              context,
+              icon: LucideIcons.megaphone,
+              title: 'Manage Posts',
+              subtitle: 'Post updates & news',
+              color: Colors.purple.shade50,
+              iconColor: Colors.purple.shade700,
+              onTap: () {
+                ref.read(bottomNavIndexProvider.notifier).state = 2;
+              },
+            ),
+          ],
         ),
-        const SizedBox(height: AppSpacing.sectionGap),
+        const SizedBox(height: 28),
 
-        // Business Information
-        Text('Store Information', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-            border: Border.all(color: Theme.of(context).dividerColor),
-          ),
-          child: Column(
-            children: [
-              _buildInfoRow(context, LucideIcons.mapPin, 'Address', shop.address),
-              const Divider(height: 1, indent: 48),
-              _buildInfoRow(context, LucideIcons.clock, 'Working Hours', '09:00 AM - 09:00 PM'),
-              const Divider(height: 1, indent: 48),
-              _buildInfoRow(context, LucideIcons.messageCircle, 'WhatsApp Channel', '+91 ${shop.whatsapp}'),
-              const Divider(height: 1, indent: 48),
-              _buildInfoRow(context, LucideIcons.info, 'Verification Status', shop.isVerified ? 'Verified Partner' : 'Standard Partner'),
-            ],
-          ),
+        // BUSINESS INFORMATION CARD
+        _buildSectionTitle('STORE INFORMATION'),
+        const SizedBox(height: 10),
+        _buildSectionCard(
+          context,
+          children: [
+            _buildInfoRow(context, LucideIcons.mapPin, 'Address', shop.address),
+            const Divider(height: 1, indent: 48),
+            _buildInfoRow(context, LucideIcons.clock, 'Working Hours', '09:00 AM - 09:00 PM'),
+            const Divider(height: 1, indent: 48),
+            _buildInfoRow(context, LucideIcons.messageCircle, 'WhatsApp Channel', '+91 ${shop.whatsapp}'),
+            const Divider(height: 1, indent: 48),
+            _buildInfoRow(context, LucideIcons.info, 'Status', shop.isVerified ? 'Verified Partner' : 'Standard Partner'),
+          ],
         ),
-        const SizedBox(height: AppSpacing.sectionGap),
+        const SizedBox(height: 28),
 
-        // Merchant Privacy/Notification settings
-        Text('Merchant Portal Settings', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-            border: Border.all(color: Theme.of(context).dividerColor),
-          ),
-          child: Column(
-            children: [
-              _buildSwitchRow(context, LucideIcons.bell, 'Real-time Lead Notifications', true),
-              const Divider(height: 1, indent: 48),
-              _buildSwitchRow(context, LucideIcons.eye, 'Show Store Online Status', true),
-              const Divider(height: 1, indent: 48),
-              _buildMenuRow(context, LucideIcons.helpCircle, 'Merchant Help Desk', () => _showHelpSupportSheet(context)),
-            ],
-          ),
+        // PREFERENCES & SETTINGS CARD
+        _buildSectionTitle('PREFERENCES & HELP'),
+        const SizedBox(height: 10),
+        _buildSectionCard(
+          context,
+          children: [
+            _buildThemeSelectionRow(context, ref),
+            const Divider(height: 1, indent: 48),
+            _buildSwitchRow(
+              context,
+              icon: LucideIcons.bell,
+              label: 'Real-time Lead Notifications',
+              val: true,
+              onChanged: (v) {},
+            ),
+            const Divider(height: 1, indent: 48),
+            _buildSwitchRow(
+              context,
+              icon: LucideIcons.eye,
+              label: 'Show Online Status',
+              val: true,
+              onChanged: (v) {},
+            ),
+            const Divider(height: 1, indent: 48),
+            _buildMenuRow(
+              context,
+              icon: LucideIcons.helpCircle,
+              label: 'Merchant Help Desk',
+              onTap: () => _showHelpSupportSheet(context),
+            ),
+          ],
         ),
-        const SizedBox(height: AppSpacing.sectionGap * 2),
+        const SizedBox(height: 28),
 
-        // Logout
-        _buildLogoutButton(context, ref),
-        const SizedBox(height: 32),
+        // DANGER ZONE
+        _buildSectionTitle('DANGER ZONE'),
+        const SizedBox(height: 10),
+        _buildSectionCard(
+          context,
+          borderColor: Colors.red.shade100,
+          children: [
+            _buildMenuRow(
+              context,
+              icon: LucideIcons.logOut,
+              label: 'Log Out',
+              textColor: AppColors.error,
+              iconColor: AppColors.error,
+              showChevron: false,
+              onTap: () => _handleLogout(context, ref),
+            ),
+          ],
+        ),
+        const SizedBox(height: 48),
       ],
     );
   }
 
   // ==========================================
-  // --- BOTTOM SHEETS & INTERACTION DIALOGS ---
+  // --- BOTTOM SHEETS & SUB WIDGETS ---
   // ==========================================
 
-  // EDIT USER PROFILE SHEET
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4.0),
+      child: Text(
+        title,
+        style: AppTypography.label.copyWith(
+          color: AppColors.textSecondary,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.0,
+          fontSize: 11,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionCard(BuildContext context, {required List<Widget> children, Color? borderColor}) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor ?? AppColors.border, width: 1),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: Material(
+          color: AppColors.surface,
+          child: Column(
+            children: children,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return BaseCard(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 18),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                ),
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    String? trailingText,
+    Color? textColor,
+    Color? iconColor,
+    bool showChevron = true,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: iconColor ?? Theme.of(context).iconTheme.color, size: 20),
+      title: Text(
+        label,
+        style: AppTypography.body.copyWith(
+          fontWeight: FontWeight.w600,
+          color: textColor ?? AppColors.textPrimary,
+          fontSize: 14,
+        ),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (trailingText != null) ...[
+            Text(
+              trailingText,
+              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+            ),
+            const SizedBox(width: 8),
+          ],
+          if (showChevron)
+            Icon(LucideIcons.chevronRight, size: 14, color: AppColors.textSecondary.withValues(alpha: 0.7)),
+        ],
+      ),
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildInfoRow(BuildContext context, IconData icon, String label, String val) {
+    return ListTile(
+      leading: Icon(icon, color: Theme.of(context).iconTheme.color, size: 20),
+      title: Text(
+        label,
+        style: AppTypography.body.copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+      ),
+      trailing: SizedBox(
+        width: 150,
+        child: Text(
+          val,
+          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.end,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSwitchRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required bool val,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return StatefulBuilder(
+      builder: (context, setStateRow) {
+        return ListTile(
+          leading: Icon(icon, color: Theme.of(context).iconTheme.color, size: 20),
+          title: Text(
+            label,
+            style: AppTypography.body.copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+          ),
+          trailing: Switch.adaptive(
+            value: val,
+            activeThumbColor: AppColors.primary,
+            onChanged: (v) {
+              setStateRow(() => val = v);
+              onChanged(v);
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildThemeSelectionRow(BuildContext context, WidgetRef ref) {
+    final activeThemeMode = ref.watch(appThemeModeProvider);
+
+    return ListTile(
+      leading: const Icon(LucideIcons.palette, size: 20),
+      title: Text(
+        'Theme Mode',
+        style: AppTypography.body.copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ThemeOptionPill(
+            label: 'Light',
+            isSelected: activeThemeMode == ThemeMode.light,
+            onTap: () => ref.read(authServiceProvider).updateThemeMode('light'),
+          ),
+          const SizedBox(width: 6),
+          _ThemeOptionPill(
+            label: 'Dark',
+            isSelected: activeThemeMode == ThemeMode.dark,
+            onTap: () => ref.read(authServiceProvider).updateThemeMode('dark'),
+          ),
+          const SizedBox(width: 6),
+          _ThemeOptionPill(
+            label: 'Auto',
+            isSelected: activeThemeMode == ThemeMode.system,
+            onTap: () => ref.read(authServiceProvider).updateThemeMode('system'),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  // Edit User Profile sheet
   void _showEditProfileSheet(BuildContext context, WidgetRef ref, UserModel user) {
     final nameCont = TextEditingController(text: user.name);
     final emailCont = TextEditingController(text: user.email);
@@ -597,7 +846,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // EDIT SHOP DETAILS SHEET
+  // Edit Shop Details Sheet
   void _showEditShopSheet(BuildContext context, WidgetRef ref, ShopModel shop) {
     final nameCont = TextEditingController(text: shop.shopName);
     final ownerCont = TextEditingController(text: shop.ownerName);
@@ -677,7 +926,90 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // FAQ HELP DESK ACCORDION
+  // Saved Products sheet overlay
+  void _showSavedProductsSheet(BuildContext context, List<ProductModel> products) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          height: MediaQuery.of(context).size.height * 0.75,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: Theme.of(context).dividerColor, borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('Saved Products', style: AppTypography.heading.copyWith(fontWeight: FontWeight.bold)),
+              const Divider(height: 24),
+              Expanded(
+                child: products.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No saved products.',
+                          style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                        ),
+                      )
+                    : GridView.builder(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: AppSpacing.s16,
+                          crossAxisSpacing: AppSpacing.s16,
+                          childAspectRatio: 0.8,
+                        ),
+                        itemCount: products.length,
+                        itemBuilder: (context, index) {
+                          final p = products[index];
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => ProductDetailsScreen(productId: p.id)),
+                              );
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.network(p.images.first, fit: BoxFit.cover, width: double.infinity),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  p.name,
+                                  style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text('₹${p.discountPrice?.toStringAsFixed(0) ?? p.price.toStringAsFixed(0)}', style: AppTypography.label),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // FAQs
   void _showHelpSupportSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -702,7 +1034,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              Text('Help & FAQ Desk', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
+              Text('Help & Support FAQ', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
               const Divider(height: 24),
               _buildFaqTile('How do I contact a shop owner?', 'Simply click on any product, click "WhatsApp" or "Interested" and you will be connected with the shop owner instantly.'),
               const Divider(height: 1),
@@ -717,7 +1049,19 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // TERMS / PRIVACY DISPLAY SHEET
+  Widget _buildFaqTile(String question, String answer) {
+    return ExpansionTile(
+      title: Text(question, style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+          child: Text(answer, style: AppTypography.caption.copyWith(color: AppColors.textSecondary, height: 1.4)),
+        ),
+      ],
+    );
+  }
+
+  // Terms & Privacy Sheets
   void _showDocumentSheet(BuildContext context, String title, String body) {
     showModalBottomSheet(
       context: context,
@@ -759,275 +1103,52 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // INTERACTIVE APP RATING DIALOG
-  void _showRatingDialog(BuildContext context) {
-    int selectedRating = 0;
+  // Deletion Dialogue
+  void _showDeleteAccountDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Center(child: Text('Rate Nearo', style: TextStyle(fontWeight: FontWeight.bold))),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Enjoying your local neighborhood catalog? Tap stars to rate us!', textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) {
-                      final starNum = index + 1;
-                      final isLit = starNum <= selectedRating;
-                      return IconButton(
-                        icon: Icon(
-                          LucideIcons.star,
-                          color: isLit ? Colors.amber : Colors.grey.shade400,
-                          size: 32,
-                        ),
-                        onPressed: () {
-                          setDialogState(() => selectedRating = starNum);
-                        },
-                      );
-                    }),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                TextButton(
-                  child: const Text('Submit', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Thank you for rating us $selectedRating stars!')),
-                    );
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // APP SHARING BOTTOM SHEET
-  void _showShareSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        return AlertDialog(
+          title: const Text('Delete Account?', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          content: const Text(
+            'This action is permanent and cannot be undone. All your profile details, settings, and local history will be wiped out.',
+            style: TextStyle(height: 1.4),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(color: Theme.of(context).dividerColor, borderRadius: BorderRadius.circular(2)),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text('Share Nearo', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildShareIcon(LucideIcons.link, 'Copy Link', () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Link copied to clipboard!')));
-                  }),
-                  _buildShareIcon(LucideIcons.messageCircle, 'WhatsApp', () => Navigator.pop(context)),
-                  _buildShareIcon(LucideIcons.camera, 'Instagram', () => Navigator.pop(context)),
-                  _buildShareIcon(LucideIcons.send, 'Twitter', () => Navigator.pop(context)),
-
-                ],
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // ==========================================
-  // --- SUB-WIDGET COMPONENTS ---
-  // ==========================================
-
-  Widget _buildShareIcon(IconData icon, String label, VoidCallback onTap) {
-    return ScaleButtonPressed(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.border,
-              shape: BoxShape.circle,
+          actions: [
+            TextButton(
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+              onPressed: () => Navigator.pop(context),
             ),
-            child: Icon(icon, color: AppColors.primary),
-          ),
-          const SizedBox(height: 6),
-          Text(label, style: AppTypography.label.copyWith(fontSize: 10)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFaqTile(String question, String answer) {
-    return ExpansionTile(
-      title: Text(question, style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-          child: Text(answer, style: AppTypography.caption.copyWith(color: AppColors.textSecondary, height: 1.4)),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAnalyticsMetric(String label, String val, String trend) {
-    return Column(
-      children: [
-        Text(val, style: AppTypography.display.copyWith(fontWeight: FontWeight.w800, fontSize: 24)),
-        const SizedBox(height: 4),
-        Row(
-          children: [
-            Text(label, style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
-            const SizedBox(width: 4),
-            Text(trend, style: const TextStyle(color: AppColors.success, fontSize: 9, fontWeight: FontWeight.bold)),
+            TextButton(
+              child: const Text('Delete', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              onPressed: () async {
+                Navigator.pop(context); // Close dialog
+                try {
+                  await ref.read(authServiceProvider).handleDeleteAccount();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Account successfully deleted.'), backgroundColor: Colors.red),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to delete account: ${e.toString()}')),
+                  );
+                }
+              },
+            ),
           ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildConversionProgressBar(String label, double val, String desc) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: AppTypography.label.copyWith(fontWeight: FontWeight.w600)),
-            Text(desc, style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10)),
-          ],
-        ),
-        const SizedBox(height: 4),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: val,
-            minHeight: 6,
-            backgroundColor: AppColors.border,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSectionHeader(String title, String val) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(title, style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
-        Text(val, style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
-      ],
-    );
-  }
-
-  Widget _buildEmptyState(String msg) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Center(
-        child: Text(msg, style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
-      ),
-    );
-  }
-
-  Widget _buildMenuRow(BuildContext context, IconData icon, String label, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: Theme.of(context).iconTheme.color),
-      title: Text(label, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
-      trailing: const Icon(LucideIcons.chevronRight, size: 16),
-      onTap: onTap,
-    );
-  }
-
-  Widget _buildInfoRow(BuildContext context, IconData icon, String label, String val) {
-    return ListTile(
-      leading: Icon(icon, color: Theme.of(context).iconTheme.color),
-      title: Text(label, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
-      trailing: Text(
-        val,
-        style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
-
-  Widget _buildSwitchRow(BuildContext context, IconData icon, String label, bool initVal) {
-    return StatefulBuilder(
-      builder: (context, setRowState) {
-        return ListTile(
-          leading: Icon(icon, color: Theme.of(context).iconTheme.color),
-          title: Text(label, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
-          trailing: Switch.adaptive(
-            value: initVal,
-            activeColor: AppColors.primary,
-            onChanged: (v) => setRowState(() => initVal = v),
-          ),
         );
       },
     );
   }
 
-  Widget _buildLogoutButton(BuildContext context, WidgetRef ref) {
-    return ScaleButtonPressed(
-      onTap: () async {
-        try {
-          await ref.read(authServiceProvider).handleSignOut();
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Sign out failed: ${e.toString()}')),
-          );
-        }
-      },
-      child: Container(
-        height: 52,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.red.shade50.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-          border: Border.all(color: AppColors.error),
-        ),
-        child: Center(
-          child: Text(
-            'Log Out',
-            style: AppTypography.body.copyWith(color: AppColors.error, fontWeight: FontWeight.bold),
-          ),
-        ),
-      ),
-    );
+  Future<void> _handleLogout(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref.read(authServiceProvider).handleSignOut();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Sign out failed: ${e.toString()}')),
+      );
+    }
   }
 
   Future<void> _changePhoto(BuildContext context, WidgetRef ref) async {
@@ -1109,10 +1230,41 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // --- DUMMY CORE DOCUMENT STRINGS ---
   static const String _dummyTerms = 'Welcome to Nearo. By accessing or using our hyperlocal discovery application, you agree to comply with and be bound by these terms. We match users with nearby merchant product catalogs without charging commission. We do not process direct transactions or store card detail info. Purchases are conducted offline or directly via the merchant\'s chosen channels (e.g. WhatsApp).';
   
   static const String _dummyPrivacyPolicy = 'At Nearo, we take privacy and local security seriously. We collect approximate location coordinates to retrieve catalog details from shops in your immediate vicinity. This coordinate info is processed locally and never sold or shared. Profile pictures, names, and contact detail info are only visible to merchants you explicitly contact.';
-  
-  static const String _dummyAboutNearo = 'Nearo is a premium hyperlocal discovery platform connecting customers with their neighborhood sellers. Inspired by modern minimalism, we design high-end shopping feed screens that bring back the charm of neighborhood discovery. Version 1.0.0 (Production Ready).';
+}
+
+class _ThemeOptionPill extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ThemeOptionPill({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : AppColors.border,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: AppTypography.label.copyWith(
+            fontSize: 10,
+            color: isSelected ? Colors.white : AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
 }

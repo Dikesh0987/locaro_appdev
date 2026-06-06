@@ -5,6 +5,7 @@ import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/common/offer_badge.dart';
+import '../../../core/widgets/navigation/top_app_bar.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../models/post_model.dart';
 import '../../../models/lead_model.dart';
@@ -21,31 +22,14 @@ class HomeScreen extends ConsumerWidget {
     final posts = state.posts;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(LucideIcons.menu),
-          onPressed: () {},
-        ),
-        title: Text(
-          'Nearo',
-          style: AppTypography.heading.copyWith(
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(LucideIcons.search),
-            onPressed: () {},
-          ),
-          const SizedBox(width: AppSpacing.s8),
-        ],
-      ),
+      appBar: const TopAppBar(),
       body: posts.isEmpty
           ? Center(
               child: Text(
                 'No updates in your area yet.',
-                style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             )
           : RefreshIndicator(
@@ -55,10 +39,8 @@ class HomeScreen extends ConsumerWidget {
               child: ListView.separated(
                 padding: const EdgeInsets.only(bottom: AppSpacing.s24),
                 itemCount: posts.length,
-                separatorBuilder: (context, index) => Container(
-                  height: 8,
-                  color: AppColors.border,
-                ),
+                separatorBuilder: (context, index) =>
+                    Container(height: 8, color: AppColors.border),
                 itemBuilder: (context, index) {
                   final post = posts[index];
                   // Find shop
@@ -78,13 +60,15 @@ class HomeScreen extends ConsumerWidget {
                     post: post,
                     shopName: shop.shopName,
                     shopLogo: shop.logo,
-                    distance: '${(1.2 - (index * 0.4)).toStringAsFixed(1)} km away',
+                    distance:
+                        '${(1.2 - (index * 0.4)).toStringAsFixed(1)} km away',
                     linkedProduct: linkedProduct,
                     onShopTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ShopProfileScreen(shopId: shop.id),
+                          builder: (context) =>
+                              ShopProfileScreen(shopId: shop.id),
                         ),
                       );
                     },
@@ -117,7 +101,8 @@ class _FeedCard extends ConsumerStatefulWidget {
   ConsumerState<_FeedCard> createState() => _FeedCardState();
 }
 
-class _FeedCardState extends ConsumerState<_FeedCard> with SingleTickerProviderStateMixin {
+class _FeedCardState extends ConsumerState<_FeedCard>
+    with SingleTickerProviderStateMixin {
   bool _isLiked = false;
   late AnimationController _likeController;
   late Animation<double> _likeScale;
@@ -142,48 +127,63 @@ class _FeedCardState extends ConsumerState<_FeedCard> with SingleTickerProviderS
   }
 
   void _triggerLike() {
-    ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
-      setState(() => _isLiked = !_isLiked);
-      if (_isLiked) {
-        _likeController.forward(from: 0.0);
-        ref.read(databaseProvider.notifier).toggleLikePost(widget.post.id);
-      }
-    });
+    ref
+        .read(authServiceProvider)
+        .checkGuest(
+          context,
+          onAllowed: () {
+            setState(() => _isLiked = !_isLiked);
+            if (_isLiked) {
+              _likeController.forward(from: 0.0);
+              ref
+                  .read(databaseProvider.notifier)
+                  .toggleLikePost(widget.post.id);
+            }
+          },
+        );
   }
 
   void _generateLead(LeadType type, String typeLabel) {
     if (widget.linkedProduct == null) return;
-    
-    ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
-      final dbState = ref.read(databaseProvider);
-      final newLead = LeadModel(
-        id: 'lead_${DateTime.now().millisecondsSinceEpoch}',
-        userId: dbState.currentUser.id,
-        userName: dbState.currentUser.name,
-        userPhone: dbState.currentUser.phone,
-        productId: widget.linkedProduct!.id,
-        productName: widget.linkedProduct!.name,
-        shopId: widget.post.shopId,
-        type: type,
-        status: 'New',
-        createdAt: DateTime.now(),
-      );
 
-      ref.read(databaseProvider.notifier).addLead(newLead);
+    ref
+        .read(authServiceProvider)
+        .checkGuest(
+          context,
+          onAllowed: () {
+            final dbState = ref.read(databaseProvider);
+            final newLead = LeadModel(
+              id: 'lead_${DateTime.now().millisecondsSinceEpoch}',
+              userId: dbState.currentUser.id,
+              userName: dbState.currentUser.name,
+              userPhone: dbState.currentUser.phone,
+              productId: widget.linkedProduct!.id,
+              productName: widget.linkedProduct!.name,
+              shopId: widget.post.shopId,
+              type: type,
+              status: 'New',
+              createdAt: DateTime.now(),
+            );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Simulated Lead: $typeLabel generated for ${widget.shopName}'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    });
+            ref.read(databaseProvider.notifier).addLead(newLead);
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Simulated Lead: $typeLabel generated for ${widget.shopName}',
+                ),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          },
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     final dbState = ref.watch(databaseProvider);
-    final isSaved = widget.linkedProduct != null &&
+    final isSaved =
+        widget.linkedProduct != null &&
         dbState.currentUser.savedProducts.contains(widget.linkedProduct!.id);
 
     return Column(
@@ -214,12 +214,18 @@ class _FeedCardState extends ConsumerState<_FeedCard> with SingleTickerProviderS
                     children: [
                       Text(
                         widget.shopName,
-                        style: AppTypography.caption.copyWith(fontWeight: FontWeight.w700),
+                        style: AppTypography.caption.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Row(
                         children: [
-                          Icon(LucideIcons.navigation, size: 10, color: AppColors.textSecondary),
+                          Icon(
+                            LucideIcons.navigation,
+                            size: 10,
+                            color: AppColors.textSecondary,
+                          ),
                           const SizedBox(width: 2),
                           Text(
                             widget.distance,
@@ -280,10 +286,7 @@ class _FeedCardState extends ConsumerState<_FeedCard> with SingleTickerProviderS
 
         // Actions Row
         Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12.0,
-            vertical: 4.0,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
           child: Row(
             children: [
               ScaleTransition(
@@ -313,15 +316,24 @@ class _FeedCardState extends ConsumerState<_FeedCard> with SingleTickerProviderS
                 IconButton(
                   icon: Icon(
                     isSaved ? LucideIcons.bookmark : LucideIcons.bookmark,
-                    color: isSaved ? AppColors.primary : AppColors.textSecondary,
+                    color: isSaved
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
                   ),
                   onPressed: () {
-                    ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
-                      ref.read(databaseProvider.notifier).toggleSaveProduct(widget.linkedProduct!.id);
-                      if (!isSaved) {
-                        _generateLead(LeadType.saved, 'Product Saved');
-                      }
-                    });
+                    ref
+                        .read(authServiceProvider)
+                        .checkGuest(
+                          context,
+                          onAllowed: () {
+                            ref
+                                .read(databaseProvider.notifier)
+                                .toggleSaveProduct(widget.linkedProduct!.id);
+                            if (!isSaved) {
+                              _generateLead(LeadType.saved, 'Product Saved');
+                            }
+                          },
+                        );
                   },
                 ),
             ],
@@ -330,7 +342,9 @@ class _FeedCardState extends ConsumerState<_FeedCard> with SingleTickerProviderS
 
         // Content Details
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.mobilePadding,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -341,7 +355,9 @@ class _FeedCardState extends ConsumerState<_FeedCard> with SingleTickerProviderS
                     Expanded(
                       child: Text(
                         widget.linkedProduct!.name,
-                        style: AppTypography.body.copyWith(fontWeight: FontWeight.w700),
+                        style: AppTypography.body.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                     Text(
@@ -360,38 +376,62 @@ class _FeedCardState extends ConsumerState<_FeedCard> with SingleTickerProviderS
                 style: AppTypography.caption.copyWith(height: 1.4),
               ),
               const SizedBox(height: AppSpacing.s12),
-              
+
               // Sticky actions for Leads generation
               if (widget.linkedProduct != null) ...[
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        icon: const Icon(LucideIcons.percent, size: 14, color: AppColors.offerOrange),
-                        label: const Text('Ask Discount', style: TextStyle(color: AppColors.textPrimary)),
+                        icon: const Icon(
+                          LucideIcons.percent,
+                          size: 14,
+                          color: AppColors.offerOrange,
+                        ),
+                        label: const Text(
+                          'Ask Discount',
+                          style: TextStyle(color: AppColors.textPrimary),
+                        ),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           side: const BorderSide(color: AppColors.border),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+                            borderRadius: BorderRadius.circular(
+                              AppSpacing.buttonRadius,
+                            ),
                           ),
                         ),
-                        onPressed: () => _generateLead(LeadType.discountRequest, 'Discount Request'),
+                        onPressed: () => _generateLead(
+                          LeadType.discountRequest,
+                          'Discount Request',
+                        ),
                       ),
                     ),
                     const SizedBox(width: AppSpacing.s12),
                     Expanded(
                       child: ElevatedButton.icon(
-                        icon: const Icon(LucideIcons.messageSquare, size: 14, color: Colors.white),
-                        label: const Text('WhatsApp', style: TextStyle(color: Colors.white)),
+                        icon: const Icon(
+                          LucideIcons.messageSquare,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                        label: const Text(
+                          'WhatsApp',
+                          style: TextStyle(color: Colors.white),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green.shade600,
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+                            borderRadius: BorderRadius.circular(
+                              AppSpacing.buttonRadius,
+                            ),
                           ),
                         ),
-                        onPressed: () => _generateLead(LeadType.whatsappClick, 'WhatsApp query'),
+                        onPressed: () => _generateLead(
+                          LeadType.whatsappClick,
+                          'WhatsApp query',
+                        ),
                       ),
                     ),
                   ],

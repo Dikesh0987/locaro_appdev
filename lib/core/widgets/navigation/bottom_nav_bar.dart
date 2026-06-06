@@ -35,9 +35,9 @@ class BottomNavBar extends StatelessWidget {
               label: 'Map',
             ),
             BottomNavigationBarItem(
-              icon: Icon(LucideIcons.bell),
-              activeIcon: Icon(LucideIcons.bell, fill: 1.0),
-              label: 'Alerts',
+              icon: Icon(LucideIcons.heart),
+              activeIcon: Icon(LucideIcons.heart, fill: 1.0),
+              label: 'Following',
             ),
             BottomNavigationBarItem(
               icon: Icon(LucideIcons.user),
@@ -59,7 +59,7 @@ class BottomNavBar extends StatelessWidget {
             BottomNavigationBarItem(
               icon: Icon(LucideIcons.plusCircle),
               activeIcon: Icon(LucideIcons.plusCircle, fill: 1.0),
-              label: 'Posts',
+              label: 'Add',
             ),
             BottomNavigationBarItem(
               icon: Icon(LucideIcons.users),

@@ -6,6 +6,7 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/cards/base_card.dart';
 import '../../../core/widgets/common/offer_badge.dart';
+import '../../../core/widgets/navigation/top_app_bar.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
 import '../../products/presentation/product_details_screen.dart';
@@ -21,10 +22,7 @@ class DiscoverScreen extends ConsumerWidget {
     final offers = state.offers;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Discover'),
-        centerTitle: false,
-      ),
+      appBar: const TopAppBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
         child: Column(

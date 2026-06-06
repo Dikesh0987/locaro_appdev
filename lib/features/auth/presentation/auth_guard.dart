@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/auth_provider.dart';
 import '../../shell/presentation/shell_screen.dart';
-import 'auth_flow_container.dart';
+import 'role_selection_screen.dart';
 import 'splash_screen.dart';
-import 'welcome_screen.dart';
 
 class AuthGuard extends ConsumerWidget {
   const AuthGuard({super.key});
@@ -15,20 +14,15 @@ class AuthGuard extends ConsumerWidget {
 
     return authUserVal.when(
       data: (user) {
-        if (user == null) {
-          return const WelcomeScreen();
+        if (user != null && user.isOnboardingCompleted) {
+          return const ShellScreen();
         }
 
-        if (!user.isOnboardingCompleted) {
-          // New authenticated user needing onboarding
-          return const AuthFlowContainer(role: 'user');
-        }
-
-        // Fully authenticated user
-        return const ShellScreen();
+        // Return RoleSelectionScreen if logged out or onboarding is incomplete
+        return const RoleSelectionScreen();
       },
       loading: () => const SplashScreen(),
-      error: (err, stack) => const WelcomeScreen(),
+      error: (err, stack) => const RoleSelectionScreen(),
     );
   }
 }

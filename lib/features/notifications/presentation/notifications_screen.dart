@@ -1,22 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/cards/base_card.dart';
+import '../../../providers/notification_providers.dart';
 
-class NotificationsScreen extends StatelessWidget {
+class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
+  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+  String _selectedFilter = 'All';
+  final List<String> _filters = ['All', 'Offers', 'Followers', 'Comments', 'System'];
+
+  @override
   Widget build(BuildContext context) {
+    final notifications = ref.watch(notificationsProvider);
+    final unreadCount = notifications.where((n) => n.isUnread).length;
+
+    // Filter notifications
+    final filteredNotifications = _selectedFilter == 'All'
+        ? notifications
+        : notifications.where((n) => n.category.toLowerCase() == _selectedFilter.toLowerCase()).toList();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
         centerTitle: false,
         actions: [
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              ref.read(notificationsProvider.notifier).markAllRead();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('All notifications marked as read.'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            },
             child: Text(
               'MARK ALL READ',
               style: AppTypography.label.copyWith(
@@ -28,159 +54,219 @@ class NotificationsScreen extends StatelessWidget {
           const SizedBox(width: AppSpacing.s12),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding, vertical: AppSpacing.s12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Stay updated with your favorite local spots.',
-              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: AppSpacing.sectionGap),
-
-            // Card Container encapsulating notifications matching mockup
-            BaseCard(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.s4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // --- NEW SECTION ---
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16.0, top: 16.0, bottom: 8.0),
-                      child: Text(
-                        'NEW',
-                        style: AppTypography.label.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                    ),
-                    _buildNotificationRow(
-                      logoUrl: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=100', // Cafe
-                      title: 'Cafe Aroma',
-                      body: 'Your morning brew is ready! Flash this notification for 10% off your next purchase.',
-                      time: '2m ago',
-                      isUnread: true,
-                    ),
-                    const Divider(color: AppColors.border, height: 1),
-                    _buildNotificationRow(
-                      logoUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=100', // Mart
-                      title: 'The Daily Catch',
-                      body: 'Fresh King Salmon just arrived. Limited stock available this weekend!',
-                      time: '1h ago',
-                      isUnread: true,
-                    ),
-                    
-                    // --- EARLIER SECTION ---
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16.0, top: 24.0, bottom: 8.0),
-                      child: Text(
-                        'EARLIER',
-                        style: AppTypography.label.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                    ),
-                    _buildNotificationRow(
-                      logoUrl: 'https://images.unsplash.com/photo-1619546813926-a78fa6372cd2?w=100', // Fruit
-                      title: 'Local Green Grocer',
-                      body: 'Weekend farmer\'s market starts at 8 AM tomorrow. Tap to see the vendors list.',
-                      time: 'Yesterday',
-                      isUnread: false,
-                    ),
-                    const Divider(color: AppColors.border, height: 1),
-                    _buildNotificationRow(
-                      logoUrl: '', // System
-                      title: 'Nearo System',
-                      body: 'You\'ve reached level 3 local explorer! Check out your new badge in settings.',
-                      time: 'Tue',
-                      isUnread: false,
-                      isSystem: true,
-                    ),
-                  ],
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Screen description & Unread badge
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding, vertical: AppSpacing.s8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    'Stay updated with your favorite local spots.',
+                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                  ),
                 ),
-              ),
+                if (unreadCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    child: Text(
+                      '$unreadCount unread',
+                      style: AppTypography.label.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(height: 32),
-            Center(
-              child: Text(
-                'You\'re all caught up',
-                style: AppTypography.label.copyWith(color: AppColors.textSecondary),
-              ),
+          ),
+
+          // Filters Row
+          SizedBox(
+            height: 48,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding, vertical: 8),
+              scrollDirection: Axis.horizontal,
+              itemCount: _filters.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final filter = _filters[index];
+                final isSelected = _selectedFilter == filter;
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedFilter = filter;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.primary : AppColors.surface,
+                      borderRadius: BorderRadius.circular(100),
+                      border: Border.all(
+                        color: isSelected ? AppColors.primary : AppColors.border,
+                      ),
+                    ),
+                    child: Text(
+                      filter,
+                      style: AppTypography.label.copyWith(
+                        color: isSelected ? Colors.white : AppColors.textPrimary,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+
+          // Notifications List
+          Expanded(
+            child: filteredNotifications.isEmpty
+                ? _buildEmptyState()
+                : RefreshIndicator(
+                    onRefresh: () async {
+                      await Future.delayed(const Duration(milliseconds: 600));
+                    },
+                    child: ListView.separated(
+                      padding: const EdgeInsets.all(AppSpacing.mobilePadding),
+                      itemCount: filteredNotifications.length,
+                      separatorBuilder: (context, index) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final notification = filteredNotifications[index];
+                        return BaseCard(
+                          onTap: () {
+                            ref.read(notificationsProvider.notifier).toggleUnread(notification.id);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Unread Indicator Dot
+                                if (notification.isUnread)
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 18, right: 8),
+                                    height: 8,
+                                    width: 8,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.offerOrange,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  )
+                                else
+                                  const SizedBox(width: 16),
+
+                                // Sender Avatar
+                                CircleAvatar(
+                                  radius: 22,
+                                  backgroundColor: AppColors.border,
+                                  backgroundImage: notification.logoUrl.isNotEmpty
+                                      ? NetworkImage(notification.logoUrl)
+                                      : null,
+                                  child: notification.logoUrl.isEmpty
+                                      ? const Icon(LucideIcons.sparkles, size: 18, color: AppColors.primary)
+                                      : null,
+                                ),
+                                const SizedBox(width: AppSpacing.s12),
+
+                                // Notification Text details
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              notification.title,
+                                              style: AppTypography.body.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.textPrimary,
+                                              ),
+                                            ),
+                                          ),
+                                          Text(
+                                            notification.time,
+                                            style: AppTypography.label.copyWith(
+                                              color: AppColors.textSecondary,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        notification.body,
+                                        style: AppTypography.caption.copyWith(
+                                          color: AppColors.textSecondary,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      // Category Pill
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.border,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          notification.category,
+                                          style: AppTypography.label.copyWith(
+                                            color: AppColors.textSecondary,
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildNotificationRow({
-    required String logoUrl,
-    required String title,
-    required String body,
-    required String time,
-    required bool isUnread,
-    bool isSystem = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (isUnread) ...[
-            Container(
-              margin: const EdgeInsets.only(top: 14, right: 8),
-              height: 6,
-              width: 6,
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
-              ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.border.withValues(alpha: 0.5),
+              shape: BoxShape.circle,
             ),
-          ] else ...[
-            const SizedBox(width: 14),
-          ],
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: AppColors.border,
-            backgroundImage: logoUrl.isNotEmpty ? NetworkImage(logoUrl) : null,
-            child: logoUrl.isEmpty
-                ? const Icon(LucideIcons.sparkles, size: 16, color: AppColors.primary)
-                : null,
+            child: const Icon(LucideIcons.bellOff, size: 40, color: AppColors.secondary),
           ),
-          const SizedBox(width: AppSpacing.s12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTypography.body.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      time,
-                      style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  body,
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondary,
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
+          const SizedBox(height: 16),
+          Text(
+            'No notifications found',
+            style: AppTypography.body.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Change your filters or search options.',
+            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),

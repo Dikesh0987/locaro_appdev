@@ -13,6 +13,8 @@ import '../../../providers/app_state_providers.dart';
 import '../../../models/shop_model.dart';
 import '../application/auth_service.dart';
 import '../data/auth_repository.dart';
+import 'auth_controller.dart';
+import 'auth_state.dart';
 
 
 class AuthFlowContainer extends ConsumerStatefulWidget {
@@ -102,6 +104,84 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
     );
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(authControllerProvider.notifier).signInWithGoogle(_role);
+      
+      final authState = ref.read(authControllerProvider);
+      if (authState is AuthFailure) {
+        throw Exception(authState.errorMessage);
+      }
+      
+      final user = ref.read(databaseProvider).currentUser;
+      
+      setState(() {
+        _userNameController.text = user.name;
+        _userEmailController.text = user.email;
+        if (user.phone.isNotEmpty) {
+          _userPhoneController.text = user.phone;
+        }
+        _googleProfileImage = user.photoUrl.isNotEmpty ? user.photoUrl : null;
+        
+        _shopOwnerNameController.text = user.name;
+        _shopNameController.text = "${user.name}'s Shop";
+      });
+
+      if (user.isOnboardingCompleted) {
+        if (mounted) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      } else {
+        _nextPage();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleGuestSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(authControllerProvider.notifier).signInAsGuest();
+      
+      final authState = ref.read(authControllerProvider);
+      if (authState is AuthFailure) {
+        throw Exception(authState.errorMessage);
+      }
+      
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   Future<void> _completeAuth() async {
     setState(() => _isLoading = true);
     try {
@@ -142,6 +222,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
       }
 
       await ref.read(authServiceProvider).completeOnboarding(updatedUser);
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -166,9 +249,11 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
         );
         setState(() => _logoUrl = url);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload logo: ${e.toString()}')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to upload logo: ${e.toString()}')),
+          );
+        }
       } finally {
         setState(() => _isLoading = false);
       }
@@ -189,9 +274,11 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
         );
         setState(() => _bannerUrl = url);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload banner: ${e.toString()}')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to upload banner: ${e.toString()}')),
+          );
+        }
       } finally {
         setState(() => _isLoading = false);
       }
@@ -204,12 +291,16 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: _currentStep > 0
-            ? IconButton(
-                icon: const Icon(LucideIcons.arrowLeft),
-                onPressed: _prevPage,
-              )
-            : null,
+        leading: IconButton(
+          icon: const Icon(LucideIcons.arrowLeft),
+          onPressed: () {
+            if (_currentStep > 0) {
+              _prevPage();
+            } else {
+              Navigator.of(context).pop();
+            }
+          },
+        ),
         title: Text(_role == 'user' ? 'Create Account' : 'Merchant Center'),
         actions: [
           Padding(
@@ -253,7 +344,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   // --- USER FLOW PAGES ---
   List<Widget> _buildUserPages() {
     return [
-      _buildRoleSelectionStep(),
+      _buildWelcomeStep(),
       _buildProfileStep(),
       _buildInterestsStep(),
       _buildPermissionStep(),
@@ -263,7 +354,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   // --- SHOP FLOW PAGES ---
   List<Widget> _buildShopPages() {
     return [
-      _buildRoleSelectionStep(),
+      _buildWelcomeStep(),
       _buildBusinessSetupStep(),
       _buildShopDetailsStep(),
       _buildMediaUploadStep(),
@@ -271,128 +362,96 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
     ];
   }
 
-  // --- ROLE SELECTION STEP ---
-  Widget _buildRoleSelectionStep() {
+  // --- WELCOME STEP ---
+  Widget _buildWelcomeStep() {
+    final isShop = _role == 'shop_owner';
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.mobilePadding),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.mobilePadding,
+        vertical: AppSpacing.s24,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: AppSpacing.s24),
-          Text(
-            'Choose account type',
-            style: AppTypography.heading.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Text(
-            'Tell us how you plan to use Nearo',
-            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: AppSpacing.s32),
-          
-          // User Card
-          ScaleButtonPressed(
-            onTap: () => setState(() => _role = 'user'),
-            child: Container(
-              padding: const EdgeInsets.all(AppSpacing.s20),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                border: Border.all(
-                  color: _role == 'user' ? AppColors.primary : Theme.of(context).dividerColor,
-                  width: 2,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.s12),
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(LucideIcons.user, color: AppColors.primary),
-                  ),
-                  const SizedBox(width: AppSpacing.s16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('User', style: AppTypography.body.copyWith(fontWeight: FontWeight.w700)),
-                        const SizedBox(height: AppSpacing.s4),
-                        Text(
-                          'Discover products and offers around you',
-                          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          
-          // Shop Owner Card
-          ScaleButtonPressed(
-            onTap: () => setState(() => _role = 'shop_owner'),
-            child: Container(
-              padding: const EdgeInsets.all(AppSpacing.s20),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                border: Border.all(
-                  color: _role == 'shop_owner' ? AppColors.primary : Theme.of(context).dividerColor,
-                  width: 2,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.s12),
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(LucideIcons.store, color: AppColors.primary),
-                  ),
-                  const SizedBox(width: AppSpacing.s16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Shop Owner', style: AppTypography.body.copyWith(fontWeight: FontWeight.w700)),
-                        const SizedBox(height: AppSpacing.s4),
-                        Text(
-                          'Promote products and grow followers',
-                          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          
           const Spacer(),
-          PrimaryButton(
-            text: 'Continue',
-            onPressed: () {
-              // Pre-fill merchant names if they switched to shop owner
-              if (_role == 'shop_owner') {
-                final user = ref.read(databaseProvider).currentUser;
-                if (_shopOwnerNameController.text.isEmpty) {
-                  _shopOwnerNameController.text = user.name;
-                }
-                if (_shopNameController.text.isEmpty) {
-                  _shopNameController.text = "${user.name}'s Shop";
-                }
-              }
-              _nextPage();
-            },
+          // Visual Brand element
+          Center(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0.8, end: 1.0),
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.easeOutBack,
+              builder: (context, scale, child) {
+                return Transform.scale(scale: scale, child: child);
+              },
+              child: Container(
+                height: 110,
+                width: 110,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: AppColors.border, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  isShop ? LucideIcons.store : LucideIcons.compass,
+                  size: 44,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
           ),
-          const SizedBox(height: AppSpacing.s8),
+          const SizedBox(height: 36),
+          // Welcome Headlines
+          Text(
+            isShop ? 'Grow your\nbusiness' : 'Discover your\nneighborhood',
+            style: AppTypography.display.copyWith(
+              fontSize: 34,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -1.2,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            isShop
+                ? 'Create your merchant profile, list your products, post deals, and connect with customers in your neighborhood directly.'
+                : 'Connect with local merchants, explore nearby fresh arrivals, and get custom discount updates in your block instantly.',
+            style: AppTypography.body.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          const Spacer(),
+          // Login Actions
+          PrimaryButton(
+            text: 'Continue with Google',
+            isLoading: _isLoading,
+            onPressed: _handleGoogleSignIn,
+          ),
+          if (!isShop) ...[
+            const SizedBox(height: AppSpacing.s16),
+            Center(
+              child: ScaleButtonPressed(
+                onTap: _isLoading ? () {} : _handleGuestSignIn,
+                child: TextButton(
+                  onPressed: null, // Let ScaleButtonPressed handle the tap
+                  child: Text(
+                    'Continue as Guest',
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.s12),
         ],
       ),
     );

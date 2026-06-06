@@ -515,13 +515,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required bool val,
     required ValueChanged<bool> onChanged,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: Theme.of(context).iconTheme.color),
-      title: Text(label, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
-      trailing: Switch.adaptive(
-        value: val,
-        onChanged: onChanged,
-        activeColor: AppColors.primary,
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        leading: Icon(icon, color: Theme.of(context).iconTheme.color),
+        title: Text(label, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
+        trailing: Switch.adaptive(
+          value: val,
+          onChanged: onChanged,
+          activeColor: AppColors.primary,
+        ),
       ),
     );
   }
@@ -532,12 +535,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required IconData icon,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: Theme.of(context).iconTheme.color),
-      title: Text(label, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
-      subtitle: Text(subtitle, style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 11)),
-      trailing: const Icon(LucideIcons.chevronRight, size: 16),
-      onTap: onTap,
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        leading: Icon(icon, color: Theme.of(context).iconTheme.color),
+        title: Text(label, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
+        subtitle: Text(subtitle, style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 11)),
+        trailing: const Icon(LucideIcons.chevronRight, size: 16),
+        onTap: onTap,
+      ),
     );
   }
 }

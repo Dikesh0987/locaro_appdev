@@ -15,7 +15,7 @@ class AuthRepository {
 
   // Google Sign-In
   Future<UserCredential> signInWithGoogle() async {
-    final GoogleSignInAccount? googleUser = await GoogleSignIn.instance.authenticate();
+    final GoogleSignInAccount googleUser = await GoogleSignIn.instance.authenticate();
     if (googleUser == null) {
       throw FirebaseAuthException(
         code: 'ERROR_ABORTED_BY_USER',

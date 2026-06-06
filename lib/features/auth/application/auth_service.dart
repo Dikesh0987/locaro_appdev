@@ -19,7 +19,7 @@ class AuthService {
   AuthService(this._repository, this._ref);
 
   // Sign In with Google
-  Future<UserModel> handleGoogleSignIn() async {
+  Future<UserModel> handleGoogleSignIn(String selectedRole) async {
     final credential = await _repository.signInWithGoogle();
     final fbUser = credential.user;
     if (fbUser == null) {
@@ -62,7 +62,7 @@ class AuthService {
         email: fbUser.email ?? '',
         phone: fbUser.phoneNumber ?? '',
         photoUrl: fbUser.photoURL ?? '',
-        role: 'user',
+        role: selectedRole,
         isGuest: false,
         interests: [],
         location: '',
@@ -90,7 +90,7 @@ class AuthService {
       final mapData = newUser.toMap();
       mapData['loginCount'] = 1;
       mapData['platform'] = Platform.isAndroid ? 'Android' : 'iOS';
-      mapData['accountType'] = 'user';
+      mapData['accountType'] = selectedRole;
       
       await _repository.setUserDoc(fbUser.uid, mapData);
 
