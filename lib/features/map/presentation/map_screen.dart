@@ -9,6 +9,8 @@ import '../../../providers/app_state_providers.dart';
 import '../../../models/shop_model.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
 import '../../../core/widgets/common/fallback_image.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' hide Path;
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -29,32 +31,29 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Google Maps Mock Background
-          Container(
-            color: const Color(0xFFE8ECE9), // Minimal map land color
-            child: Stack(
-              children: [
-                // Simulated Roads
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _MapPainter(),
-                  ),
-                ),
-
-                // Simulated Pins
-                ...shops.map((shop) {
-                  // Find if shop has active offer
+          // Flutter Map Integration
+          FlutterMap(
+            options: MapOptions(
+              initialCenter: state.currentUser.latitude != 0.0 
+                  ? LatLng(state.currentUser.latitude, state.currentUser.longitude) 
+                  : const LatLng(28.6273, 77.3725), // Fallback if no user location
+              initialZoom: 14.0,
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.nearo.app',
+              ),
+              MarkerLayer(
+                markers: shops.where((s) => s.latitude != 0.0 && s.longitude != 0.0).map((shop) {
                   final hasOffer = offers.any((o) => o.shopId == shop.id);
-                  // Generate deterministic mock screen positions
-                  final index = shops.indexOf(shop);
-                  final double top = 180.0 + (index * 60) % 250;
-                  final double left = 40.0 + (index * 90) % 300;
-
                   final isSelected = _selectedShop?.id == shop.id;
 
-                  return Positioned(
-                    top: top,
-                    left: left,
+                  return Marker(
+                    point: LatLng(shop.latitude, shop.longitude),
+                    width: 120,
+                    height: 50,
+                    alignment: Alignment.topCenter,
                     child: GestureDetector(
                       onTap: () {
                         setState(() {
@@ -79,6 +78,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                               ],
                             ),
                             child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
                                   hasOffer ? LucideIcons.percent : LucideIcons.store,
@@ -88,11 +88,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                       : (hasOffer ? AppColors.offerOrange : AppColors.primary),
                                 ),
                                 const SizedBox(width: 4),
-                                Text(
-                                  shop.shopName,
-                                  style: AppTypography.label.copyWith(
-                                    color: isSelected ? AppColors.surface : AppColors.textPrimary,
-                                    fontWeight: FontWeight.bold,
+                                Flexible(
+                                  child: Text(
+                                    shop.shopName,
+                                    style: AppTypography.label.copyWith(
+                                      color: isSelected ? AppColors.surface : AppColors.textPrimary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
@@ -108,9 +112,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       ),
                     ),
                   );
-                }),
-              ],
-            ),
+                }).toList(),
+              ),
+            ],
           ),
 
           // Floating Top Search Bar
@@ -194,11 +198,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                       _selectedShop!.rating.toString(),
                                       style: AppTypography.label.copyWith(fontWeight: FontWeight.bold),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '0.8 km away',
-                                      style: AppTypography.label.copyWith(color: AppColors.textSecondary),
-                                    ),
                                   ],
                                 ),
                               ],
@@ -274,31 +273,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 }
 
-// Custom painter to draw clean lines/streets resembling minimal Apple map
-class _MapPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 24
-      ..strokeCap = StrokeCap.round;
-
-    // Draw main roads
-    canvas.drawLine(const Offset(-50, 200), Offset(size.width + 50, 250), paint);
-    canvas.drawLine(const Offset(-50, 450), Offset(size.width + 50, 400), paint);
-    canvas.drawLine(Offset(size.width * 0.3, -50), Offset(size.width * 0.4, size.height + 50), paint);
-    canvas.drawLine(Offset(size.width * 0.7, -50), Offset(size.width * 0.65, size.height + 50), paint);
-
-    // Minor roads
-    paint.strokeWidth = 10;
-    paint.color = Colors.white.withValues(alpha: 0.8);
-    canvas.drawLine(const Offset(-50, 100), Offset(size.width + 50, 150), paint);
-    canvas.drawLine(Offset(size.width * 0.1, -50), Offset(size.width * 0.15, size.height + 50), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+// Removed Mock MapPainter
 
 // Small pointer pin triangle pointing downwards
 class _TrianglePainter extends CustomPainter {

@@ -49,8 +49,8 @@ class UserModel {
     required this.followingShops,
     required this.savedProducts,
     required this.notificationSettings,
-    this.latitude = 28.6273,
-    this.longitude = 77.3725,
+    this.latitude = 0.0,
+    this.longitude = 0.0,
   });
 
   factory UserModel.empty() {
@@ -59,7 +59,7 @@ class UserModel {
       name: '',
       email: '',
       phone: '',
-      photoUrl: '',
+      photoUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&q=80', // Professional placeholder
       role: 'user',
       isGuest: true,
       interests: [],
@@ -173,8 +173,8 @@ class UserModel {
         'announcements': true,
         'marketing': false,
       }),
-      latitude: (map['latitude'] as num?)?.toDouble() ?? 28.6273,
-      longitude: (map['longitude'] as num?)?.toDouble() ?? 77.3725,
+      latitude: (map['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (map['longitude'] as num?)?.toDouble() ?? 0.0,
     );
   }
 

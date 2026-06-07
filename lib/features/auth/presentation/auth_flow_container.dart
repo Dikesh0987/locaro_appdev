@@ -15,6 +15,7 @@ import '../application/auth_service.dart';
 import '../data/auth_repository.dart';
 import 'auth_controller.dart';
 import 'auth_state.dart';
+import 'package:geolocator/geolocator.dart';
 
 
 class AuthFlowContainer extends ConsumerStatefulWidget {
@@ -185,15 +186,41 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   Future<void> _completeAuth() async {
     setState(() => _isLoading = true);
     try {
+      double latitude = 0.0;
+      double longitude = 0.0;
+      String locationStr = '';
+
+      // Fetch actual location
+      try {
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (serviceEnabled) {
+          LocationPermission permission = await Geolocator.checkPermission();
+          if (permission == LocationPermission.denied) {
+            permission = await Geolocator.requestPermission();
+          }
+          
+          if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+            Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+            latitude = position.latitude;
+            longitude = position.longitude;
+            locationStr = '${latitude.toStringAsFixed(4)}, ${longitude.toStringAsFixed(4)}';
+          }
+        }
+      } catch (e) {
+        // Location fetch failed, proceed with 0.0 defaults
+      }
+
       final user = ref.read(databaseProvider).currentUser;
       final updatedUser = user.copyWith(
         name: _userNameController.text.trim(),
         email: _userEmailController.text.trim(),
         phone: _userPhoneController.text.trim(),
         interests: _selectedInterests,
-        location: 'Sector 62, Noida', // default block
+        location: locationStr, // updated dynamically
         photoUrl: _googleProfileImage ?? '',
         role: _role,
+        latitude: latitude,
+        longitude: longitude,
       );
 
       if (_role == 'shop_owner') {
@@ -205,8 +232,8 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           logoUrl: _logoUrl ?? '',
           bannerUrl: _bannerUrl ?? '',
           address: _shopAddressController.text.trim(),
-          latitude: 28.6273,
-          longitude: 77.3725,
+          latitude: latitude,
+          longitude: longitude,
           rating: 5.0,
           followers: 0,
           category: _selectedCategory,
@@ -724,7 +751,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
             const SizedBox(height: AppSpacing.s32),
             AppTextField(
               controller: _shopAddressController,
-              hintText: 'Shop Address (e.g. Sector 62, Noida)',
+              hintText: 'Shop Address (or Auto-detect in next step)',
             ),
             const SizedBox(height: AppSpacing.s24),
             Text('Select Business Category', style: AppTypography.subheading),

@@ -47,8 +47,8 @@ class ShopModel {
       ownerUid: '',
       shopName: '',
       ownerName: '',
-      logoUrl: '',
-      bannerUrl: '',
+      logoUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80', // Generic storefront
+      bannerUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80',
       category: '',
       address: '',
       phone: '',
