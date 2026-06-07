@@ -13,6 +13,7 @@ class AuthGuard extends ConsumerWidget {
     final authUserVal = ref.watch(authUserProvider);
 
     return authUserVal.when(
+      skipLoadingOnReload: true,
       data: (user) {
         if (user != null && user.isOnboardingCompleted) {
           return const ShellScreen();

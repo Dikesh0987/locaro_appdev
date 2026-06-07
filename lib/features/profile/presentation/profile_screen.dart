@@ -55,6 +55,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       appBar: const TopAppBar(),
       body: SingleChildScrollView(
+        key: const PageStorageKey('profile_scroll'),
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding, vertical: AppSpacing.s16),
         child: role == 'user'

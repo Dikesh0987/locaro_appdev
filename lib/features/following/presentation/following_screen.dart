@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
@@ -44,6 +44,7 @@ class FollowingScreen extends ConsumerWidget {
                 await Future.delayed(const Duration(milliseconds: 600));
               },
               child: SingleChildScrollView(
+                key: const PageStorageKey('following_feed'),
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),
                 child: Column(

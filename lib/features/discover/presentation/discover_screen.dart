@@ -44,6 +44,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
     return Scaffold(
       appBar: const TopAppBar(),
       body: SingleChildScrollView(
+        key: const PageStorageKey('discover_feed'),
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,18 +376,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
         itemCount: 3,
         separatorBuilder: (context, index) => const SizedBox(width: AppSpacing.s16),
         itemBuilder: (context, index) {
-          return SizedBox(
+          return const SizedBox(
             width: 200,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Expanded(child: SkeletonContainer(width: 200, borderRadius: 8)),
-                SizedBox(height: 8),
-                SkeletonContainer(width: 120, height: 14, borderRadius: 4),
-                SizedBox(height: 4),
-                SkeletonContainer(width: 80, height: 12, borderRadius: 4),
-              ],
-            ),
+            child: ShopCardSkeleton(),
           );
         },
       ),
@@ -401,29 +393,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
       itemCount: 3,
       separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.s12),
       itemBuilder: (context, index) {
-        return BaseCard(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.s12),
-            child: Row(
-              children: [
-                const SkeletonContainer(width: 80, height: 80, borderRadius: 8),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      SkeletonContainer(width: double.infinity, height: 16, borderRadius: 4),
-                      SizedBox(height: 8),
-                      SkeletonContainer(width: 100, height: 12, borderRadius: 4),
-                      SizedBox(height: 8),
-                      SkeletonContainer(width: double.infinity, height: 12, borderRadius: 4),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+        return const OfferCardSkeleton();
       },
     );
   }

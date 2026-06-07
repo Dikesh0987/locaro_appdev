@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
@@ -10,6 +10,7 @@ import '../../../providers/app_state_providers.dart';
 import '../../../models/lead_model.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
 import '../../auth/application/auth_service.dart';
+import '../../../core/widgets/common/skeleton_loaders.dart';
 
 class ProductDetailsScreen extends ConsumerStatefulWidget {
   final String productId;
@@ -22,6 +23,15 @@ class ProductDetailsScreen extends ConsumerStatefulWidget {
 
 class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
   int _activeImageIndex = 0;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) setState(() => _isLoading = false);
+    });
+  }
 
   void _generateLead(LeadType type, String typeLabel, String shopId, String productName) {
     ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
@@ -67,6 +77,14 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
     );
 
     final isSaved = state.currentUser.savedProducts.contains(product.id);
+
+    if (_isLoading) {
+      return const Scaffold(
+        body: SingleChildScrollView(
+          child: ProductDetailsSkeleton(),
+        ),
+      );
+    }
 
     return Scaffold(
       body: Stack(
