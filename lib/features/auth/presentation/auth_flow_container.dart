@@ -208,6 +208,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
         }
       } catch (e) {
         // Location fetch failed, proceed with 0.0 defaults
+        print('Location fetch failed: $e');
       }
 
       final user = ref.read(databaseProvider).currentUser;
