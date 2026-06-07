@@ -18,12 +18,12 @@ class FallbackAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     return CircleAvatar(
       radius: radius,
-      backgroundColor: AppColors.border,
+      backgroundColor: context.colors.border,
       backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-      child: imageUrl.isEmpty 
-          ? Icon(fallbackIcon, size: radius, color: AppColors.textSecondary) 
-          : null,
       onBackgroundImageError: imageUrl.isNotEmpty ? (e, s) {} : null,
+      child: imageUrl.isEmpty 
+          ? Icon(fallbackIcon, size: radius, color: context.colors.textSecondary) 
+          : null,
     );
   }
 }
@@ -50,9 +50,9 @@ class FallbackImage extends StatelessWidget {
       return Container(
         width: width,
         height: height,
-        color: AppColors.border,
+        color: context.colors.border,
         child: Center(
-          child: Icon(fallbackIcon, size: 48, color: AppColors.textSecondary),
+          child: Icon(fallbackIcon, size: 48, color: context.colors.textSecondary),
         ),
       );
     }
@@ -65,9 +65,9 @@ class FallbackImage extends StatelessWidget {
       errorBuilder: (context, error, stackTrace) => Container(
         width: width,
         height: height,
-        color: AppColors.border,
+        color: context.colors.border,
         child: Center(
-          child: Icon(fallbackIcon, size: 48, color: AppColors.textSecondary),
+          child: Icon(fallbackIcon, size: 48, color: context.colors.textSecondary),
         ),
       ),
       loadingBuilder: (context, child, loadingProgress) {
@@ -75,7 +75,7 @@ class FallbackImage extends StatelessWidget {
         return Container(
           width: width,
           height: height,
-          color: AppColors.border,
+          color: context.colors.border,
           child: const Center(
             child: SizedBox(
               height: 24,

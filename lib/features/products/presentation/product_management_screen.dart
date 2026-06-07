@@ -21,7 +21,7 @@ class ProductManagementScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.cardRadius)),
       ),
@@ -43,7 +43,7 @@ class ProductManagementScreen extends ConsumerWidget {
         centerTitle: false,
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.plus, color: AppColors.primary),
+            icon: Icon(LucideIcons.plus, color: context.colors.primary),
             onPressed: () => _showProductForm(context, ref),
           ),
           const SizedBox(width: AppSpacing.s8),
@@ -54,11 +54,11 @@ class ProductManagementScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(LucideIcons.shoppingBag, size: 48, color: AppColors.border),
+                  Icon(LucideIcons.shoppingBag, size: 48, color: context.colors.border),
                   const SizedBox(height: AppSpacing.s12),
                   Text(
                     'No products in your catalog yet.',
-                    style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                    style: AppTypography.body.copyWith(color: context.colors.textSecondary),
                   ),
                   const SizedBox(height: AppSpacing.s16),
                   SizedBox(
@@ -105,14 +105,14 @@ class ProductManagementScreen extends ConsumerWidget {
                                 children: [
                                   Text(
                                     'Stock: ${p.stock}',
-                                    style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+                                    style: AppTypography.label.copyWith(color: context.colors.textSecondary),
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
                                     '₹${p.discountPrice?.toStringAsFixed(0) ?? p.price.toStringAsFixed(0)}',
                                     style: AppTypography.label.copyWith(
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.primary,
+                                      color: context.colors.primary,
                                     ),
                                   ),
                                 ],
@@ -125,7 +125,7 @@ class ProductManagementScreen extends ConsumerWidget {
                           onPressed: () => _showProductForm(context, ref, product: p),
                         ),
                         IconButton(
-                          icon: const Icon(LucideIcons.trash2, size: 16, color: AppColors.error),
+                          icon: Icon(LucideIcons.trash2, size: 16, color: context.colors.error),
                           onPressed: () {
                             ref.read(databaseProvider.notifier).deleteProduct(p.id);
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -295,7 +295,7 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
                   height: 120,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: context.colors.border,
                     borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
                     image: _selectedImageFile != null
                         ? DecorationImage(image: FileImage(_selectedImageFile!), fit: BoxFit.cover)
@@ -370,9 +370,9 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
                       height: 52,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: context.colors.surface,
                         borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: context.colors.border),
                       ),
                       alignment: Alignment.center,
                       child: DropdownButton<String>(

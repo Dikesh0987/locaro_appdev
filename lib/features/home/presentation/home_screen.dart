@@ -135,16 +135,16 @@ class HomeScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(LucideIcons.newspaper, size: 64, color: AppColors.border),
-                  const SizedBox(height: AppSpacing.s16),
+                  Icon(LucideIcons.newspaper, size: 64, color: context.colors.border),
+                  SizedBox(height: AppSpacing.s16),
                   Text(
                     'No Updates Yet',
-                    style: AppTypography.heading.copyWith(color: AppColors.textPrimary),
+                    style: AppTypography.heading.copyWith(color: context.colors.textPrimary),
                   ),
-                  const SizedBox(height: AppSpacing.s8),
+                  SizedBox(height: AppSpacing.s8),
                   Text(
                     'Follow shops to see their updates here.',
-                    style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                    style: AppTypography.body.copyWith(color: context.colors.textSecondary),
                   ),
                 ],
               ),
@@ -157,7 +157,7 @@ class HomeScreen extends ConsumerWidget {
                 padding: const EdgeInsets.only(bottom: AppSpacing.s24),
                 itemCount: feedItems.length,
                 separatorBuilder: (context, index) =>
-                    Container(height: 8, color: AppColors.border),
+                    Container(height: 8, color: context.colors.border),
                 itemBuilder: (context, index) {
                   final feedItem = feedItems[index];
                   final shop = shops.firstWhere(
@@ -356,7 +356,7 @@ class _FeedCardState extends ConsumerState<_FeedCard>
                   fallbackIcon: LucideIcons.store,
                 ),
               ),
-              const SizedBox(width: AppSpacing.s12),
+              SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: GestureDetector(
                   onTap: widget.onShopTap,
@@ -369,19 +369,19 @@ class _FeedCardState extends ConsumerState<_FeedCard>
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             LucideIcons.navigation,
                             size: 10,
-                            color: AppColors.textSecondary,
+                            color: context.colors.textSecondary,
                           ),
-                          const SizedBox(width: 2),
+                          SizedBox(width: 2),
                           Text(
                             widget.distance,
                             style: AppTypography.label.copyWith(
-                              color: AppColors.textSecondary,
+                              color: context.colors.textSecondary,
                               fontSize: 10,
                             ),
                           ),
@@ -432,7 +432,7 @@ class _FeedCardState extends ConsumerState<_FeedCard>
                 child: IconButton(
                   icon: Icon(
                     _isLiked ? LucideIcons.heart : LucideIcons.heart,
-                    color: _isLiked ? AppColors.error : AppColors.primary,
+                    color: _isLiked ? context.colors.error : context.colors.primary,
                   ),
                   onPressed: _triggerLike,
                 ),
@@ -455,8 +455,8 @@ class _FeedCardState extends ConsumerState<_FeedCard>
                   icon: Icon(
                     isSaved ? LucideIcons.bookmark : LucideIcons.bookmark,
                     color: isSaved
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
+                        ? context.colors.primary
+                        : context.colors.textSecondary,
                   ),
                   onPressed: () {
                     ref.read(authServiceProvider).checkGuest(
@@ -500,18 +500,18 @@ class _FeedCardState extends ConsumerState<_FeedCard>
                       '₹${widget.linkedProduct!.discountPrice?.toStringAsFixed(0) ?? widget.linkedProduct!.price.toStringAsFixed(0)}',
                       style: AppTypography.body.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
+                        color: context.colors.primary,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.s8),
+                SizedBox(height: AppSpacing.s8),
               ],
               Text(
                 widget.post.caption,
                 style: AppTypography.caption.copyWith(height: 1.4),
               ),
-              const SizedBox(height: AppSpacing.s12),
+              SizedBox(height: AppSpacing.s12),
 
               // Sticky actions for Leads generation
               if (widget.linkedProduct != null) ...[
@@ -519,18 +519,18 @@ class _FeedCardState extends ConsumerState<_FeedCard>
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        icon: const Icon(
+                        icon: Icon(
                           LucideIcons.percent,
                           size: 14,
-                          color: AppColors.offerOrange,
+                          color: context.colors.offerOrange,
                         ),
-                        label: const Text(
+                        label: Text(
                           'Ask Discount',
-                          style: TextStyle(color: AppColors.textPrimary),
+                          style: TextStyle(color: context.colors.textPrimary),
                         ),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 10),
-                          side: const BorderSide(color: AppColors.border),
+                          side: BorderSide(color: context.colors.border),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
                               AppSpacing.buttonRadius,
@@ -543,7 +543,7 @@ class _FeedCardState extends ConsumerState<_FeedCard>
                         ),
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.s12),
+                    SizedBox(width: AppSpacing.s12),
                     Expanded(
                       child: ElevatedButton.icon(
                         icon: const Icon(
@@ -572,18 +572,18 @@ class _FeedCardState extends ConsumerState<_FeedCard>
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.s12),
+                SizedBox(height: AppSpacing.s12),
               ],
 
               Text(
                 'SHOP UPDATE',
                 style: AppTypography.label.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.colors.textSecondary,
                   fontSize: 10,
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              const SizedBox(height: AppSpacing.s16),
+              SizedBox(height: AppSpacing.s16),
             ],
           ),
         ),
@@ -708,7 +708,7 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard>
                   fallbackIcon: LucideIcons.store,
                 ),
               ),
-              const SizedBox(width: AppSpacing.s12),
+              SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: GestureDetector(
                   onTap: widget.onShopTap,
@@ -721,19 +721,19 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard>
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             LucideIcons.navigation,
                             size: 10,
-                            color: AppColors.textSecondary,
+                            color: context.colors.textSecondary,
                           ),
-                          const SizedBox(width: 2),
+                          SizedBox(width: 2),
                           Text(
                             widget.distance,
                             style: AppTypography.label.copyWith(
-                              color: AppColors.textSecondary,
+                              color: context.colors.textSecondary,
                               fontSize: 10,
                             ),
                           ),
@@ -797,7 +797,7 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard>
                 child: IconButton(
                   icon: Icon(
                     _isLiked ? LucideIcons.heart : LucideIcons.heart,
-                    color: _isLiked ? AppColors.error : AppColors.primary,
+                    color: _isLiked ? context.colors.error : context.colors.primary,
                   ),
                   onPressed: _triggerLike,
                 ),
@@ -818,7 +818,7 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard>
               IconButton(
                 icon: Icon(
                   isSaved ? LucideIcons.bookmark : LucideIcons.bookmark,
-                  color: isSaved ? AppColors.primary : AppColors.textSecondary,
+                  color: isSaved ? context.colors.primary : context.colors.textSecondary,
                 ),
                 onPressed: () {
                   ref.read(authServiceProvider).checkGuest(
@@ -864,46 +864,46 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard>
                           '₹${widget.product.price.toStringAsFixed(0)}',
                           style: AppTypography.caption.copyWith(
                             decoration: TextDecoration.lineThrough,
-                            color: AppColors.textSecondary,
+                            color: context.colors.textSecondary,
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        SizedBox(width: 6),
                       ],
                       Text(
                         '₹${widget.product.discountPrice?.toStringAsFixed(0) ?? widget.product.price.toStringAsFixed(0)}',
                         style: AppTypography.body.copyWith(
                           fontWeight: FontWeight.w800,
-                          color: AppColors.primary,
+                          color: context.colors.primary,
                         ),
                       ),
                     ],
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.s8),
+              SizedBox(height: AppSpacing.s8),
               Text(
                 widget.product.description,
                 style: AppTypography.caption.copyWith(height: 1.4),
               ),
-              const SizedBox(height: AppSpacing.s12),
+              SizedBox(height: AppSpacing.s12),
 
               // Sticky actions
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      icon: const Icon(
+                      icon: Icon(
                         LucideIcons.percent,
                         size: 14,
-                        color: AppColors.offerOrange,
+                        color: context.colors.offerOrange,
                       ),
-                      label: const Text(
+                      label: Text(
                         'Ask Discount',
-                        style: TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(color: context.colors.textPrimary),
                       ),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        side: const BorderSide(color: AppColors.border),
+                        side: BorderSide(color: context.colors.border),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(
                             AppSpacing.buttonRadius,
@@ -916,7 +916,7 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard>
                       ),
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.s12),
+                  SizedBox(width: AppSpacing.s12),
                   Expanded(
                     child: ElevatedButton.icon(
                       icon: const Icon(
@@ -945,17 +945,17 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard>
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.s12),
+              SizedBox(height: AppSpacing.s12),
 
               Text(
                 'PRODUCT RECOMMENDATION',
                 style: AppTypography.label.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.colors.textSecondary,
                   fontSize: 10,
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              const SizedBox(height: AppSpacing.s16),
+              SizedBox(height: AppSpacing.s16),
             ],
           ),
         ),
@@ -1076,7 +1076,7 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
                   fallbackIcon: LucideIcons.store,
                 ),
               ),
-              const SizedBox(width: AppSpacing.s12),
+              SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: GestureDetector(
                   onTap: widget.onShopTap,
@@ -1089,19 +1089,19 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             LucideIcons.navigation,
                             size: 10,
-                            color: AppColors.textSecondary,
+                            color: context.colors.textSecondary,
                           ),
-                          const SizedBox(width: 2),
+                          SizedBox(width: 2),
                           Text(
                             widget.distance,
                             style: AppTypography.label.copyWith(
-                              color: AppColors.textSecondary,
+                              color: context.colors.textSecondary,
                               fontSize: 10,
                             ),
                           ),
@@ -1151,7 +1151,7 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
                 child: IconButton(
                   icon: Icon(
                     _isLiked ? LucideIcons.heart : LucideIcons.heart,
-                    color: _isLiked ? AppColors.error : AppColors.primary,
+                    color: _isLiked ? context.colors.error : context.colors.primary,
                   ),
                   onPressed: _triggerLike,
                 ),
@@ -1186,30 +1186,30 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: AppSpacing.s8),
+              SizedBox(height: AppSpacing.s8),
               Text(
                 widget.offer.description,
                 style: AppTypography.caption.copyWith(height: 1.4),
               ),
-              const SizedBox(height: AppSpacing.s12),
+              SizedBox(height: AppSpacing.s12),
 
               // Sticky actions for claim coupon
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      icon: const Icon(
+                      icon: Icon(
                         LucideIcons.ticket,
                         size: 14,
-                        color: AppColors.offerOrange,
+                        color: context.colors.offerOrange,
                       ),
-                      label: const Text(
+                      label: Text(
                         'Claim Coupon',
-                        style: TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(color: context.colors.textPrimary),
                       ),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        side: const BorderSide(color: AppColors.border),
+                        side: BorderSide(color: context.colors.border),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(
                             AppSpacing.buttonRadius,
@@ -1222,7 +1222,7 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
                       ),
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.s12),
+                  SizedBox(width: AppSpacing.s12),
                   Expanded(
                     child: ElevatedButton.icon(
                       icon: const Icon(
@@ -1251,17 +1251,17 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.s12),
+              SizedBox(height: AppSpacing.s12),
 
               Text(
                 'PROMOTIONAL OFFER',
                 style: AppTypography.label.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.colors.textSecondary,
                   fontSize: 10,
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              const SizedBox(height: AppSpacing.s16),
+              SizedBox(height: AppSpacing.s16),
             ],
           ),
         ),

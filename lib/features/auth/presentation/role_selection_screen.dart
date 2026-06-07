@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
@@ -21,7 +21,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.mobilePadding),
@@ -36,16 +36,16 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                     fontSize: 40,
                     letterSpacing: -1.2,
                     fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
+                    color: context.colors.primary,
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.s12),
+              SizedBox(height: AppSpacing.s12),
               Center(
                 child: Text(
                   'Hyperlocal Discovery Platform',
                   style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.colors.textSecondary,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -55,7 +55,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                 'Choose account type',
                 style: AppTypography.heading.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: AppSpacing.s16),
+              SizedBox(height: AppSpacing.s16),
               
               // User Card
               BaseCard(
@@ -65,7 +65,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
                     border: Border.all(
-                      color: _selectedRole == 'user' ? AppColors.primary : Colors.transparent,
+                      color: _selectedRole == 'user' ? context.colors.primary : Colors.transparent,
                       width: 2,
                     ),
                   ),
@@ -73,22 +73,22 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                     children: [
                       Container(
                         padding: const EdgeInsets.all(AppSpacing.s12),
-                        decoration: const BoxDecoration(
-                          color: AppColors.border,
+                        decoration: BoxDecoration(
+                          color: context.colors.border,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(LucideIcons.user, color: AppColors.primary),
+                        child: Icon(LucideIcons.user, color: context.colors.primary),
                       ),
-                      const SizedBox(width: AppSpacing.s16),
+                      SizedBox(width: AppSpacing.s16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('User', style: AppTypography.body.copyWith(fontWeight: FontWeight.w700)),
-                            const SizedBox(height: AppSpacing.s4),
+                            SizedBox(height: AppSpacing.s4),
                             Text(
                               'Discover products and offers around you',
-                              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                              style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
                             ),
                           ],
                         ),
@@ -97,7 +97,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.s12),
+              SizedBox(height: AppSpacing.s12),
               
               // Owner Card
               BaseCard(
@@ -107,7 +107,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
                     border: Border.all(
-                      color: _selectedRole == 'shop_owner' ? AppColors.primary : Colors.transparent,
+                      color: _selectedRole == 'shop_owner' ? context.colors.primary : Colors.transparent,
                       width: 2,
                     ),
                   ),
@@ -115,22 +115,22 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                     children: [
                       Container(
                         padding: const EdgeInsets.all(AppSpacing.s12),
-                        decoration: const BoxDecoration(
-                          color: AppColors.border,
+                        decoration: BoxDecoration(
+                          color: context.colors.border,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(LucideIcons.store, color: AppColors.primary),
+                        child: Icon(LucideIcons.store, color: context.colors.primary),
                       ),
-                      const SizedBox(width: AppSpacing.s16),
+                      SizedBox(width: AppSpacing.s16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('Shop Owner', style: AppTypography.body.copyWith(fontWeight: FontWeight.w700)),
-                            const SizedBox(height: AppSpacing.s4),
+                            SizedBox(height: AppSpacing.s4),
                             Text(
                               'Promote products and grow followers',
-                              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                              style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
                             ),
                           ],
                         ),
@@ -160,7 +160,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                   }
                 },
               ),
-              const SizedBox(height: AppSpacing.s8),
+              SizedBox(height: AppSpacing.s8),
             ],
           ),
         ),

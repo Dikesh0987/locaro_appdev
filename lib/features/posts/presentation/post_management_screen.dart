@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -118,26 +118,26 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Publish Shop Update', style: AppTypography.heading),
-              const SizedBox(height: AppSpacing.s8),
+              SizedBox(height: AppSpacing.s8),
               Text(
                 'Publish product updates, announcements, or custom limited offers to neighborhood feeds.',
-                style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
               ),
-              const SizedBox(height: AppSpacing.s24),
+              SizedBox(height: AppSpacing.s24),
 
               // Post Type Selector
               Text('Select Post Category', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: AppSpacing.s12),
+              SizedBox(height: AppSpacing.s12),
               Row(
                 children: [
                   _buildTypeTab(PostType.product, 'Product', LucideIcons.shoppingBag),
-                  const SizedBox(width: AppSpacing.s8),
+                  SizedBox(width: AppSpacing.s8),
                   _buildTypeTab(PostType.offer, 'Offer Coupon', LucideIcons.percent),
-                  const SizedBox(width: AppSpacing.s8),
+                  SizedBox(width: AppSpacing.s8),
                   _buildTypeTab(PostType.update, 'Status Update', LucideIcons.sparkles),
                 ],
               ),
-              const SizedBox(height: AppSpacing.s24),
+              SizedBox(height: AppSpacing.s24),
 
               // Image simulation picker
               GestureDetector(
@@ -146,7 +146,7 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
                   height: 180,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: context.colors.border,
                     borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
                     image: _selectedImageFile != null
                         ? DecorationImage(image: FileImage(_selectedImageFile!), fit: BoxFit.cover)
@@ -154,22 +154,22 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
                   ),
                   alignment: Alignment.center,
                   child: _selectedImageFile == null && _imageUrl == null
-                      ? const Column(
+                      ? Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(LucideIcons.image, size: 36, color: AppColors.textSecondary),
+                            Icon(LucideIcons.image, size: 36, color: context.colors.textSecondary),
                             SizedBox(height: 8),
-                            Text('Tap to choose photo', style: TextStyle(color: AppColors.textSecondary)),
+                            Text('Tap to choose photo', style: TextStyle(color: context.colors.textSecondary)),
                           ],
                         )
                       : null,
                 ),
               ),
-              const SizedBox(height: AppSpacing.s24),
+              SizedBox(height: AppSpacing.s24),
 
               // Caption input
               Text('Caption Text', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: AppSpacing.s12),
+              SizedBox(height: AppSpacing.s12),
               TextFormField(
                 controller: _captionController,
                 maxLines: 4,
@@ -178,7 +178,7 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
                 ),
                 validator: (val) => val == null || val.isEmpty ? 'Please enter a caption' : null,
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
 
               PrimaryButton(
                 text: _isUploading ? 'Publishing...' : 'Publish Post',
@@ -199,18 +199,18 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary : AppColors.surface,
+            color: isSelected ? context.colors.primary : context.colors.surface,
             borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-            border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
+            border: Border.all(color: isSelected ? context.colors.primary : context.colors.border),
           ),
           child: Column(
             children: [
-              Icon(icon, size: 16, color: isSelected ? AppColors.surface : AppColors.primary),
-              const SizedBox(height: 4),
+              Icon(icon, size: 16, color: isSelected ? context.colors.surface : context.colors.primary),
+              SizedBox(height: 4),
               Text(
                 label,
                 style: AppTypography.label.copyWith(
-                  color: isSelected ? AppColors.surface : AppColors.textPrimary,
+                  color: isSelected ? context.colors.surface : context.colors.textPrimary,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                 ),

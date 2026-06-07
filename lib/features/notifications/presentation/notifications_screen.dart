@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
@@ -47,12 +47,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             child: Text(
               'MARK ALL READ',
               style: AppTypography.label.copyWith(
-                color: AppColors.primary,
+                color: context.colors.primary,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          const SizedBox(width: AppSpacing.s12),
+          SizedBox(width: AppSpacing.s12),
         ],
       ),
       body: Column(
@@ -67,20 +67,20 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 Expanded(
                   child: Text(
                     'Stay updated with your favorite local spots.',
-                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                    style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
                   ),
                 ),
                 if (unreadCount > 0)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
+                      color: context.colors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(100),
                     ),
                     child: Text(
                       '$unreadCount unread',
                       style: AppTypography.label.copyWith(
-                        color: AppColors.primary,
+                        color: context.colors.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -96,7 +96,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding, vertical: 8),
               scrollDirection: Axis.horizontal,
               itemCount: _filters.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 8),
+              separatorBuilder: (context, index) => SizedBox(width: 8),
               itemBuilder: (context, index) {
                 final filter = _filters[index];
                 final isSelected = _selectedFilter == filter;
@@ -109,16 +109,16 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary : AppColors.surface,
+                      color: isSelected ? context.colors.primary : context.colors.surface,
                       borderRadius: BorderRadius.circular(100),
                       border: Border.all(
-                        color: isSelected ? AppColors.primary : AppColors.border,
+                        color: isSelected ? context.colors.primary : context.colors.border,
                       ),
                     ),
                     child: Text(
                       filter,
                       style: AppTypography.label.copyWith(
-                        color: isSelected ? Colors.white : AppColors.textPrimary,
+                        color: isSelected ? Colors.white : context.colors.textPrimary,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
@@ -127,7 +127,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               },
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
 
           // Notifications List
           Expanded(
@@ -142,7 +142,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     child: ListView.separated(
                       padding: const EdgeInsets.all(AppSpacing.mobilePadding),
                       itemCount: filteredNotifications.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 12),
+                      separatorBuilder: (context, index) => SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final notification = filteredNotifications[index];
                         return BaseCard(
@@ -160,13 +160,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                     margin: const EdgeInsets.only(top: 18, right: 8),
                                     height: 8,
                                     width: 8,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.offerOrange,
+                                    decoration: BoxDecoration(
+                                      color: context.colors.offerOrange,
                                       shape: BoxShape.circle,
                                     ),
                                   )
                                 else
-                                  const SizedBox(width: 16),
+                                  SizedBox(width: 16),
 
                                 // Sender Avatar
                                 FallbackAvatar(
@@ -174,7 +174,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                   radius: 22,
                                   fallbackIcon: LucideIcons.sparkles,
                                 ),
-                                const SizedBox(width: AppSpacing.s12),
+                                SizedBox(width: AppSpacing.s12),
 
                                 // Notification Text details
                                 Expanded(
@@ -189,39 +189,39 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                               notification.title,
                                               style: AppTypography.body.copyWith(
                                                 fontWeight: FontWeight.bold,
-                                                color: AppColors.textPrimary,
+                                                color: context.colors.textPrimary,
                                               ),
                                             ),
                                           ),
                                           Text(
                                             notification.time,
                                             style: AppTypography.label.copyWith(
-                                              color: AppColors.textSecondary,
+                                              color: context.colors.textSecondary,
                                               fontSize: 10,
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 4),
+                                      SizedBox(height: 4),
                                       Text(
                                         notification.body,
                                         style: AppTypography.caption.copyWith(
-                                          color: AppColors.textSecondary,
+                                          color: context.colors.textSecondary,
                                           height: 1.4,
                                         ),
                                       ),
-                                      const SizedBox(height: 8),
+                                      SizedBox(height: 8),
                                       // Category Pill
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: AppColors.border,
+                                          color: context.colors.border,
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Text(
                                           notification.category,
                                           style: AppTypography.label.copyWith(
-                                            color: AppColors.textSecondary,
+                                            color: context.colors.textSecondary,
                                             fontSize: 9,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -251,20 +251,20 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.border.withValues(alpha: 0.5),
+              color: context.colors.border.withValues(alpha: 0.5),
               shape: BoxShape.circle,
             ),
-            child: const Icon(LucideIcons.bellOff, size: 40, color: AppColors.secondary),
+            child: Icon(LucideIcons.bellOff, size: 40, color: context.colors.secondary),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             title,
             style: AppTypography.body.copyWith(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             subtitle,
-            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+            style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
           ),
         ],
       ),

@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -68,7 +68,7 @@ class ProfileScreen extends ConsumerWidget {
             letterSpacing: -0.8,
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
 
         // PROFILE HEADER
         Row(
@@ -94,8 +94,8 @@ class ProfileScreen extends ConsumerWidget {
                       right: 0,
                       child: Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: AppColors.primary,
+                        decoration: BoxDecoration(
+                          color: context.colors.primary,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(LucideIcons.camera, size: 12, color: Colors.white),
@@ -105,7 +105,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 20),
+            SizedBox(width: 20),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,20 +117,20 @@ class ProfileScreen extends ConsumerWidget {
                       letterSpacing: -0.5,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     user.email,
-                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                    style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(LucideIcons.calendar, size: 12, color: AppColors.textSecondary),
-                      const SizedBox(width: 4),
+                      Icon(LucideIcons.calendar, size: 12, color: context.colors.textSecondary),
+                      SizedBox(width: 4),
                       Text(
                         _formatMemberSince(user.createdAt),
                         style: AppTypography.label.copyWith(
-                          color: AppColors.textSecondary,
+                          color: context.colors.textSecondary,
                           fontSize: 11,
                         ),
                       ),
@@ -141,27 +141,27 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         
         // Edit Profile Button
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            icon: const Icon(LucideIcons.edit2, size: 14, color: AppColors.textPrimary),
-            label: const Text('Edit Profile', style: TextStyle(color: AppColors.textPrimary)),
+            icon: Icon(LucideIcons.edit2, size: 14, color: context.colors.textPrimary),
+            label: Text('Edit Profile', style: TextStyle(color: context.colors.textPrimary)),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              side: const BorderSide(color: AppColors.border),
+              side: BorderSide(color: context.colors.border),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
             ),
             onPressed: () => _showEditProfileSheet(context, ref, user),
           ),
         ),
-        const SizedBox(height: 28),
+        SizedBox(height: 28),
 
         // QUICK ACTIONS SECTION
-        _buildSectionTitle('QUICK ACTIONS'),
-        const SizedBox(height: 10),
+        _buildSectionTitle(context, 'QUICK ACTIONS'),
+        SizedBox(height: 10),
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -211,11 +211,11 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 28),
+        SizedBox(height: 28),
 
         // PREFERENCES SECTION
-        _buildSectionTitle('PREFERENCES'),
-        const SizedBox(height: 10),
+        _buildSectionTitle(context, 'PREFERENCES'),
+        SizedBox(height: 10),
         _buildSectionCard(
           context,
           children: [
@@ -241,11 +241,11 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 28),
+        SizedBox(height: 28),
 
         // ACCOUNT SECTION
-        _buildSectionTitle('ACCOUNT SECTION'),
-        const SizedBox(height: 10),
+        _buildSectionTitle(context, 'ACCOUNT SECTION'),
+        SizedBox(height: 10),
         _buildSectionCard(
           context,
           children: [
@@ -286,11 +286,11 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 28),
+        SizedBox(height: 28),
 
         // DANGER ZONE
-        _buildSectionTitle('DANGER ZONE'),
-        const SizedBox(height: 10),
+        _buildSectionTitle(context, 'DANGER ZONE'),
+        SizedBox(height: 10),
         _buildSectionCard(
           context,
           borderColor: Colors.red.shade100,
@@ -299,8 +299,8 @@ class ProfileScreen extends ConsumerWidget {
               context,
               icon: LucideIcons.logOut,
               label: 'Log Out',
-              textColor: AppColors.error,
-              iconColor: AppColors.error,
+              textColor: context.colors.error,
+              iconColor: context.colors.error,
               showChevron: false,
               onTap: () => _handleLogout(context, ref),
             ),
@@ -309,14 +309,14 @@ class ProfileScreen extends ConsumerWidget {
               context,
               icon: LucideIcons.trash2,
               label: 'Delete Account',
-              textColor: AppColors.error,
-              iconColor: AppColors.error,
+              textColor: context.colors.error,
+              iconColor: context.colors.error,
               showChevron: false,
               onTap: () => _showDeleteAccountDialog(context, ref),
             ),
           ],
         ),
-        const SizedBox(height: 48),
+        SizedBox(height: 48),
       ],
     );
   }
@@ -339,7 +339,7 @@ class ProfileScreen extends ConsumerWidget {
             letterSpacing: -0.8,
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
 
         // PROFILE HEADER
         Row(
@@ -365,8 +365,8 @@ class ProfileScreen extends ConsumerWidget {
                       right: 0,
                       child: Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: AppColors.primary,
+                        decoration: BoxDecoration(
+                          color: context.colors.primary,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(LucideIcons.camera, size: 12, color: Colors.white),
@@ -376,7 +376,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 20),
+            SizedBox(width: 20),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -395,25 +395,25 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                       ),
                       if (shop.isVerified) ...[
-                        const SizedBox(width: 6),
-                        const Icon(LucideIcons.checkCircle, size: 16, color: AppColors.success),
+                        SizedBox(width: 6),
+                        Icon(LucideIcons.checkCircle, size: 16, color: context.colors.success),
                       ]
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     'Owner: ${shop.ownerName}',
-                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                    style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(LucideIcons.store, size: 12, color: AppColors.textSecondary),
-                      const SizedBox(width: 4),
+                      Icon(LucideIcons.store, size: 12, color: context.colors.textSecondary),
+                      SizedBox(width: 4),
                       Text(
                         '${shop.category} • Verified Partner',
                         style: AppTypography.label.copyWith(
-                          color: AppColors.textSecondary,
+                          color: context.colors.textSecondary,
                           fontSize: 11,
                         ),
                       ),
@@ -424,27 +424,27 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
 
         // Edit Shop Details Button
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            icon: const Icon(LucideIcons.edit3, size: 14, color: AppColors.textPrimary),
-            label: const Text('Edit Shop Details', style: TextStyle(color: AppColors.textPrimary)),
+            icon: Icon(LucideIcons.edit3, size: 14, color: context.colors.textPrimary),
+            label: Text('Edit Shop Details', style: TextStyle(color: context.colors.textPrimary)),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              side: const BorderSide(color: AppColors.border),
+              side: BorderSide(color: context.colors.border),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
             ),
             onPressed: () => _showEditShopSheet(context, ref, shop),
           ),
         ),
-        const SizedBox(height: 28),
+        SizedBox(height: 28),
 
         // QUICK ACTIONS SECTION
-        _buildSectionTitle('QUICK ACTIONS'),
-        const SizedBox(height: 10),
+        _buildSectionTitle(context, 'QUICK ACTIONS'),
+        SizedBox(height: 10),
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -497,11 +497,11 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 28),
+        SizedBox(height: 28),
 
         // BUSINESS INFORMATION CARD
-        _buildSectionTitle('STORE INFORMATION'),
-        const SizedBox(height: 10),
+        _buildSectionTitle(context, 'STORE INFORMATION'),
+        SizedBox(height: 10),
         _buildSectionCard(
           context,
           children: [
@@ -514,11 +514,11 @@ class ProfileScreen extends ConsumerWidget {
             _buildInfoRow(context, LucideIcons.info, 'Status', shop.isVerified ? 'Verified Partner' : 'Standard Partner'),
           ],
         ),
-        const SizedBox(height: 28),
+        SizedBox(height: 28),
 
         // PREFERENCES & SETTINGS CARD
-        _buildSectionTitle('PREFERENCES & HELP'),
-        const SizedBox(height: 10),
+        _buildSectionTitle(context, 'PREFERENCES & HELP'),
+        SizedBox(height: 10),
         _buildSectionCard(
           context,
           children: [
@@ -548,11 +548,11 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 28),
+        SizedBox(height: 28),
 
         // DANGER ZONE
-        _buildSectionTitle('DANGER ZONE'),
-        const SizedBox(height: 10),
+        _buildSectionTitle(context, 'DANGER ZONE'),
+        SizedBox(height: 10),
         _buildSectionCard(
           context,
           borderColor: Colors.red.shade100,
@@ -561,14 +561,14 @@ class ProfileScreen extends ConsumerWidget {
               context,
               icon: LucideIcons.logOut,
               label: 'Log Out',
-              textColor: AppColors.error,
-              iconColor: AppColors.error,
+              textColor: context.colors.error,
+              iconColor: context.colors.error,
               showChevron: false,
               onTap: () => _handleLogout(context, ref),
             ),
           ],
         ),
-        const SizedBox(height: 48),
+        SizedBox(height: 48),
       ],
     );
   }
@@ -577,13 +577,13 @@ class ProfileScreen extends ConsumerWidget {
   // --- BOTTOM SHEETS & SUB WIDGETS ---
   // ==========================================
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.only(left: 4.0),
       child: Text(
         title,
         style: AppTypography.label.copyWith(
-          color: AppColors.textSecondary,
+          color: context.colors.textSecondary,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.0,
           fontSize: 11,
@@ -596,12 +596,12 @@ class ProfileScreen extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor ?? AppColors.border, width: 1),
+        border: Border.all(color: borderColor ?? context.colors.border, width: 1),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(15),
         child: Material(
-          color: AppColors.surface,
+          color: context.colors.surface,
           child: Column(
             children: children,
           ),
@@ -642,10 +642,10 @@ class ProfileScreen extends ConsumerWidget {
                   title,
                   style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                  style: AppTypography.label.copyWith(color: context.colors.textSecondary, fontSize: 10),
                 ),
               ],
             )
@@ -671,7 +671,7 @@ class ProfileScreen extends ConsumerWidget {
         label,
         style: AppTypography.body.copyWith(
           fontWeight: FontWeight.w600,
-          color: textColor ?? AppColors.textPrimary,
+          color: textColor ?? context.colors.textPrimary,
           fontSize: 14,
         ),
       ),
@@ -681,12 +681,12 @@ class ProfileScreen extends ConsumerWidget {
           if (trailingText != null) ...[
             Text(
               trailingText,
-              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+              style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
           ],
           if (showChevron)
-            Icon(LucideIcons.chevronRight, size: 14, color: AppColors.textSecondary.withValues(alpha: 0.7)),
+            Icon(LucideIcons.chevronRight, size: 14, color: context.colors.textSecondary.withValues(alpha: 0.7)),
         ],
       ),
       onTap: onTap,
@@ -704,7 +704,7 @@ class ProfileScreen extends ConsumerWidget {
         width: 150,
         child: Text(
           val,
-          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+          style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.end,
         ),
@@ -729,7 +729,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
           trailing: Switch.adaptive(
             value: val,
-            activeThumbColor: AppColors.primary,
+            activeThumbColor: context.colors.primary,
             onChanged: (v) {
               setStateRow(() => val = v);
               onChanged(v);
@@ -757,13 +757,13 @@ class ProfileScreen extends ConsumerWidget {
             isSelected: activeThemeMode == ThemeMode.light,
             onTap: () => ref.read(authServiceProvider).updateThemeMode('light'),
           ),
-          const SizedBox(width: 6),
+          SizedBox(width: 6),
           _ThemeOptionPill(
             label: 'Dark',
             isSelected: activeThemeMode == ThemeMode.dark,
             onTap: () => ref.read(authServiceProvider).updateThemeMode('dark'),
           ),
-          const SizedBox(width: 6),
+          SizedBox(width: 6),
           _ThemeOptionPill(
             label: 'Auto',
             isSelected: activeThemeMode == ThemeMode.system,
@@ -808,15 +808,15 @@ class ProfileScreen extends ConsumerWidget {
                   decoration: BoxDecoration(color: Theme.of(context).dividerColor, borderRadius: BorderRadius.circular(2)),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text('Edit Profile', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               AppTextField(controller: nameCont, hintText: 'Full Name'),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               AppTextField(controller: emailCont, hintText: 'Email Address', keyboardType: TextInputType.emailAddress),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               AppTextField(controller: phoneCont, hintText: 'Phone Number', keyboardType: TextInputType.phone),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               PrimaryButton(
                 text: 'Save Changes',
                 onPressed: () {
@@ -877,23 +877,23 @@ class ProfileScreen extends ConsumerWidget {
                     decoration: BoxDecoration(color: Theme.of(context).dividerColor, borderRadius: BorderRadius.circular(2)),
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Text('Edit Shop Details', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 AppTextField(controller: nameCont, hintText: 'Shop Name'),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 AppTextField(controller: ownerCont, hintText: 'Owner Name'),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 AppTextField(controller: addressCont, hintText: 'Shop Address'),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 AppTextField(controller: phoneCont, hintText: 'WhatsApp Number'),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 TextFormField(
                   controller: descCont,
                   maxLines: 3,
                   decoration: const InputDecoration(hintText: 'Shop Description...'),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 PrimaryButton(
                   text: 'Save Details',
                   onPressed: () {
@@ -945,7 +945,7 @@ class ProfileScreen extends ConsumerWidget {
                   decoration: BoxDecoration(color: Theme.of(context).dividerColor, borderRadius: BorderRadius.circular(2)),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text('Saved Products', style: AppTypography.heading.copyWith(fontWeight: FontWeight.bold)),
               const Divider(height: 24),
               Expanded(
@@ -954,16 +954,16 @@ class ProfileScreen extends ConsumerWidget {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(LucideIcons.bookmark, size: 48, color: AppColors.border),
-                              const SizedBox(height: 16),
+                              Icon(LucideIcons.bookmark, size: 48, color: context.colors.border),
+                              SizedBox(height: 16),
                               Text(
                                 'No Saved Products',
                                 style: AppTypography.heading.copyWith(fontWeight: FontWeight.bold),
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Text(
                                 'Products you save will appear here.',
-                                style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                                style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
                               ),
                             ],
                           ),
@@ -999,7 +999,7 @@ class ProfileScreen extends ConsumerWidget {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                SizedBox(height: 8),
                                 Text(
                                   p.name,
                                   style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold),
@@ -1044,15 +1044,15 @@ class ProfileScreen extends ConsumerWidget {
                   decoration: BoxDecoration(color: Theme.of(context).dividerColor, borderRadius: BorderRadius.circular(2)),
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Text('Help & Support FAQ', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
               const Divider(height: 24),
-              _buildFaqTile('How do I contact a shop owner?', 'Simply click on any product, click "WhatsApp" or "Interested" and you will be connected with the shop owner instantly.'),
+              _buildFaqTile(context, 'How do I contact a shop owner?', 'Simply click on any product, click "WhatsApp" or "Interested" and you will be connected with the shop owner instantly.'),
               const Divider(height: 1),
-              _buildFaqTile('How is my location used?', 'We only use your approximate location coordinates to find and display shops and offers within 2-3 km of your radius.'),
+              _buildFaqTile(context, 'How is my location used?', 'We only use your approximate location coordinates to find and display shops and offers within 2-3 km of your radius.'),
               const Divider(height: 1),
-              _buildFaqTile('How do I register a merchant shop?', 'Log out from your User profile, select "Shop Owner" in the selection panel, and complete the business registration form.'),
-              const SizedBox(height: 24),
+              _buildFaqTile(context, 'How do I register a merchant shop?', 'Log out from your User profile, select "Shop Owner" in the selection panel, and complete the business registration form.'),
+              SizedBox(height: 24),
             ],
           ),
         );
@@ -1060,13 +1060,13 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildFaqTile(String question, String answer) {
+  Widget _buildFaqTile(BuildContext context, String question, String answer) {
     return ExpansionTile(
       title: Text(question, style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-          child: Text(answer, style: AppTypography.caption.copyWith(color: AppColors.textSecondary, height: 1.4)),
+          child: Text(answer, style: AppTypography.caption.copyWith(color: context.colors.textSecondary, height: 1.4)),
         ),
       ],
     );
@@ -1096,14 +1096,14 @@ class ProfileScreen extends ConsumerWidget {
                   decoration: BoxDecoration(color: Theme.of(context).dividerColor, borderRadius: BorderRadius.circular(2)),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(title, style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
               const Divider(height: 24),
               Expanded(
                 child: SingleChildScrollView(
                   child: Text(
                     body,
-                    style: AppTypography.body.copyWith(height: 1.5, color: AppColors.textSecondary),
+                    style: AppTypography.body.copyWith(height: 1.5, color: context.colors.textSecondary),
                   ),
                 ),
               ),
@@ -1264,14 +1264,14 @@ class _ThemeOptionPill extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : AppColors.border,
+          color: isSelected ? context.colors.primary : context.colors.border,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
           label,
           style: AppTypography.label.copyWith(
             fontSize: 10,
-            color: isSelected ? Colors.white : AppColors.textPrimary,
+            color: isSelected ? Colors.white : context.colors.textPrimary,
             fontWeight: FontWeight.bold,
           ),
         ),

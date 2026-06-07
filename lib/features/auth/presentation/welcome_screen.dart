@@ -24,14 +24,14 @@ class WelcomeScreen extends ConsumerWidget {
           SnackBar(
             content: Text(authState.errorMessage),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: AppColors.error,
+            backgroundColor: context.colors.error,
           ),
         );
       });
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -55,9 +55,9 @@ class WelcomeScreen extends ConsumerWidget {
                     height: 110,
                     width: 110,
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: context.colors.surface,
                       borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: AppColors.border, width: 1.5),
+                      border: Border.all(color: context.colors.border, width: 1.5),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.03),
@@ -66,10 +66,10 @@ class WelcomeScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       LucideIcons.compass,
                       size: 44,
-                      color: AppColors.primary,
+                      color: context.colors.primary,
                     ),
                   ),
                 ),
@@ -88,7 +88,7 @@ class WelcomeScreen extends ConsumerWidget {
               Text(
                 'Connect with local merchants, explore nearby fresh arrivals, and get custom discount updates in your block instantly.',
                 style: AppTypography.body.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.colors.textSecondary,
                   height: 1.5,
                 ),
               ),
@@ -114,7 +114,7 @@ class WelcomeScreen extends ConsumerWidget {
                     child: Text(
                       'Continue as Guest',
                       style: AppTypography.body.copyWith(
-                        color: AppColors.primary,
+                        color: context.colors.primary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),

@@ -64,9 +64,9 @@ class _SecondaryButtonState extends State<SecondaryButton> with SingleTickerProv
           height: 52,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: context.colors.surface,
             borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-            border: Border.all(color: AppColors.border, width: 1),
+            border: Border.all(color: context.colors.border, width: 1),
           ),
           alignment: Alignment.center,
           child: Row(
@@ -79,7 +79,7 @@ class _SecondaryButtonState extends State<SecondaryButton> with SingleTickerProv
               Text(
                 widget.text,
                 style: AppTypography.body.copyWith(
-                  color: AppColors.textPrimary,
+                  color: context.colors.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),

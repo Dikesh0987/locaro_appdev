@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
@@ -63,45 +63,45 @@ class FollowingScreen extends ConsumerWidget {
                               letterSpacing: -0.8,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4),
                           Text(
                             'Updates and exclusive offers from your favorite shops.',
-                            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                            style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.sectionGap),
+                    SizedBox(height: AppSpacing.sectionGap),
 
                     // SECTION 1: Followed Shops (Recently Followed)
-                    _buildSectionHeader('Shops You Follow', '${followedShops.length} shops'),
-                    const SizedBox(height: AppSpacing.s12),
+                    _buildSectionHeader(context, 'Shops You Follow', '${followedShops.length} shops'),
+                    SizedBox(height: AppSpacing.s12),
                     SizedBox(
                       height: 105,
                       child: ListView.separated(
                         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
                         scrollDirection: Axis.horizontal,
                         itemCount: recentlyFollowed.length,
-                        separatorBuilder: (context, index) => const SizedBox(width: AppSpacing.s16),
+                        separatorBuilder: (context, index) => SizedBox(width: AppSpacing.s16),
                         itemBuilder: (context, index) {
                           final shop = recentlyFollowed[index];
                           return _ShopAvatarCard(shop: shop);
                         },
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.sectionGap),
+                    SizedBox(height: AppSpacing.sectionGap),
 
                     // SECTION 2: Latest Offers from Followed Shops
                     if (offers.isNotEmpty) ...[
-                      _buildSectionHeader('Exclusive Offers', '${offers.length} active'),
-                      const SizedBox(height: AppSpacing.s12),
+                      _buildSectionHeader(context, 'Exclusive Offers', '${offers.length} active'),
+                      SizedBox(height: AppSpacing.s12),
                       SizedBox(
                         height: 140,
                         child: ListView.separated(
                           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
                           scrollDirection: Axis.horizontal,
                           itemCount: offers.length,
-                          separatorBuilder: (context, index) => const SizedBox(width: AppSpacing.s16),
+                          separatorBuilder: (context, index) => SizedBox(width: AppSpacing.s16),
                           itemBuilder: (context, index) {
                             final offer = offers[index];
                             final shop = followedShops.firstWhere((s) => s.id == offer.shopId);
@@ -109,23 +109,23 @@ class FollowingScreen extends ConsumerWidget {
                           },
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.sectionGap),
+                      SizedBox(height: AppSpacing.sectionGap),
                     ],
 
                     // SECTION 3: New Posts Feed
-                    _buildSectionHeader('Recent Updates', '${posts.length} posts'),
-                    const SizedBox(height: AppSpacing.s12),
+                    _buildSectionHeader(context, 'Recent Updates', '${posts.length} posts'),
+                    SizedBox(height: AppSpacing.s12),
                     posts.isEmpty
                         ? Padding(
                             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
-                            child: _buildSimplePlaceholder('No recent updates or posts from these shops.'),
+                            child: _buildSimplePlaceholder(context, 'No recent updates or posts from these shops.'),
                           )
                         : ListView.separated(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
                             itemCount: posts.length,
-                            separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.s16),
+                            separatorBuilder: (context, index) => SizedBox(height: AppSpacing.s16),
                             itemBuilder: (context, index) {
                               final post = posts[index];
                               final shop = followedShops.firstWhere((s) => s.id == post.shopId);
@@ -139,7 +139,7 @@ class FollowingScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title, String count) {
+  Widget _buildSectionHeader(BuildContext context, String title, String count) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
       child: Row(
@@ -154,26 +154,26 @@ class FollowingScreen extends ConsumerWidget {
           ),
           Text(
             count,
-            style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+            style: AppTypography.label.copyWith(color: context.colors.textSecondary),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSimplePlaceholder(String text) {
+  Widget _buildSimplePlaceholder(BuildContext context, String text) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.colors.border),
       ),
       child: Center(
         child: Text(
           text,
-          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+          style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
           textAlign: TextAlign.center,
         ),
       ),
@@ -190,32 +190,32 @@ class FollowingScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.border.withValues(alpha: 0.5),
+                color: context.colors.border.withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 LucideIcons.heart,
                 size: 48,
-                color: AppColors.secondary,
+                color: context.colors.secondary,
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Text(
               'No Followed Shops Yet',
               style: AppTypography.heading.copyWith(fontWeight: FontWeight.w800),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               'Follow local shops to get their latest updates, products, and exclusive offers right here.',
-              style: AppTypography.body.copyWith(color: AppColors.textSecondary, height: 1.4),
+              style: AppTypography.body.copyWith(color: context.colors.textSecondary, height: 1.4),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             ElevatedButton.icon(
               icon: const Icon(LucideIcons.compass, size: 16, color: Colors.white),
               label: const Text('Discover Local Shops', style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: context.colors.primary,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(100),
@@ -266,8 +266,8 @@ class _ShopAvatarCard extends ConsumerWidget {
                     onTap: () => _showUnfollowConfirmation(context, ref),
                     child: Container(
                       padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: AppColors.surface,
+                      decoration: BoxDecoration(
+                        color: context.colors.surface,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -277,17 +277,17 @@ class _ShopAvatarCard extends ConsumerWidget {
                           )
                         ],
                       ),
-                      child: const Icon(
+                      child: Icon(
                         LucideIcons.heartHandshake,
                         size: 10,
-                        color: AppColors.error,
+                        color: context.colors.error,
                       ),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Text(
               shop.shopName,
               style: AppTypography.label.copyWith(fontWeight: FontWeight.bold),
@@ -313,7 +313,7 @@ class _ShopAvatarCard extends ConsumerWidget {
             onPressed: () => Navigator.pop(context),
           ),
           TextButton(
-            child: const Text('Unfollow', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
+            child: Text('Unfollow', style: TextStyle(color: context.colors.error, fontWeight: FontWeight.bold)),
             onPressed: () {
               ref.read(databaseProvider.notifier).toggleFollowShop(shop.id);
               Navigator.pop(context);
@@ -366,7 +366,7 @@ class _OfferCard extends StatelessWidget {
                 fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(width: AppSpacing.s12),
+            SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -382,19 +382,19 @@ class _OfferCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       OfferBadge(text: offer.discount),
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     shop.shopName,
-                    style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                    style: AppTypography.label.copyWith(color: context.colors.textSecondary, fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     offer.description,
-                    style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                    style: AppTypography.label.copyWith(color: context.colors.textSecondary, fontSize: 10),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -442,10 +442,10 @@ class _PostCardState extends ConsumerState<_PostCard> {
             ),
             subtitle: Text(
               widget.shop.category,
-              style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10),
+              style: AppTypography.label.copyWith(color: context.colors.textSecondary, fontSize: 10),
             ),
             trailing: IconButton(
-              icon: const Icon(LucideIcons.heartOff, size: 16, color: AppColors.textSecondary),
+              icon: Icon(LucideIcons.heartOff, size: 16, color: context.colors.textSecondary),
               tooltip: 'Unfollow Shop',
               onPressed: () => _confirmUnfollow(context),
             ),
@@ -468,7 +468,7 @@ class _PostCardState extends ConsumerState<_PostCard> {
                 IconButton(
                   icon: Icon(
                     _isLiked ? LucideIcons.heart : LucideIcons.heart,
-                    color: _isLiked ? AppColors.error : AppColors.primary,
+                    color: _isLiked ? context.colors.error : context.colors.primary,
                     size: 20,
                   ),
                   onPressed: () {
@@ -480,9 +480,9 @@ class _PostCardState extends ConsumerState<_PostCard> {
                   '${widget.post.likes + (_isLiked ? 1 : 0)}',
                   style: AppTypography.label.copyWith(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(width: 16),
-                const Icon(LucideIcons.messageCircle, size: 20, color: AppColors.primary),
-                const SizedBox(width: 4),
+                SizedBox(width: 16),
+                Icon(LucideIcons.messageCircle, size: 20, color: context.colors.primary),
+                SizedBox(width: 4),
                 Text(
                   '${widget.post.comments}',
                   style: AppTypography.label.copyWith(fontWeight: FontWeight.bold),
@@ -516,7 +516,7 @@ class _PostCardState extends ConsumerState<_PostCard> {
             onPressed: () => Navigator.pop(context),
           ),
           TextButton(
-            child: const Text('Unfollow', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
+            child: Text('Unfollow', style: TextStyle(color: context.colors.error, fontWeight: FontWeight.bold)),
             onPressed: () {
               ref.read(databaseProvider.notifier).toggleFollowShop(widget.shop.id);
               Navigator.pop(context);

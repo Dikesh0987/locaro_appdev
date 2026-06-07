@@ -100,7 +100,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 title: Text(lang, style: AppTypography.body),
                 value: lang,
                 groupValue: _selectedLanguage,
-                activeColor: AppColors.primary,
+                activeColor: context.colors.primary,
                 onChanged: (val) async {
                   if (val != null) {
                     setState(() => _selectedLanguage = val);
@@ -157,13 +157,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(height: 20),
                   Text('Blocked Users', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Text('Users you block will not be able to follow you or contact you.', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                  Text('Users you block will not be able to follow you or contact you.', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
                   const Divider(height: 24),
                   if (_blockedUsers.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 32.0),
                       child: Center(
-                        child: Text('No blocked users.', style: AppTypography.body.copyWith(color: AppColors.textSecondary)),
+                        child: Text('No blocked users.', style: AppTypography.body.copyWith(color: context.colors.textSecondary)),
                       ),
                     )
                   else
@@ -176,7 +176,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: CircleAvatar(
-                            backgroundColor: AppColors.border,
+                            backgroundColor: context.colors.border,
                             child: Text(name[0], style: const TextStyle(fontWeight: FontWeight.bold)),
                           ),
                           title: Text(name, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
@@ -262,7 +262,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // --- THEME SELECTOR ---
-            Text('Appearance', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+            Text('Appearance', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: context.colors.textSecondary)),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -289,7 +289,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             : activeThemeMode == ThemeMode.dark
                                 ? 'Dark'
                                 : 'Light',
-                        style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                        style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
                       ),
                     ],
                   ),
@@ -330,7 +330,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: AppSpacing.sectionGap),
 
             // --- NOTIFICATIONS ---
-            Text('Notifications', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+            Text('Notifications', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: context.colors.textSecondary)),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -373,7 +373,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: AppSpacing.sectionGap),
 
             // --- PREFERENCES ---
-            Text('Preferences', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+            Text('Preferences', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: context.colors.textSecondary)),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -409,7 +409,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: AppSpacing.sectionGap),
 
             // --- PERMISSIONS ---
-            Text('App Permissions', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+            Text('App Permissions', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: context.colors.textSecondary)),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -485,10 +485,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Theme.of(context).dividerColor.withValues(alpha: 0.05),
+          color: isSelected ? context.colors.primary : Theme.of(context).dividerColor.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(100),
           border: Border.all(
-            color: isSelected ? AppColors.primary : Theme.of(context).dividerColor,
+            color: isSelected ? context.colors.primary : Theme.of(context).dividerColor,
           ),
         ),
         child: Row(
@@ -523,7 +523,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         trailing: Switch.adaptive(
           value: val,
           onChanged: onChanged,
-          activeColor: AppColors.primary,
+          activeColor: context.colors.primary,
         ),
       ),
     );
@@ -540,7 +540,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       child: ListTile(
         leading: Icon(icon, color: Theme.of(context).iconTheme.color),
         title: Text(label, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle, style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 11)),
+        subtitle: Text(subtitle, style: AppTypography.caption.copyWith(color: context.colors.textSecondary, fontSize: 11)),
         trailing: const Icon(LucideIcons.chevronRight, size: 16),
         onTap: onTap,
       ),

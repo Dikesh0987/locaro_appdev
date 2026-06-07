@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
@@ -71,8 +71,8 @@ class ShellScreen extends ConsumerWidget {
             children: [
               // Drawer Header
               UserAccountsDrawerHeader(
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
+                decoration: BoxDecoration(
+                  color: context.colors.primary,
                 ),
                 currentAccountPicture: FallbackAvatar(
                   imageUrl: role == 'user' ? user.photoUrl : shop.logo,
@@ -98,7 +98,7 @@ class ShellScreen extends ConsumerWidget {
                   padding: EdgeInsets.zero,
                   children: [
                     ListTile(
-                      leading: const Icon(LucideIcons.home, color: AppColors.primary),
+                      leading: Icon(LucideIcons.home, color: context.colors.primary),
                       title: Text('Home Feed', style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
                       onTap: () {
                         Navigator.pop(context);
@@ -106,7 +106,7 @@ class ShellScreen extends ConsumerWidget {
                       },
                     ),
                     ListTile(
-                      leading: const Icon(LucideIcons.compass, color: AppColors.primary),
+                      leading: Icon(LucideIcons.compass, color: context.colors.primary),
                       title: Text('Discover', style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
                       onTap: () {
                         Navigator.pop(context);
@@ -114,7 +114,7 @@ class ShellScreen extends ConsumerWidget {
                       },
                     ),
                     ListTile(
-                      leading: const Icon(LucideIcons.mapPin, color: AppColors.primary),
+                      leading: Icon(LucideIcons.mapPin, color: context.colors.primary),
                       title: Text('Map View', style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
                       onTap: () {
                         Navigator.pop(context);
@@ -123,7 +123,7 @@ class ShellScreen extends ConsumerWidget {
                     ),
                     if (role == 'user')
                       ListTile(
-                        leading: const Icon(LucideIcons.heart, color: AppColors.primary),
+                        leading: Icon(LucideIcons.heart, color: context.colors.primary),
                         title: Text('Following Updates', style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
                         onTap: () {
                           Navigator.pop(context);
@@ -131,7 +131,7 @@ class ShellScreen extends ConsumerWidget {
                         },
                       ),
                     ListTile(
-                      leading: const Icon(LucideIcons.user, color: AppColors.primary),
+                      leading: Icon(LucideIcons.user, color: context.colors.primary),
                       title: Text('My Profile', style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
                       onTap: () {
                         Navigator.pop(context);
@@ -149,11 +149,11 @@ class ShellScreen extends ConsumerWidget {
                           Text(
                             'Appearance',
                             style: AppTypography.label.copyWith(
-                              color: AppColors.textSecondary,
+                              color: context.colors.textSecondary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           Row(
                             children: [
                               _ThemeOptionPill(
@@ -162,14 +162,14 @@ class ShellScreen extends ConsumerWidget {
                                 icon: LucideIcons.sun,
                                 onTap: () => ref.read(authServiceProvider).updateThemeMode('light'),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               _ThemeOptionPill(
                                 label: 'Dark',
                                 isSelected: activeThemeMode == ThemeMode.dark,
                                 icon: LucideIcons.moon,
                                 onTap: () => ref.read(authServiceProvider).updateThemeMode('dark'),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               _ThemeOptionPill(
                                 label: 'Auto',
                                 isSelected: activeThemeMode == ThemeMode.system,
@@ -188,11 +188,11 @@ class ShellScreen extends ConsumerWidget {
               // Drawer Footer
               const Divider(),
               ListTile(
-                leading: const Icon(LucideIcons.logOut, color: AppColors.error),
+                leading: Icon(LucideIcons.logOut, color: context.colors.error),
                 title: Text(
                   'Log Out',
                   style: AppTypography.body.copyWith(
-                    color: AppColors.error,
+                    color: context.colors.error,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -209,7 +209,7 @@ class ShellScreen extends ConsumerWidget {
                   }
                 },
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
             ],
           ),
         ),
@@ -239,10 +239,10 @@ class _ThemeOptionPill extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary : AppColors.border,
+            color: isSelected ? context.colors.primary : context.colors.border,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isSelected ? AppColors.primary : Colors.transparent,
+              color: isSelected ? context.colors.primary : Colors.transparent,
             ),
           ),
           child: Row(
@@ -251,14 +251,14 @@ class _ThemeOptionPill extends StatelessWidget {
               Icon(
                 icon,
                 size: 12,
-                color: isSelected ? Colors.white : AppColors.textPrimary,
+                color: isSelected ? Colors.white : context.colors.textPrimary,
               ),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               Text(
                 label,
                 style: AppTypography.label.copyWith(
                   fontSize: 10,
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
+                  color: isSelected ? Colors.white : context.colors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'colors.dart';
 import 'typography.dart';
 import 'spacing.dart';
@@ -10,19 +10,22 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      primaryColor: AppColors.primary,
-      scaffoldBackgroundColor: AppColors.background,
+      primaryColor: AppColorsExtension.light.primary,
+      scaffoldBackgroundColor: AppColorsExtension.light.background,
+      extensions: const <ThemeExtension<dynamic>>[
+        AppColorsExtension.light,
+      ],
       
       // Color Scheme
-      colorScheme: const ColorScheme.light(
-        primary: AppColors.primary,
-        secondary: AppColors.secondary,
-        surface: AppColors.surface,
-        error: AppColors.error,
-        onPrimary: AppColors.surface,
-        onSecondary: AppColors.surface,
-        onSurface: AppColors.textPrimary,
-        onError: AppColors.surface,
+      colorScheme: ColorScheme.light(
+        primary: AppColorsExtension.light.primary,
+        secondary: AppColorsExtension.light.secondary,
+        surface: AppColorsExtension.light.surface,
+        error: AppColorsExtension.light.error,
+        onPrimary: AppColorsExtension.light.surface,
+        onSecondary: AppColorsExtension.light.surface,
+        onSurface: AppColorsExtension.light.textPrimary,
+        onError: AppColorsExtension.light.surface,
       ),
 
       // Text Theme
@@ -36,47 +39,47 @@ class AppTheme {
       ),
 
       // Card Theme
-      cardTheme: const CardThemeData(
-        color: AppColors.surface,
+      cardTheme: CardThemeData(
+        color: AppColorsExtension.light.surface,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppSpacing.cardRadius)),
-          side: BorderSide(color: AppColors.border, width: 1), // Light border, no visible shadow
+          side: BorderSide(color: AppColorsExtension.light.border, width: 1), // Light border, no visible shadow
         ),
       ),
 
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: AppColorsExtension.light.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColorsExtension.light.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColorsExtension.light.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
-          borderSide: const BorderSide(color: AppColors.primary),
+          borderSide: BorderSide(color: AppColorsExtension.light.primary),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
-          borderSide: const BorderSide(color: AppColors.error),
+          borderSide: BorderSide(color: AppColorsExtension.light.error),
         ),
-        hintStyle: AppTypography.body.copyWith(color: AppColors.textSecondary),
+        hintStyle: AppTypography.body.copyWith(color: AppColorsExtension.light.textSecondary),
       ),
       
       // AppBar Theme
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColorsExtension.light.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        iconTheme: const IconThemeData(color: AppColors.primary),
+        iconTheme: IconThemeData(color: AppColorsExtension.light.primary),
         titleTextStyle: AppTypography.heading,
       ),
     );
@@ -88,6 +91,9 @@ class AppTheme {
       brightness: Brightness.dark,
       primaryColor: const Color(0xFFF9FAFB),
       scaffoldBackgroundColor: const Color(0xFF0F172A), // Dark slate/navy
+      extensions: const <ThemeExtension<dynamic>>[
+        AppColorsExtension.dark,
+      ],
       
       // Color Scheme
       colorScheme: const ColorScheme.dark(
@@ -112,7 +118,7 @@ class AppTheme {
       ),
 
       // Card Theme
-      cardTheme: const CardThemeData(
+      cardTheme: CardThemeData(
         color: Color(0xFF1E293B),
         elevation: 0,
         margin: EdgeInsets.zero,

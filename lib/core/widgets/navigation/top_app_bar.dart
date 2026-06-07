@@ -27,11 +27,11 @@ class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
     final leadingWidget = leading ?? (canPop
         ? IconButton(
-            icon: const Icon(LucideIcons.chevronLeft, color: AppColors.primary),
+            icon: Icon(LucideIcons.chevronLeft, color: context.colors.primary),
             onPressed: () => Navigator.pop(context),
           )
         : IconButton(
-            icon: const Icon(LucideIcons.menu, color: AppColors.primary),
+            icon: Icon(LucideIcons.menu, color: context.colors.primary),
             onPressed: () {
               Scaffold.of(context).openDrawer();
             },
@@ -45,7 +45,7 @@ class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
               style: AppTypography.heading.copyWith(
                 fontWeight: FontWeight.w900,
                 letterSpacing: -1.0,
-                color: AppColors.primary,
+                color: context.colors.primary,
               ),
             ),
       centerTitle: title == null, // Center only the Nearo logo
@@ -55,9 +55,9 @@ class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
           icon: Badge(
             label: Text('$unreadCount'),
             isLabelVisible: unreadCount > 0,
-            backgroundColor: AppColors.error,
+            backgroundColor: context.colors.error,
             textColor: Colors.white,
-            child: const Icon(LucideIcons.bell, color: AppColors.primary),
+            child: Icon(LucideIcons.bell, color: context.colors.primary),
           ),
           onPressed: () {
             Navigator.push(
@@ -67,7 +67,7 @@ class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
           },
         ),
         IconButton(
-          icon: const Icon(LucideIcons.search, color: AppColors.primary),
+          icon: Icon(LucideIcons.search, color: context.colors.primary),
           onPressed: () {},
         ),
         const SizedBox(width: AppSpacing.s8),

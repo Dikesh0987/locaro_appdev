@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
@@ -76,23 +76,23 @@ class _PrimaryButtonState extends State<PrimaryButton> with SingleTickerProvider
           height: 52,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: AppColors.primary,
+            color: context.colors.primary,
             borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
           ),
           alignment: Alignment.center,
           child: widget.isLoading
-              ? const SizedBox(
+              ? SizedBox(
                   height: 24,
                   width: 24,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.surface),
+                    valueColor: AlwaysStoppedAnimation<Color>(context.colors.surface),
                   ),
                 )
               : Text(
                   widget.text,
                   style: AppTypography.body.copyWith(
-                    color: AppColors.surface,
+                    color: context.colors.surface,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

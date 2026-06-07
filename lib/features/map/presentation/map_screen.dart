@@ -66,9 +66,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: isSelected ? AppColors.primary : AppColors.surface,
+                              color: isSelected ? context.colors.primary : context.colors.surface,
                               borderRadius: BorderRadius.circular(100),
-                              border: Border.all(color: AppColors.border, width: 1),
+                              border: Border.all(color: context.colors.border, width: 1),
                               boxShadow: const [
                                 BoxShadow(
                                   color: Colors.black12,
@@ -84,15 +84,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                   hasOffer ? LucideIcons.percent : LucideIcons.store,
                                   size: 12,
                                   color: isSelected
-                                      ? AppColors.surface
-                                      : (hasOffer ? AppColors.offerOrange : AppColors.primary),
+                                      ? context.colors.surface
+                                      : (hasOffer ? context.colors.offerOrange : context.colors.primary),
                                 ),
                                 const SizedBox(width: 4),
                                 Flexible(
                                   child: Text(
                                     shop.shopName,
                                     style: AppTypography.label.copyWith(
-                                      color: isSelected ? AppColors.surface : AppColors.textPrimary,
+                                      color: isSelected ? context.colors.surface : context.colors.textPrimary,
                                       fontWeight: FontWeight.bold,
                                     ),
                                     maxLines: 1,
@@ -105,7 +105,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           CustomPaint(
                             size: const Size(10, 8),
                             painter: _TrianglePainter(
-                              color: isSelected ? AppColors.primary : AppColors.surface,
+                              color: isSelected ? context.colors.primary : context.colors.surface,
                             ),
                           ),
                         ],
@@ -125,9 +125,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             child: Container(
               height: 52,
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: context.colors.surface,
                 borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: context.colors.border),
                 boxShadow: const [
                   BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))
                 ],
@@ -136,15 +136,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               alignment: Alignment.center,
               child: Row(
                 children: [
-                  const Icon(LucideIcons.search, color: AppColors.textSecondary),
+                  Icon(LucideIcons.search, color: context.colors.textSecondary),
                   const SizedBox(width: AppSpacing.s12),
                   Expanded(
                     child: Text(
                       'Search area...',
-                      style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                      style: AppTypography.body.copyWith(color: context.colors.textSecondary),
                     ),
                   ),
-                  const Icon(LucideIcons.slidersHorizontal, color: AppColors.textSecondary),
+                  Icon(LucideIcons.slidersHorizontal, color: context.colors.textSecondary),
                 ],
               ),
             ),
@@ -187,7 +187,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                 const SizedBox(height: 2),
                                 Text(
                                   _selectedShop!.category,
-                                  style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+                                  style: AppTypography.label.copyWith(color: context.colors.textSecondary),
                                 ),
                                 const SizedBox(height: 2),
                                 Row(
@@ -208,7 +208,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: AppColors.border,
+                                color: context.colors.border,
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(LucideIcons.x, size: 14),
@@ -223,7 +223,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                             child: OutlinedButton(
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(vertical: 12),
-                                side: const BorderSide(color: AppColors.border),
+                                side: BorderSide(color: context.colors.border),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
                                 ),
@@ -236,7 +236,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                   ),
                                 );
                               },
-                              child: const Text('View Store', style: TextStyle(color: AppColors.textPrimary)),
+                              child: Text('View Store', style: TextStyle(color: context.colors.textPrimary)),
                             ),
                           ),
                           const SizedBox(width: AppSpacing.s12),
@@ -245,7 +245,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                               icon: const Icon(LucideIcons.navigation, size: 14, color: Colors.white),
                               label: const Text('Directions', style: TextStyle(color: Colors.white)),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
+                                backgroundColor: context.colors.primary,
                                 padding: const EdgeInsets.symmetric(vertical: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),

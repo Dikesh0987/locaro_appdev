@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -142,7 +142,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           SnackBar(
             content: Text(e.toString()),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: AppColors.error,
+            backgroundColor: context.colors.error,
           ),
         );
       }
@@ -172,7 +172,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           SnackBar(
             content: Text(e.toString()),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: AppColors.error,
+            backgroundColor: context.colors.error,
           ),
         );
       }
@@ -200,10 +200,23 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           }
           
           if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
-            Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-            latitude = position.latitude;
-            longitude = position.longitude;
-            locationStr = '${latitude.toStringAsFixed(4)}, ${longitude.toStringAsFixed(4)}';
+            Position? position;
+            try {
+              position = await Geolocator.getCurrentPosition(
+                locationSettings: const LocationSettings(
+                  accuracy: LocationAccuracy.high,
+                  timeLimit: Duration(seconds: 10),
+                ),
+              );
+            } catch (e) {
+              position = await Geolocator.getLastKnownPosition();
+            }
+
+            if (position != null) {
+              latitude = position.latitude;
+              longitude = position.longitude;
+              locationStr = '${latitude.toStringAsFixed(4)}, ${longitude.toStringAsFixed(4)}';
+            }
           }
         }
       } catch (e) {
@@ -336,7 +349,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
             child: Center(
               child: Text(
                 '${_currentStep + 1}/$totalSteps',
-                style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+                style: AppTypography.label.copyWith(color: context.colors.textSecondary),
               ),
             ),
           ),
@@ -347,8 +360,8 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           children: [
             LinearProgressIndicator(
               value: (_currentStep + 1) / totalSteps,
-              backgroundColor: AppColors.border,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              backgroundColor: context.colors.border,
+              valueColor: AlwaysStoppedAnimation<Color>(context.colors.primary),
               minHeight: 3,
             ),
             Expanded(
@@ -415,9 +428,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 height: 110,
                 width: 110,
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: context.colors.surface,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: AppColors.border, width: 1.5),
+                  border: Border.all(color: context.colors.border, width: 1.5),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.03),
@@ -429,12 +442,12 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 child: Icon(
                   isShop ? LucideIcons.store : LucideIcons.compass,
                   size: 44,
-                  color: AppColors.primary,
+                  color: context.colors.primary,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 36),
+          SizedBox(height: 36),
           // Welcome Headlines
           Text(
             isShop ? 'Grow your\nbusiness' : 'Discover your\nneighborhood',
@@ -444,13 +457,13 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
               letterSpacing: -1.2,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Text(
             isShop
                 ? 'Create your merchant profile, list your products, post deals, and connect with customers in your neighborhood directly.'
                 : 'Connect with local merchants, explore nearby fresh arrivals, and get custom discount updates in your block instantly.',
             style: AppTypography.body.copyWith(
-              color: AppColors.textSecondary,
+              color: context.colors.textSecondary,
               height: 1.5,
             ),
           ),
@@ -462,7 +475,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
             onPressed: _handleGoogleSignIn,
           ),
           if (!isShop) ...[
-            const SizedBox(height: AppSpacing.s16),
+            SizedBox(height: AppSpacing.s16),
             Center(
               child: ScaleButtonPressed(
                 onTap: _isLoading ? () {} : _handleGuestSignIn,
@@ -471,7 +484,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                   child: Text(
                     'Continue as Guest',
                     style: AppTypography.body.copyWith(
-                      color: AppColors.primary,
+                      color: context.colors.primary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -479,7 +492,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
               ),
             ),
           ],
-          const SizedBox(height: AppSpacing.s12),
+          SizedBox(height: AppSpacing.s12),
         ],
       ),
     );
@@ -493,22 +506,22 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: AppSpacing.s24),
+            SizedBox(height: AppSpacing.s24),
             Text('Create Profile', style: AppTypography.heading),
-            const SizedBox(height: AppSpacing.s8),
-            Text('Verify and complete your profile details', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
-            const SizedBox(height: AppSpacing.s32),
+            SizedBox(height: AppSpacing.s8),
+            Text('Verify and complete your profile details', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+            SizedBox(height: AppSpacing.s32),
             Center(
               child: Stack(
                 children: [
                   CircleAvatar(
                     radius: 50,
-                    backgroundColor: AppColors.border,
+                    backgroundColor: context.colors.border,
                     backgroundImage: _googleProfileImage != null
                         ? NetworkImage(_googleProfileImage!)
                         : null,
                     child: _googleProfileImage == null
-                        ? const Icon(LucideIcons.user, size: 40, color: AppColors.textSecondary)
+                        ? Icon(LucideIcons.user, size: 40, color: context.colors.textSecondary)
                         : null,
                   ),
                   Positioned(
@@ -516,8 +529,8 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                     right: 0,
                     child: Container(
                       padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
+                      decoration: BoxDecoration(
+                        color: context.colors.primary,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(LucideIcons.camera, size: 16, color: Colors.white),
@@ -526,24 +539,24 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.s32),
+            SizedBox(height: AppSpacing.s32),
             AppTextField(
               controller: _userNameController,
               hintText: 'Full Name',
             ),
-            const SizedBox(height: AppSpacing.s16),
+            SizedBox(height: AppSpacing.s16),
             AppTextField(
               controller: _userEmailController,
               hintText: 'Email Address',
               keyboardType: TextInputType.emailAddress,
             ),
-            const SizedBox(height: AppSpacing.s16),
+            SizedBox(height: AppSpacing.s16),
             AppTextField(
               controller: _userPhoneController,
               hintText: 'Phone Number (Optional)',
               keyboardType: TextInputType.phone,
             ),
-            const SizedBox(height: 80),
+            SizedBox(height: 80),
             PrimaryButton(
               text: 'Continue',
               isLoading: _isLoading,
@@ -561,7 +574,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 }
               },
             ),
-            const SizedBox(height: AppSpacing.s16),
+            SizedBox(height: AppSpacing.s16),
           ],
         ),
       ),
@@ -575,11 +588,11 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: AppSpacing.s24),
+          SizedBox(height: AppSpacing.s24),
           Text('Select Interests', style: AppTypography.heading),
-          const SizedBox(height: AppSpacing.s8),
-          Text('Help us curate a custom local feed for you', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
-          const SizedBox(height: AppSpacing.s32),
+          SizedBox(height: AppSpacing.s8),
+          Text('Help us curate a custom local feed for you', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+          SizedBox(height: AppSpacing.s32),
           Wrap(
             spacing: AppSpacing.s8,
             runSpacing: AppSpacing.s8,
@@ -598,10 +611,10 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary : Theme.of(context).cardColor,
+                    color: isSelected ? context.colors.primary : Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(100),
                     border: Border.all(
-                      color: isSelected ? AppColors.primary : Theme.of(context).dividerColor,
+                      color: isSelected ? context.colors.primary : Theme.of(context).dividerColor,
                     ),
                   ),
                   child: Text(
@@ -629,7 +642,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
               }
             },
           ),
-          const SizedBox(height: AppSpacing.s16),
+          SizedBox(height: AppSpacing.s16),
         ],
       ),
     );
@@ -648,18 +661,18 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
               height: 140,
               width: 140,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: context.colors.border,
                 borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
               ),
-              child: const Icon(LucideIcons.mapPin, size: 56, color: AppColors.primary),
+              child: Icon(LucideIcons.mapPin, size: 56, color: context.colors.primary),
             ),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
           Text('Enable Location & Alerts', style: AppTypography.heading),
-          const SizedBox(height: AppSpacing.s12),
+          SizedBox(height: AppSpacing.s12),
           Text(
             'Nearo is built for local discovery. We need location permission to show you stores and products near your block, and notification permission to alert you on active discounts.',
-            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+            style: AppTypography.body.copyWith(color: context.colors.textSecondary),
           ),
           const Spacer(),
           PrimaryButton(
@@ -667,17 +680,17 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
             isLoading: _isLoading,
             onPressed: _completeAuth,
           ),
-          const SizedBox(height: AppSpacing.s12),
+          SizedBox(height: AppSpacing.s12),
           Center(
             child: TextButton(
               onPressed: _completeAuth,
               child: Text(
                 'Skip for now',
-                style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                style: AppTypography.body.copyWith(color: context.colors.textSecondary),
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.s8),
+          SizedBox(height: AppSpacing.s8),
         ],
       ),
     );
@@ -691,21 +704,21 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: AppSpacing.s24),
+            SizedBox(height: AppSpacing.s24),
             Text('Business Setup', style: AppTypography.heading),
-            const SizedBox(height: AppSpacing.s8),
-            Text('Let customers discover your shop brand', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
-            const SizedBox(height: AppSpacing.s32),
+            SizedBox(height: AppSpacing.s8),
+            Text('Let customers discover your shop brand', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+            SizedBox(height: AppSpacing.s32),
             AppTextField(
               controller: _shopNameController,
               hintText: 'Shop Name',
             ),
-            const SizedBox(height: AppSpacing.s16),
+            SizedBox(height: AppSpacing.s16),
             AppTextField(
               controller: _shopOwnerNameController,
               hintText: 'Owner Name',
             ),
-            const SizedBox(height: AppSpacing.s16),
+            SizedBox(height: AppSpacing.s16),
             SizedBox(
               height: 100,
               child: TextFormField(
@@ -716,7 +729,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 ),
               ),
             ),
-            const SizedBox(height: 80),
+            SizedBox(height: 80),
             PrimaryButton(
               text: 'Continue',
               isLoading: _isLoading,
@@ -730,7 +743,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 }
               },
             ),
-            const SizedBox(height: AppSpacing.s16),
+            SizedBox(height: AppSpacing.s16),
           ],
         ),
       ),
@@ -745,18 +758,18 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: AppSpacing.s24),
+            SizedBox(height: AppSpacing.s24),
             Text('Address & Category', style: AppTypography.heading),
-            const SizedBox(height: AppSpacing.s8),
-            Text('Set where you are located and shop type', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
-            const SizedBox(height: AppSpacing.s32),
+            SizedBox(height: AppSpacing.s8),
+            Text('Set where you are located and shop type', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+            SizedBox(height: AppSpacing.s32),
             AppTextField(
               controller: _shopAddressController,
               hintText: 'Shop Address (or Auto-detect in next step)',
             ),
-            const SizedBox(height: AppSpacing.s24),
+            SizedBox(height: AppSpacing.s24),
             Text('Select Business Category', style: AppTypography.subheading),
-            const SizedBox(height: AppSpacing.s12),
+            SizedBox(height: AppSpacing.s12),
             Wrap(
               spacing: AppSpacing.s8,
               runSpacing: AppSpacing.s8,
@@ -767,10 +780,10 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary : Theme.of(context).cardColor,
+                      color: isSelected ? context.colors.primary : Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(100),
                       border: Border.all(
-                        color: isSelected ? AppColors.primary : Theme.of(context).dividerColor,
+                        color: isSelected ? context.colors.primary : Theme.of(context).dividerColor,
                       ),
                     ),
                     child: Text(
@@ -784,7 +797,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 );
               }).toList(),
             ),
-            const SizedBox(height: 120),
+            SizedBox(height: 120),
             PrimaryButton(
               text: 'Continue',
               isLoading: _isLoading,
@@ -798,7 +811,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 }
               },
             ),
-            const SizedBox(height: AppSpacing.s16),
+            SizedBox(height: AppSpacing.s16),
           ],
         ),
       ),
@@ -812,11 +825,11 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: AppSpacing.s24),
+          SizedBox(height: AppSpacing.s24),
           Text('Upload Logo & Banner', style: AppTypography.heading),
-          const SizedBox(height: AppSpacing.s8),
-          Text('Visual assets build trust with customers', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
-          const SizedBox(height: AppSpacing.s32),
+          SizedBox(height: AppSpacing.s8),
+          Text('Visual assets build trust with customers', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+          SizedBox(height: AppSpacing.s32),
           
           Row(
             children: [
@@ -826,31 +839,31 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                   height: 80,
                   width: 80,
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: context.colors.border,
                     borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
                     image: _logoUrl != null ? DecorationImage(image: NetworkImage(_logoUrl!), fit: BoxFit.cover) : null,
                   ),
                   child: _logoUrl == null
-                      ? const Column(
+                      ? Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(LucideIcons.image, size: 24, color: AppColors.textSecondary),
-                            Text('Logo', style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                            Icon(LucideIcons.image, size: 24, color: context.colors.textSecondary),
+                            Text('Logo', style: TextStyle(fontSize: 10, color: context.colors.textSecondary)),
                           ],
                         )
                       : null,
                 ),
               ),
-              const SizedBox(width: AppSpacing.s16),
+              SizedBox(width: AppSpacing.s16),
               Expanded(
                 child: Text(
                   _logoUrl != null ? 'Logo uploaded' : 'Tap to upload shop logo',
-                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                  style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s24),
+          SizedBox(height: AppSpacing.s24),
 
           ScaleButtonPressed(
             onTap: _pickBanner,
@@ -858,18 +871,18 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
               height: 160,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: context.colors.border,
                 borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
                 image: _bannerUrl != null ? DecorationImage(image: NetworkImage(_bannerUrl!), fit: BoxFit.cover) : null,
               ),
               alignment: Alignment.center,
               child: _bannerUrl == null
-                  ? const Column(
+                  ? Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(LucideIcons.image, size: 32, color: AppColors.textSecondary),
+                        Icon(LucideIcons.image, size: 32, color: context.colors.textSecondary),
                         SizedBox(height: AppSpacing.s4),
-                        Text('Tap to upload store banner image', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                        Text('Tap to upload store banner image', style: TextStyle(fontSize: 12, color: context.colors.textSecondary)),
                       ],
                     )
                   : null,
@@ -882,7 +895,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
             isLoading: _isLoading,
             onPressed: _nextPage,
           ),
-          const SizedBox(height: AppSpacing.s16),
+          SizedBox(height: AppSpacing.s16),
         ],
       ),
     );

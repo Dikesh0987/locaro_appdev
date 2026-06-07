@@ -16,13 +16,13 @@ class OfferBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s4),
       decoration: BoxDecoration(
-        color: AppColors.offerOrange,
+        color: context.colors.offerOrange,
         borderRadius: BorderRadius.circular(100), // Fully rounded
       ),
       child: Text(
         text.toUpperCase(),
         style: AppTypography.label.copyWith(
-          color: AppColors.surface,
+          color: context.colors.surface,
           fontWeight: FontWeight.w700,
         ),
       ),

@@ -67,13 +67,13 @@ class DashboardScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.success.withValues(alpha: 0.1),
+                          color: context.colors.success.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(100),
                         ),
                         child: Text(
                           'Store Verified & Online',
                           style: AppTypography.label.copyWith(
-                            color: AppColors.success,
+                            color: context.colors.success,
                             fontWeight: FontWeight.bold,
                             fontSize: 10,
                           ),
@@ -87,7 +87,7 @@ class DashboardScreen extends ConsumerWidget {
             const SizedBox(height: 28),
 
             // PERFORMANCE OVERVIEW SECTION
-            _buildSectionTitle('PERFORMANCE OVERVIEW'),
+            _buildSectionTitle(context, 'PERFORMANCE OVERVIEW'),
             const SizedBox(height: 10),
             GridView.count(
               shrinkWrap: true,
@@ -98,6 +98,7 @@ class DashboardScreen extends ConsumerWidget {
               childAspectRatio: 1.35,
               children: [
                 _buildMetricActionCard(
+                  context: context,
                   icon: LucideIcons.users,
                   title: 'Followers',
                   value: shop.followers.toString(),
@@ -106,6 +107,7 @@ class DashboardScreen extends ConsumerWidget {
                   iconColor: Colors.pink.shade700,
                 ),
                 _buildMetricActionCard(
+                  context: context,
                   icon: LucideIcons.eye,
                   title: 'Profile Views',
                   value: '0',
@@ -114,6 +116,7 @@ class DashboardScreen extends ConsumerWidget {
                   iconColor: Colors.blue.shade700,
                 ),
                 _buildMetricActionCard(
+                  context: context,
                   icon: LucideIcons.sparkles,
                   title: 'Total Leads',
                   value: shopLeads.length.toString(),
@@ -122,6 +125,7 @@ class DashboardScreen extends ConsumerWidget {
                   iconColor: Colors.amber.shade700,
                 ),
                 _buildMetricActionCard(
+                  context: context,
                   icon: LucideIcons.percent,
                   title: 'Offer Clicks',
                   value: '0',
@@ -134,10 +138,10 @@ class DashboardScreen extends ConsumerWidget {
             const SizedBox(height: 28),
 
             // RECENT LEADS SECTION
-            _buildSectionTitle('RECENT ACTIVE LEADS'),
+            _buildSectionTitle(context, 'RECENT ACTIVE LEADS'),
             const SizedBox(height: 10),
             shopLeads.isEmpty
-                ? _buildEmptyState('No customer leads generated yet.')
+                ? _buildEmptyState(context, 'No customer leads generated yet.')
                 : _buildSectionCard(
                     context,
                     children: [
@@ -159,11 +163,11 @@ class DashboardScreen extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                icon: const Icon(LucideIcons.arrowRight, size: 14, color: AppColors.textPrimary),
-                label: const Text('View All Leads', style: TextStyle(color: AppColors.textPrimary)),
+                icon: Icon(LucideIcons.arrowRight, size: 14, color: context.colors.textPrimary),
+                label: Text('View All Leads', style: TextStyle(color: context.colors.textPrimary)),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: const BorderSide(color: AppColors.border),
+                  side: BorderSide(color: context.colors.border),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
                 ),
                 onPressed: () {
@@ -179,13 +183,13 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.only(left: 4.0),
       child: Text(
         title,
         style: AppTypography.label.copyWith(
-          color: AppColors.textSecondary,
+          color: context.colors.textSecondary,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.0,
           fontSize: 11,
@@ -197,14 +201,14 @@ class DashboardScreen extends ConsumerWidget {
   Widget _buildSectionCard(BuildContext context, {required List<Widget> children}) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: context.colors.border, width: 1),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(15),
         child: Material(
-          color: AppColors.surface,
+          color: context.colors.surface,
           child: Column(
             children: children,
           ),
@@ -214,6 +218,7 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildMetricActionCard({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String value,
@@ -242,7 +247,7 @@ class DashboardScreen extends ConsumerWidget {
                 Text(
                   subtitle,
                   style: AppTypography.label.copyWith(
-                    color: AppColors.success,
+                    color: context.colors.success,
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
                   ),
@@ -257,7 +262,7 @@ class DashboardScreen extends ConsumerWidget {
                   style: AppTypography.heading.copyWith(
                     fontWeight: FontWeight.w900,
                     fontSize: 24,
-                    color: AppColors.textPrimary,
+                    color: context.colors.textPrimary,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -265,7 +270,7 @@ class DashboardScreen extends ConsumerWidget {
                 Text(
                   title,
                   style: AppTypography.label.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.colors.textSecondary,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -283,7 +288,7 @@ class DashboardScreen extends ConsumerWidget {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: AppColors.border,
+          color: context.colors.border,
           shape: BoxShape.circle,
         ),
         child: Icon(
@@ -291,7 +296,7 @@ class DashboardScreen extends ConsumerWidget {
               ? LucideIcons.messageSquare
               : (lead.type == LeadType.discountRequest ? LucideIcons.percent : LucideIcons.heart),
           size: 16,
-          color: AppColors.primary,
+          color: context.colors.primary,
         ),
       ),
       title: Text(
@@ -304,7 +309,7 @@ class DashboardScreen extends ConsumerWidget {
       subtitle: Text(
         'Interested in ${lead.productName}',
         style: AppTypography.label.copyWith(
-          color: AppColors.textSecondary,
+          color: context.colors.textSecondary,
           fontSize: 11,
         ),
       ),
@@ -315,21 +320,21 @@ class DashboardScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
               color: lead.status == 'New'
-                  ? AppColors.offerOrange.withValues(alpha: 0.1)
-                  : AppColors.success.withValues(alpha: 0.1),
+                  ? context.colors.offerOrange.withValues(alpha: 0.1)
+                  : context.colors.success.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
               lead.status,
               style: AppTypography.label.copyWith(
-                color: lead.status == 'New' ? AppColors.offerOrange : AppColors.success,
+                color: lead.status == 'New' ? context.colors.offerOrange : context.colors.success,
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
           const SizedBox(width: 8),
-          Icon(LucideIcons.chevronRight, size: 14, color: AppColors.textSecondary.withValues(alpha: 0.7)),
+          Icon(LucideIcons.chevronRight, size: 14, color: context.colors.textSecondary.withValues(alpha: 0.7)),
         ],
       ),
       onTap: () {
@@ -339,22 +344,22 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(String msg) {
+  Widget _buildEmptyState(BuildContext context, String msg) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.colors.border),
       ),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(LucideIcons.inbox, size: 40, color: AppColors.border),
+            Icon(LucideIcons.inbox, size: 40, color: context.colors.border),
             const SizedBox(height: 12),
-            Text(msg, style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+            Text(msg, style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
           ],
         ),
       ),

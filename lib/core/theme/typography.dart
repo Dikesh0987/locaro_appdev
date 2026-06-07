@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'colors.dart';
 
 class AppTypography {
   AppTypography._();
 
   static TextStyle get _base => GoogleFonts.inter(
-        color: AppColors.textPrimary,
         letterSpacing: -0.2, // Inter looks slightly better with tight tracking
       );
 

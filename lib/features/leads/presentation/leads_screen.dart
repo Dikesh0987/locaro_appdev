@@ -26,16 +26,16 @@ class LeadsScreen extends ConsumerWidget {
     }
   }
 
-  Color _getLeadTypeColor(LeadType type) {
+  Color _getLeadTypeColor(BuildContext context, LeadType type) {
     switch (type) {
       case LeadType.discountRequest:
-        return AppColors.offerOrange;
+        return context.colors.offerOrange;
       case LeadType.whatsappClick:
         return Colors.green.shade600;
       case LeadType.interested:
-        return AppColors.primary;
+        return context.colors.primary;
       case LeadType.saved:
-        return AppColors.secondary;
+        return context.colors.secondary;
       case LeadType.callClick:
         return Colors.blue.shade600;
     }
@@ -59,11 +59,11 @@ class LeadsScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(LucideIcons.users, size: 48, color: AppColors.textSecondary),
+                  Icon(LucideIcons.users, size: 48, color: context.colors.textSecondary),
                   const SizedBox(height: AppSpacing.s12),
                   Text(
                     'No active leads yet.',
-                    style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                    style: AppTypography.body.copyWith(color: context.colors.textSecondary),
                   ),
                   const SizedBox(height: AppSpacing.s8),
                   Padding(
@@ -71,7 +71,7 @@ class LeadsScreen extends ConsumerWidget {
                     child: Text(
                       'Leads are generated when users tap WhatsApp, Interested, or Ask Discount on your products.',
                       textAlign: TextAlign.center,
-                      style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+                      style: AppTypography.label.copyWith(color: context.colors.textSecondary),
                     ),
                   ),
                 ],
@@ -83,7 +83,7 @@ class LeadsScreen extends ConsumerWidget {
               separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.s12),
               itemBuilder: (context, index) {
                 final lead = leads[index];
-                final typeColor = _getLeadTypeColor(lead.type);
+                final typeColor = _getLeadTypeColor(context, lead.type);
                 final typeText = _getLeadTypeString(lead.type);
 
                 return BaseCard(
@@ -128,7 +128,7 @@ class LeadsScreen extends ConsumerWidget {
                             Text(
                               '${DateTime.now().difference(lead.createdAt).inMinutes}m ago',
                               style: AppTypography.label.copyWith(
-                                color: AppColors.textSecondary,
+                                color: context.colors.textSecondary,
                                 fontSize: 10,
                               ),
                             ),
@@ -142,17 +142,17 @@ class LeadsScreen extends ConsumerWidget {
                         const SizedBox(height: 2),
                         Text(
                           'Phone: ${lead.userPhone}',
-                          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                          style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
                         ),
                         const SizedBox(height: AppSpacing.s8),
                         Text(
                           'Product: ${lead.productName}',
                           style: AppTypography.caption.copyWith(
-                            color: AppColors.primary,
+                            color: context.colors.primary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const Divider(color: AppColors.border, height: 24),
+                        Divider(color: context.colors.border, height: 24),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -162,7 +162,7 @@ class LeadsScreen extends ConsumerWidget {
                                   height: 8,
                                   width: 8,
                                   decoration: BoxDecoration(
-                                    color: lead.status == 'New' ? AppColors.offerOrange : AppColors.success,
+                                    color: lead.status == 'New' ? context.colors.offerOrange : context.colors.success,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -181,7 +181,7 @@ class LeadsScreen extends ConsumerWidget {
                                 child: Text(
                                   'Mark Contacted',
                                   style: AppTypography.label.copyWith(
-                                    color: AppColors.primary,
+                                    color: context.colors.primary,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),

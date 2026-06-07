@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
@@ -81,11 +81,11 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                     onTap: () => Navigator.pop(context),
                     child: Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(LucideIcons.arrowLeft, size: 20, color: AppColors.primary),
+                      child: Icon(LucideIcons.arrowLeft, size: 20, color: context.colors.primary),
                     ),
                   ),
                 ),
@@ -95,8 +95,8 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                   left: AppSpacing.mobilePadding,
                   child: Container(
                     padding: const EdgeInsets.all(3),
-                    decoration: const BoxDecoration(
-                      color: AppColors.background,
+                    decoration: BoxDecoration(
+                      color: context.colors.background,
                       shape: BoxShape.circle,
                     ),
                     child: FallbackAvatar(
@@ -108,7 +108,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                 ),
               ],
             ),
-            const SizedBox(height: 48),
+            SizedBox(height: 48),
 
             // Shop Metadata
             Padding(
@@ -125,7 +125,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                           style: AppTypography.heading.copyWith(fontSize: 26, fontWeight: FontWeight.w800),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       SizedBox(
                         width: 110,
                         height: 38,
@@ -140,7 +140,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                               )
                             : ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
+                                  backgroundColor: context.colors.primary,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
                                   ),
@@ -159,36 +159,36 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   
                   // Category & Stats Row
                   Row(
                     children: [
-                      Text(shop.category, style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
-                      const SizedBox(width: 8),
+                      Text(shop.category, style: AppTypography.label.copyWith(color: context.colors.textSecondary)),
+                      SizedBox(width: 8),
                       const Icon(LucideIcons.star, size: 12, color: Colors.amber),
-                      const SizedBox(width: 2),
+                      SizedBox(width: 2),
                       Text('${shop.rating} rating', style: AppTypography.label.copyWith(fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 8),
-                      Text('${shop.followers} followers', style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
+                      SizedBox(width: 8),
+                      Text('${shop.followers} followers', style: AppTypography.label.copyWith(color: context.colors.textSecondary)),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.s12),
+                  SizedBox(height: AppSpacing.s12),
                   
                   Text(
                     shop.description,
-                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary, height: 1.4),
+                    style: AppTypography.caption.copyWith(color: context.colors.textSecondary, height: 1.4),
                   ),
-                  const SizedBox(height: AppSpacing.s16),
+                  SizedBox(height: AppSpacing.s16),
                   
                   Row(
                     children: [
-                      Icon(LucideIcons.mapPin, size: 14, color: AppColors.textSecondary),
-                      const SizedBox(width: 4),
+                      Icon(LucideIcons.mapPin, size: 14, color: context.colors.textSecondary),
+                      SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           shop.address,
-                          style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+                          style: AppTypography.label.copyWith(color: context.colors.textSecondary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -198,14 +198,14 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.sectionGap),
+            SizedBox(height: AppSpacing.sectionGap),
 
             // Tab Bar
             TabBar(
               controller: _tabController,
-              labelColor: AppColors.primary,
-              unselectedLabelColor: AppColors.textSecondary,
-              indicatorColor: AppColors.primary,
+              labelColor: context.colors.primary,
+              unselectedLabelColor: context.colors.textSecondary,
+              indicatorColor: context.colors.primary,
               indicatorSize: TabBarIndicatorSize.tab,
               labelStyle: AppTypography.caption.copyWith(fontWeight: FontWeight.bold),
               tabs: const [
@@ -230,7 +230,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                   case 3:
                     return _buildReviewsTab(context);
                   default:
-                    return const SizedBox();
+                    return SizedBox();
                 }
               },
             ),
@@ -281,17 +281,17 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 p.name,
                 style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Text(
                 '₹${p.discountPrice?.toStringAsFixed(0) ?? p.price.toStringAsFixed(0)}',
-                style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: AppColors.primary),
+                style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: context.colors.primary),
               ),
             ],
           ),
@@ -309,7 +309,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(AppSpacing.mobilePadding),
       itemCount: offers.length,
-      separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.s12),
+      separatorBuilder: (context, index) => SizedBox(height: AppSpacing.s12),
       itemBuilder: (context, index) {
         final o = offers[index];
         return BaseCard(
@@ -324,25 +324,25 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.offerOrange.withValues(alpha: 0.1),
+                          color: context.colors.offerOrange.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           o.discount,
                           style: AppTypography.label.copyWith(
-                            color: AppColors.offerOrange,
+                            color: context.colors.offerOrange,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(o.title, style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 4),
-                      Text(o.description, style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                      SizedBox(height: 4),
+                      Text(o.description, style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
                     ],
                   ),
                 ),
-                const Icon(LucideIcons.chevronRight, color: AppColors.textSecondary),
+                Icon(LucideIcons.chevronRight, color: context.colors.textSecondary),
               ],
             ),
           ),
@@ -360,7 +360,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(AppSpacing.mobilePadding),
       itemCount: posts.length,
-      separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.s16),
+      separatorBuilder: (context, index) => SizedBox(height: AppSpacing.s16),
       itemBuilder: (context, index) {
         final post = posts[index];
         return Column(
@@ -375,17 +375,17 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                 height: 200,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               post.caption,
               style: AppTypography.caption.copyWith(height: 1.4),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Row(
               children: [
-                const Icon(LucideIcons.heart, size: 14, color: AppColors.textSecondary),
-                const SizedBox(width: 4),
-                Text('${post.likes} likes', style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
+                Icon(LucideIcons.heart, size: 14, color: context.colors.textSecondary),
+                SizedBox(width: 4),
+                Text('${post.likes} likes', style: AppTypography.label.copyWith(color: context.colors.textSecondary)),
               ],
             ),
           ],
@@ -404,24 +404,24 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.border.withValues(alpha: 0.5),
+                color: context.colors.border.withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 LucideIcons.messageSquare,
                 size: 40,
-                color: AppColors.secondary,
+                color: context.colors.secondary,
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(
               'No reviews yet',
               style: AppTypography.body.copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               'Customers haven\'t left any reviews for this shop yet.',
-              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+              style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
               textAlign: TextAlign.center,
             ),
           ],
@@ -441,21 +441,21 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.border.withValues(alpha: 0.5),
+                  color: context.colors.border.withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   icon,
                   size: 40,
-                  color: AppColors.secondary,
+                  color: context.colors.secondary,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
             ],
             Text(
               msg,
               textAlign: TextAlign.center,
-              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+              style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
             ),
           ],
         ),

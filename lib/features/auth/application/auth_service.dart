@@ -340,10 +340,10 @@ class AuthService {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: context.colors.border,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(LucideIcons.lock, size: 32, color: AppColors.primary),
+                child: Icon(LucideIcons.lock, size: 32, color: context.colors.primary),
               ),
               const SizedBox(height: 20),
               Text(
@@ -354,7 +354,7 @@ class AuthService {
               Text(
                 'To like, save products, write reviews, and follow shops, you need to sign in with your Google account.',
                 textAlign: TextAlign.center,
-                style: AppTypography.body.copyWith(color: AppColors.textSecondary, height: 1.4),
+                style: AppTypography.body.copyWith(color: context.colors.textSecondary, height: 1.4),
               ),
               const SizedBox(height: 28),
               PrimaryButton(
@@ -370,7 +370,7 @@ class AuthService {
                 onPressed: () => Navigator.pop(context),
                 child: Text(
                   'Maybe Later',
-                  style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                  style: AppTypography.body.copyWith(color: context.colors.textSecondary),
                 ),
               ),
               const SizedBox(height: 16),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../theme/colors.dart';
 import '../../theme/typography.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
@@ -74,17 +74,17 @@ class BottomNavBar extends StatelessWidget {
           ];
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        border: Border(top: BorderSide(color: context.colors.border, width: 1)),
       ),
       child: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: onTap,
         type: BottomNavigationBarType.fixed,
-        backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.secondary,
+        backgroundColor: context.colors.surface,
+        selectedItemColor: context.colors.primary,
+        unselectedItemColor: context.colors.secondary,
         showSelectedLabels: false,
         showUnselectedLabels: false,
         selectedLabelStyle: AppTypography.label.copyWith(fontWeight: FontWeight.w600),

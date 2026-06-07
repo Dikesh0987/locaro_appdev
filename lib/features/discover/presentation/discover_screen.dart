@@ -41,11 +41,11 @@ class DiscoverScreen extends ConsumerWidget {
                     contentPadding: const EdgeInsets.symmetric(vertical: 14),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
-                      borderSide: const BorderSide(color: AppColors.border),
+                      borderSide: BorderSide(color: context.colors.border),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
-                      borderSide: const BorderSide(color: AppColors.border),
+                      borderSide: BorderSide(color: context.colors.border),
                     ),
                   ),
                 ),
@@ -56,7 +56,7 @@ class DiscoverScreen extends ConsumerWidget {
             // Trending Products
             _buildSectionHeader(context, 'Trending Products', () {}),
             if (products.isEmpty)
-              _buildEmptyState('No Products Available', LucideIcons.packageOpen)
+              _buildEmptyState(context, 'No Products Available', LucideIcons.packageOpen)
             else
               SizedBox(
                 height: 220,
@@ -103,7 +103,7 @@ class DiscoverScreen extends ConsumerWidget {
                             '₹${p.discountPrice?.toStringAsFixed(0) ?? p.price.toStringAsFixed(0)}',
                             style: AppTypography.caption.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
+                              color: context.colors.primary,
                             ),
                           ),
                         ],
@@ -118,7 +118,7 @@ class DiscoverScreen extends ConsumerWidget {
             // Nearby Shops
             _buildSectionHeader(context, 'Nearby Shops', () {}),
             if (shops.isEmpty)
-              _buildEmptyState('No Shops Nearby', LucideIcons.store)
+              _buildEmptyState(context, 'No Shops Nearby', LucideIcons.store)
             else
               SizedBox(
                 height: 180,
@@ -163,7 +163,7 @@ class DiscoverScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 s.category,
-                                style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+                                style: AppTypography.label.copyWith(color: context.colors.textSecondary),
                               ),
                               const SizedBox(width: 4),
                               const Icon(LucideIcons.star, size: 10, color: Colors.amber),
@@ -186,7 +186,7 @@ class DiscoverScreen extends ConsumerWidget {
             // Popular Offers
             _buildSectionHeader(context, 'Popular Offers', () {}),
             if (offers.isEmpty)
-              _buildEmptyState('No Offers Available', LucideIcons.tag)
+              _buildEmptyState(context, 'No Offers Available', LucideIcons.tag)
             else
               ListView.separated(
               physics: const NeverScrollableScrollPhysics(),
@@ -239,14 +239,14 @@ class DiscoverScreen extends ConsumerWidget {
                               const SizedBox(height: 4),
                               Text(
                                 shop.shopName,
-                                style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                                style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 o.description,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+                                style: AppTypography.label.copyWith(color: context.colors.textSecondary),
                               ),
                             ],
                           ),
@@ -262,7 +262,7 @@ class DiscoverScreen extends ConsumerWidget {
             // New in Town
             _buildSectionHeader(context, 'New in Town', () {}),
             if (shops.isEmpty)
-              _buildEmptyState('No New Shops', LucideIcons.store)
+              _buildEmptyState(context, 'No New Shops', LucideIcons.store)
             else
               SizedBox(
                 height: 180,
@@ -306,7 +306,7 @@ class DiscoverScreen extends ConsumerWidget {
                           ),
                           Text(
                             s.category,
-                            style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+                            style: AppTypography.label.copyWith(color: context.colors.textSecondary),
                           ),
                         ],
                       ),
@@ -336,7 +336,7 @@ class DiscoverScreen extends ConsumerWidget {
             child: Text(
               'See all',
               style: AppTypography.caption.copyWith(
-                color: AppColors.primary,
+                color: context.colors.primary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -346,18 +346,18 @@ class DiscoverScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(String message, IconData icon) {
+  Widget _buildEmptyState(BuildContext context, String message, IconData icon) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s32),
       child: Column(
         children: [
-          Icon(icon, size: 48, color: AppColors.border),
+          Icon(icon, size: 48, color: context.colors.border),
           const SizedBox(height: AppSpacing.s12),
           Text(
             message,
             style: AppTypography.body.copyWith(
-              color: AppColors.textSecondary,
+              color: context.colors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),

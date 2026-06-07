@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
@@ -111,8 +111,8 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: _activeImageIndex == index
-                                  ? AppColors.primary
-                                  : AppColors.primary.withValues(alpha: 0.3),
+                                  ? context.colors.primary
+                                  : context.colors.primary.withValues(alpha: 0.3),
                             ),
                           ),
                         ),
@@ -130,11 +130,11 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                             onTap: () => Navigator.pop(context),
                             child: Container(
                               padding: const EdgeInsets.all(8),
-                              decoration: const BoxDecoration(
+                              decoration: BoxDecoration(
                                 color: Colors.white,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(LucideIcons.arrowLeft, size: 20, color: AppColors.primary),
+                              child: Icon(LucideIcons.arrowLeft, size: 20, color: context.colors.primary),
                             ),
                           ),
                           GestureDetector(
@@ -148,14 +148,14 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                             },
                             child: Container(
                               padding: const EdgeInsets.all(8),
-                              decoration: const BoxDecoration(
+                              decoration: BoxDecoration(
                                 color: Colors.white,
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
                                 isSaved ? LucideIcons.bookmark : LucideIcons.bookmark,
                                 size: 20,
-                                color: isSaved ? AppColors.primary : AppColors.textSecondary,
+                                color: isSaved ? context.colors.primary : context.colors.textSecondary,
                               ),
                             ),
                           ),
@@ -164,7 +164,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.s24),
+                SizedBox(height: AppSpacing.s24),
 
                 // Details Content
                 Padding(
@@ -179,25 +179,25 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: AppColors.offerOrange.withValues(alpha: 0.1),
+                                color: context.colors.offerOrange.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 'SALE',
                                 style: AppTypography.label.copyWith(
-                                  color: AppColors.offerOrange,
+                                  color: context.colors.offerOrange,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                           ],
-                          const Icon(LucideIcons.clock, size: 12, color: AppColors.textSecondary),
-                          const SizedBox(width: 4),
-                          Text('Just listed', style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
+                          Icon(LucideIcons.clock, size: 12, color: context.colors.textSecondary),
+                          SizedBox(width: 4),
+                          Text('Just listed', style: AppTypography.label.copyWith(color: context.colors.textSecondary)),
                         ],
                       ),
-                      const SizedBox(height: AppSpacing.s12),
+                      SizedBox(height: AppSpacing.s12),
 
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,7 +208,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                               style: AppTypography.heading.copyWith(fontSize: 24, fontWeight: FontWeight.bold),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
@@ -220,7 +220,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                                 Text(
                                   '₹${product.price.toStringAsFixed(0)}',
                                   style: AppTypography.caption.copyWith(
-                                    color: AppColors.textSecondary,
+                                    color: context.colors.textSecondary,
                                     decoration: TextDecoration.lineThrough,
                                   ),
                                 ),
@@ -228,7 +228,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: AppSpacing.sectionGap),
+                      SizedBox(height: AppSpacing.sectionGap),
 
                       // Shop Card info
                       BaseCard(
@@ -249,7 +249,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                                 radius: 20,
                                 fallbackIcon: LucideIcons.store,
                               ),
-                              const SizedBox(width: AppSpacing.s12),
+                              SizedBox(width: AppSpacing.s12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,7 +260,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                                     ),
                                     Text(
                                       'Verified Studio • 0.8 mi away',
-                                      style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+                                      style: AppTypography.label.copyWith(color: context.colors.textSecondary),
                                     ),
                                   ],
                                 ),
@@ -270,16 +270,16 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.sectionGap),
+                      SizedBox(height: AppSpacing.sectionGap),
 
                       // About Item Description
                       Text('About this item', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: AppSpacing.s8),
+                      SizedBox(height: AppSpacing.s8),
                       Text(
                         product.description,
-                        style: AppTypography.caption.copyWith(color: AppColors.textSecondary, height: 1.5),
+                        style: AppTypography.caption.copyWith(color: context.colors.textSecondary, height: 1.5),
                       ),
-                      const SizedBox(height: AppSpacing.sectionGap),
+                      SizedBox(height: AppSpacing.sectionGap),
 
                       // Specification details grid inspired by Airbnb list
                       GridView.count(
@@ -315,9 +315,9 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                 top: AppSpacing.s16,
                 bottom: 24,
               ),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+                border: Border(top: BorderSide(color: context.colors.border, width: 1)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -326,11 +326,11 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          icon: const Icon(LucideIcons.heart, size: 16, color: AppColors.primary),
-                          label: const Text('Interested', style: TextStyle(color: AppColors.textPrimary)),
+                          icon: Icon(LucideIcons.heart, size: 16, color: context.colors.primary),
+                          label: Text('Interested', style: TextStyle(color: context.colors.textPrimary)),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            side: const BorderSide(color: AppColors.border),
+                            side: BorderSide(color: context.colors.border),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
                             ),
@@ -341,14 +341,14 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                           },
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.s12),
+                      SizedBox(width: AppSpacing.s12),
                       Expanded(
                         child: OutlinedButton.icon(
-                          icon: const Icon(LucideIcons.percent, size: 16, color: AppColors.offerOrange),
-                          label: const Text('Ask Discount', style: TextStyle(color: AppColors.textPrimary)),
+                          icon: Icon(LucideIcons.percent, size: 16, color: context.colors.offerOrange),
+                          label: Text('Ask Discount', style: TextStyle(color: context.colors.textPrimary)),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            side: const BorderSide(color: AppColors.border),
+                            side: BorderSide(color: context.colors.border),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
                             ),
@@ -360,7 +360,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.s12),
+                  SizedBox(height: AppSpacing.s12),
                   SizedBox(
                     width: double.infinity,
                     height: 52,
@@ -391,9 +391,9 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -401,23 +401,23 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 12, color: AppColors.textSecondary),
-              const SizedBox(width: 6),
+              Icon(icon, size: 12, color: context.colors.textSecondary),
+              SizedBox(width: 6),
               Text(
                 header,
                 style: AppTypography.label.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.colors.textSecondary,
                   fontSize: 9,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             value,
             style: AppTypography.label.copyWith(
-              color: AppColors.textPrimary,
+              color: context.colors.textPrimary,
               fontWeight: FontWeight.bold,
             ),
             maxLines: 1,
