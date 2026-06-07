@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.nearo"
+    namespace = "com.nearo.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -16,7 +16,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.nearo"
+        applicationId = "com.nearo.app"
 
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion

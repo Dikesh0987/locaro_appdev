@@ -6,7 +6,6 @@ import 'core/theme/app_theme.dart';
 import 'routes/app_routes.dart';
 import 'providers/app_state_providers.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -15,11 +14,7 @@ void main() async {
   } catch (_) {
     // Ignore configuration errors on unsupported desktop/test platforms
   }
-  runApp(
-    const ProviderScope(
-      child: NearoApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: NearoApp()));
 }
 
 class NearoApp extends ConsumerWidget {

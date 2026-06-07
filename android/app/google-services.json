@@ -1,41 +1,41 @@
 {
   "project_info": {
-    "project_number": "437900110124",
-    "project_id": "nearo-2c0d5",
-    "storage_bucket": "nearo-2c0d5.firebasestorage.app"
+    "project_number": "893246561309",
+    "project_id": "nearo-f6b25",
+    "storage_bucket": "nearo-f6b25.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:437900110124:android:4844a47b4d2e174b552489",
+        "mobilesdk_app_id": "1:893246561309:android:bd00c03989b6f7f0897af4",
         "android_client_info": {
-          "package_name": "com.example.nearo"
+          "package_name": "com.nearo.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "437900110124-9fg06f9m3941hcuak102mbo0i1d8379s.apps.googleusercontent.com",
+          "client_id": "893246561309-a94nutcc1ktjjtqrfiegh6e14m6prkfs.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.nearo",
+            "package_name": "com.nearo.app",
             "certificate_hash": "1518fe8ca2c139c7e1af6f234fb407332f6b7c18"
           }
         },
         {
-          "client_id": "437900110124-pfbruqpups3qvvaafulpp0pa9im9mq7o.apps.googleusercontent.com",
+          "client_id": "893246561309-m53nj92lhqmbi7idcoop97gsintbub2l.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCyVy442OQa4uQW-Kb0Xqu7IfO0eR7vALs"
+          "current_key": "AIzaSyC61luNMEdASpnk4rsLhksXA1VmBGuWvms"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "437900110124-pfbruqpups3qvvaafulpp0pa9im9mq7o.apps.googleusercontent.com",
+              "client_id": "893246561309-m53nj92lhqmbi7idcoop97gsintbub2l.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
