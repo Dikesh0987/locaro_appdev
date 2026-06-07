@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -19,9 +19,25 @@ import '../../products/presentation/product_details_screen.dart';
 import '../../auth/application/auth_service.dart';
 import '../../auth/data/auth_repository.dart';
 import 'settings_screen.dart';
+import '../../../core/widgets/common/skeleton_loaders.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) setState(() => _isLoading = false);
+    });
+  }
 
   String _formatMemberSince(DateTime dt) {
     final months = [
@@ -32,7 +48,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final role = ref.watch(appRoleProvider);
     final state = ref.watch(databaseProvider);
 
@@ -55,6 +71,20 @@ class ProfileScreen extends ConsumerWidget {
     final user = dbState.currentUser;
     final savedProducts = dbState.products.where((p) => user.savedProducts.contains(p.id)).toList();
     final followedShops = dbState.shops.where((s) => user.followingShops.contains(s.id)).toList();
+
+    if (_isLoading) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Profile',
+            style: AppTypography.display.copyWith(fontWeight: FontWeight.w900, fontSize: 28, letterSpacing: -0.8),
+          ),
+          const SizedBox(height: 20),
+          const ProfileSkeletonHeader(),
+        ],
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,6 +356,20 @@ class ProfileScreen extends ConsumerWidget {
   // ==========================================
   Widget _buildOwnerProfile(BuildContext context, WidgetRef ref, NearoDataState dbState) {
     final shop = dbState.currentShop;
+
+    if (_isLoading) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Merchant Profile',
+            style: AppTypography.display.copyWith(fontWeight: FontWeight.w900, fontSize: 28, letterSpacing: -0.8),
+          ),
+          const SizedBox(height: 20),
+          const ProfileSkeletonHeader(),
+        ],
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

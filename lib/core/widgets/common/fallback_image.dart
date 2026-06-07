@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/colors.dart';
+import 'skeleton_loaders.dart';
 
 class FallbackAvatar extends StatelessWidget {
   final String imageUrl;
@@ -16,14 +18,31 @@ class FallbackAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: radius,
-      backgroundColor: context.colors.border,
-      backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-      onBackgroundImageError: imageUrl.isNotEmpty ? (e, s) {} : null,
-      child: imageUrl.isEmpty 
-          ? Icon(fallbackIcon, size: radius, color: context.colors.textSecondary) 
-          : null,
+    if (imageUrl.isEmpty) {
+      return CircleAvatar(
+        radius: radius,
+        backgroundColor: context.colors.border,
+        child: Icon(fallbackIcon, size: radius, color: context.colors.textSecondary),
+      );
+    }
+
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      imageBuilder: (context, imageProvider) => CircleAvatar(
+        radius: radius,
+        backgroundImage: imageProvider,
+      ),
+      placeholder: (context, url) => SkeletonContainer(
+        width: radius * 2,
+        height: radius * 2,
+        borderRadius: radius,
+      ),
+      errorWidget: (context, url, error) => CircleAvatar(
+        radius: radius,
+        backgroundColor: context.colors.border,
+        child: Icon(fallbackIcon, size: radius, color: context.colors.textSecondary),
+      ),
+      fadeInDuration: const Duration(milliseconds: 250),
     );
   }
 }
@@ -57,12 +76,17 @@ class FallbackImage extends StatelessWidget {
       );
     }
 
-    return Image.network(
-      imageUrl,
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
       fit: fit,
       width: width,
       height: height,
-      errorBuilder: (context, error, stackTrace) => Container(
+      placeholder: (context, url) => SkeletonContainer(
+        width: width ?? double.infinity,
+        height: height ?? double.infinity,
+        borderRadius: 0,
+      ),
+      errorWidget: (context, url, error) => Container(
         width: width,
         height: height,
         color: context.colors.border,
@@ -70,21 +94,7 @@ class FallbackImage extends StatelessWidget {
           child: Icon(fallbackIcon, size: 48, color: context.colors.textSecondary),
         ),
       ),
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        return Container(
-          width: width,
-          height: height,
-          color: context.colors.border,
-          child: const Center(
-            child: SizedBox(
-              height: 24,
-              width: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
-        );
-      },
+      fadeInDuration: const Duration(milliseconds: 250),
     );
   }
 }

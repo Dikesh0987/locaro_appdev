@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
@@ -13,6 +13,7 @@ import '../../../models/product_model.dart';
 import '../../../models/offer_model.dart';
 import '../../../models/post_model.dart';
 import '../../auth/application/auth_service.dart';
+import '../../../core/widgets/common/skeleton_loaders.dart';
 
 
 class ShopProfileScreen extends ConsumerStatefulWidget {
@@ -26,11 +27,15 @@ class ShopProfileScreen extends ConsumerStatefulWidget {
 
 class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) setState(() => _isLoading = false);
+    });
   }
 
   @override
@@ -243,6 +248,21 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
   // --- TAB SUB-PAGES ---
 
   Widget _buildProductsTab(BuildContext context, List<ProductModel> products) {
+    if (_isLoading) {
+      return GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSpacing.mobilePadding),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: AppSpacing.s16,
+          crossAxisSpacing: AppSpacing.s16,
+          childAspectRatio: 0.78,
+        ),
+        itemCount: 4,
+        itemBuilder: (context, index) => const ProductSkeletonCard(),
+      );
+    }
     if (products.isEmpty) {
       return _buildEmptyTab('No active products posted by this merchant.', LucideIcons.packageOpen);
     }
@@ -301,6 +321,40 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
   }
 
   Widget _buildOffersTab(BuildContext context, List<OfferModel> offers) {
+    if (_isLoading) {
+      return ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSpacing.mobilePadding),
+        itemCount: 3,
+        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.s12),
+        itemBuilder: (context, index) {
+          return BaseCard(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.s12),
+              child: Row(
+                children: [
+                  const SkeletonContainer(width: 80, height: 80, borderRadius: 8),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        SkeletonContainer(width: double.infinity, height: 16, borderRadius: 4),
+                        SizedBox(height: 8),
+                        SkeletonContainer(width: 100, height: 12, borderRadius: 4),
+                        SizedBox(height: 8),
+                        SkeletonContainer(width: double.infinity, height: 12, borderRadius: 4),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    }
     if (offers.isEmpty) {
       return _buildEmptyTab('No custom discount offers currently running.', LucideIcons.tag);
     }
@@ -352,6 +406,16 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
   }
 
   Widget _buildPostsTab(BuildContext context, List<PostModel> posts) {
+    if (_isLoading) {
+      return ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSpacing.mobilePadding),
+        itemCount: 2,
+        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.s16),
+        itemBuilder: (context, index) => const FeedSkeletonCard(),
+      );
+    }
     if (posts.isEmpty) {
       return _buildEmptyTab('No updates shared yet.', LucideIcons.newspaper);
     }
