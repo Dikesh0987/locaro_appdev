@@ -20,10 +20,13 @@ class UserModel {
   final String themeMode; // 'light', 'dark', 'system'
   final double latitude;
   final double longitude;
+  final String? fcmToken;
 
   // Backward compatibility fields for followed shops and saved products
   final List<String> followingShops;
   final List<String> savedProducts;
+  final List<String> likedProducts;
+  final List<String> likedPosts;
 
   // Granular notification settings (Offers, Nearby Deals, Comments, Followers, Announcements, Marketing)
   final Map<String, bool> notificationSettings;
@@ -48,9 +51,12 @@ class UserModel {
     required this.themeMode,
     required this.followingShops,
     required this.savedProducts,
+    required this.likedProducts,
+    required this.likedPosts,
     required this.notificationSettings,
     this.latitude = 0.0,
     this.longitude = 0.0,
+    this.fcmToken,
   });
 
   factory UserModel.empty() {
@@ -74,9 +80,12 @@ class UserModel {
       themeMode: 'system',
       followingShops: [],
       savedProducts: [],
+      likedProducts: [],
+      likedPosts: [],
       notificationSettings: {},
       latitude: 0.0,
       longitude: 0.0,
+      fcmToken: null,
     );
   }
 
@@ -104,9 +113,12 @@ class UserModel {
     String? themeMode,
     List<String>? followingShops,
     List<String>? savedProducts,
+    List<String>? likedProducts,
+    List<String>? likedPosts,
     Map<String, bool>? notificationSettings,
     double? latitude,
     double? longitude,
+    String? fcmToken,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -128,9 +140,12 @@ class UserModel {
       themeMode: themeMode ?? this.themeMode,
       followingShops: followingShops ?? this.followingShops,
       savedProducts: savedProducts ?? this.savedProducts,
+      likedProducts: likedProducts ?? this.likedProducts,
+      likedPosts: likedPosts ?? this.likedPosts,
       notificationSettings: notificationSettings ?? this.notificationSettings,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
+      fcmToken: fcmToken ?? this.fcmToken,
     );
   }
 
@@ -165,6 +180,8 @@ class UserModel {
       themeMode: map['themeMode'] ?? 'system',
       followingShops: List<String>.from(map['followingShops'] ?? []),
       savedProducts: List<String>.from(map['savedProducts'] ?? []),
+      likedProducts: List<String>.from(map['likedProducts'] ?? []),
+      likedPosts: List<String>.from(map['likedPosts'] ?? []),
       notificationSettings: Map<String, bool>.from(map['notificationSettings'] ?? {
         'offers': true,
         'nearbyDeals': true,
@@ -175,6 +192,7 @@ class UserModel {
       }),
       latitude: (map['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (map['longitude'] as num?)?.toDouble() ?? 0.0,
+      fcmToken: map['fcmToken'] as String?,
     );
   }
 
@@ -199,9 +217,12 @@ class UserModel {
       'themeMode': themeMode,
       'followingShops': followingShops,
       'savedProducts': savedProducts,
+      'likedProducts': likedProducts,
+      'likedPosts': likedPosts,
       'notificationSettings': notificationSettings,
       'latitude': latitude,
       'longitude': longitude,
+      'fcmToken': fcmToken,
     };
   }
 }

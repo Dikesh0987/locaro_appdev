@@ -23,7 +23,7 @@ class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final canPop = Navigator.canPop(context);
     final notifications = ref.watch(notificationsProvider);
-    final unreadCount = notifications.where((n) => n.isUnread).length;
+    final unreadCount = notifications.where((n) => !n.isRead).length;
 
     final leadingWidget = leading ?? (canPop
         ? IconButton(

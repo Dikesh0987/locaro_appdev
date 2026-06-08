@@ -20,6 +20,7 @@ class WelcomeScreen extends ConsumerWidget {
     // Show failure messages if login failed
     if (authState is AuthFailure) {
       Future.microtask(() {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(authState.errorMessage),

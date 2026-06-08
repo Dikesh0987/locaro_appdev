@@ -65,7 +65,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       newSettings['nearbyDeals'] = newNearby;
       newSettings['marketing'] = newMarketing;
 
-      await ref.read(authServiceProvider).updateNotificationSettings(newSettings);
+      await ref.read(authServiceProvider).updateNotificationSettings(newPush, newSettings);
       
       await fcmService.updateTopicSubscriptions(
         pushEnabled: newPush,
@@ -73,12 +73,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         nearbyDealsEnabled: newNearby,
         marketingEnabled: newMarketing,
       );
-      
-      final updatedUser = user.copyWith(
-        notificationEnabled: newPush,
-        notificationSettings: newSettings,
-      );
-      await ref.read(databaseProvider.notifier).updateCurrentUser(updatedUser);
     }
   }
 
@@ -98,7 +92,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _showLanguageSelector() {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: Text('Select Language', style: AppTypography.heading),
           content: Column(
@@ -112,7 +106,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onChanged: (val) async {
                   if (val != null) {
                     setState(() => _selectedLanguage = val);
-                    Navigator.pop(context);
+                    Navigator.pop(dialogContext);
                     
                     final user = ref.read(databaseProvider).currentUser;
                     if (!user.isGuest) {
@@ -213,7 +207,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _showDeleteAccountDialog() {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Delete Account?', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           content: const Text(
@@ -223,12 +217,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           actions: [
             TextButton(
               child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
             ),
             TextButton(
               child: const Text('Delete', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
               onPressed: () async {
-                Navigator.pop(context); // Close dialog
+                Navigator.pop(dialogContext); // Close dialog
                 try {
                   await ref.read(authServiceProvider).handleDeleteAccount();
                   if (mounted) {
@@ -531,7 +525,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         trailing: Switch.adaptive(
           value: val,
           onChanged: onChanged,
-          activeColor: context.colors.primary,
+          activeTrackColor: context.colors.primary,
         ),
       ),
     );

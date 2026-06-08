@@ -62,6 +62,9 @@ class AuthService {
         marketingEnabled: updatedUser.notificationSettings['marketing'] ?? false,
       );
 
+      // Sync FCM Token
+      await fcmService.syncToken();
+
       return updatedUser;
     } else {
       // New User - Auto create account
@@ -92,7 +95,7 @@ class AuthService {
           'followers': true,
           'announcements': true,
           'marketing': false,
-        },
+        }, likedProducts: [], likedPosts: [],
       );
 
       // Write user profile to Firestore
@@ -116,6 +119,9 @@ class AuthService {
         nearbyDealsEnabled: newUser.notificationSettings['nearbyDeals'] ?? true,
         marketingEnabled: newUser.notificationSettings['marketing'] ?? false,
       );
+
+      // Sync FCM Token
+      await fcmService.syncToken();
 
       return newUser;
     }
@@ -156,7 +162,7 @@ class AuthService {
         'followers': false,
         'announcements': false,
         'marketing': false,
-      },
+      }, likedProducts: [], likedPosts: [],
     );
 
     // Save Guest user to Firestore
@@ -253,15 +259,19 @@ class AuthService {
   }
 
   // Save Notification Preference
-  Future<void> updateNotificationSettings(Map<String, bool> settings) async {
+  Future<void> updateNotificationSettings(bool enabled, Map<String, bool> settings) async {
     final user = _ref.read(databaseProvider).currentUser;
     if (!user.isGuest) {
       await _repository.updateUserDoc(user.uid, {
+        'notificationEnabled': enabled,
         'notificationSettings': settings,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
       
-      final updatedUser = user.copyWith(notificationSettings: settings);
+      final updatedUser = user.copyWith(
+        notificationEnabled: enabled,
+        notificationSettings: settings,
+      );
       _ref.read(databaseProvider.notifier).setCurrentUser(updatedUser);
     }
   }

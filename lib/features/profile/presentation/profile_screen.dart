@@ -1163,7 +1163,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void _showDeleteAccountDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Delete Account?', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           content: const Text(
@@ -1173,18 +1173,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           actions: [
             TextButton(
               child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
             ),
             TextButton(
               child: const Text('Delete', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
               onPressed: () async {
-                Navigator.pop(context); // Close dialog
+                Navigator.pop(dialogContext); // Close dialog
                 try {
                   await ref.read(authServiceProvider).handleDeleteAccount();
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Account successfully deleted.'), backgroundColor: Colors.red),
                   );
                 } catch (e) {
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Failed to delete account: ${e.toString()}')),
                   );
@@ -1201,6 +1203,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     try {
       await ref.read(authServiceProvider).handleSignOut();
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Sign out failed: ${e.toString()}')),
       );
@@ -1213,10 +1216,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (image != null) {
       try {
         await ref.read(authServiceProvider).changeProfilePhoto(File(image.path));
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile photo updated successfully.')),
         );
       } catch (e) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to update photo: ${e.toString()}')),
         );
@@ -1236,10 +1241,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         );
         final updatedShop = shop.copyWith(logoUrl: url);
         await ref.read(databaseProvider.notifier).updateCurrentShop(updatedShop);
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Shop logo updated successfully.')),
         );
       } catch (e) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to update logo: ${e.toString()}')),
         );
@@ -1259,10 +1266,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         );
         final updatedShop = shop.copyWith(bannerUrl: url);
         await ref.read(databaseProvider.notifier).updateCurrentShop(updatedShop);
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Shop banner updated successfully.')),
         );
       } catch (e) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to update banner: ${e.toString()}')),
         );

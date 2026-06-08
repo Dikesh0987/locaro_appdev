@@ -15,6 +15,7 @@ import '../../../models/offer_model.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
 import '../../auth/application/auth_service.dart';
 import '../../../core/widgets/common/skeleton_loaders.dart';
+import '../../../core/widgets/common/animated_action_icon.dart';
 import '../application/home_feed_provider.dart';
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -227,39 +228,45 @@ class _FeedCard extends ConsumerStatefulWidget {
   ConsumerState<_FeedCard> createState() => _FeedCardState();
 }
 
-class _FeedCardState extends ConsumerState<_FeedCard>
-    with SingleTickerProviderStateMixin {
-  bool _isLiked = false;
-  late AnimationController _likeController;
-  late Animation<double> _likeScale;
+class _FeedCardState extends ConsumerState<_FeedCard> {
+  bool? _localIsLiked;
+  bool? _localIsSaved;
 
-  @override
-  void initState() {
-    super.initState();
-    _likeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 150),
-    );
-    _likeScale = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
-    ]).animate(_likeController);
+  bool get _isLiked {
+    final dbState = ref.read(databaseProvider);
+    return _localIsLiked ?? dbState.currentUser.likedPosts.contains(widget.post.id);
   }
 
-  @override
-  void dispose() {
-    _likeController.dispose();
-    super.dispose();
+  bool get _isSaved {
+    if (widget.linkedProduct == null) return false;
+    final dbState = ref.read(databaseProvider);
+    return _localIsSaved ?? dbState.currentUser.savedProducts.contains(widget.linkedProduct!.id);
   }
 
   void _triggerLike() {
     ref.read(authServiceProvider).checkGuest(
           context,
           onAllowed: () {
-            setState(() => _isLiked = !_isLiked);
-            if (_isLiked) {
-              _likeController.forward(from: 0.0);
-              ref.read(databaseProvider.notifier).toggleLikePost(widget.post.id);
+            setState(() {
+              _localIsLiked = !_isLiked;
+            });
+            ref.read(databaseProvider.notifier).toggleLikePost(widget.post.id);
+          },
+        );
+  }
+
+  void _triggerSave() {
+    if (widget.linkedProduct == null) return;
+    ref.read(authServiceProvider).checkGuest(
+          context,
+          onAllowed: () {
+            final wasSaved = _isSaved;
+            setState(() {
+              _localIsSaved = !wasSaved;
+            });
+            ref.read(databaseProvider.notifier).toggleSaveProduct(widget.linkedProduct!.id);
+            if (!wasSaved) {
+              _generateLead(LeadType.saved, 'Product Saved');
             }
           },
         );
@@ -301,10 +308,9 @@ class _FeedCardState extends ConsumerState<_FeedCard>
 
   @override
   Widget build(BuildContext context) {
-    final dbState = ref.watch(databaseProvider);
-    final isSaved =
-        widget.linkedProduct != null &&
-        dbState.currentUser.savedProducts.contains(widget.linkedProduct!.id);
+    ref.watch(databaseProvider);
+    final isSaved = _isSaved;
+    final isLiked = _isLiked;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,15 +402,16 @@ class _FeedCardState extends ConsumerState<_FeedCard>
           padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
           child: Row(
             children: [
-              ScaleTransition(
-                scale: _likeScale,
-                child: IconButton(
-                  icon: Icon(
-                    _isLiked ? LucideIcons.heart : LucideIcons.heart,
-                    color: _isLiked ? context.colors.error : context.colors.primary,
-                  ),
-                  onPressed: _triggerLike,
+              IconButton(
+                icon: AnimatedActionIcon(
+                  icon: Icons.favorite_border,
+                  activeIcon: Icons.favorite,
+                  isActive: isLiked,
+                  inactiveColor: context.colors.primary,
+                  activeColor: context.colors.error,
+                  size: 24,
                 ),
+                onPressed: _triggerLike,
               ),
               IconButton(
                 icon: const Icon(LucideIcons.messageCircle),
@@ -421,25 +428,15 @@ class _FeedCardState extends ConsumerState<_FeedCard>
               const Spacer(),
               if (widget.linkedProduct != null)
                 IconButton(
-                  icon: Icon(
-                    isSaved ? LucideIcons.bookmark : LucideIcons.bookmark,
-                    color: isSaved
-                        ? context.colors.primary
-                        : context.colors.textSecondary,
+                  icon: AnimatedActionIcon(
+                    icon: Icons.bookmark_border,
+                    activeIcon: Icons.bookmark,
+                    isActive: isSaved,
+                    inactiveColor: context.colors.textSecondary,
+                    activeColor: context.colors.primary,
+                    size: 24,
                   ),
-                  onPressed: () {
-                    ref.read(authServiceProvider).checkGuest(
-                          context,
-                          onAllowed: () {
-                            ref
-                                .read(databaseProvider.notifier)
-                                .toggleSaveProduct(widget.linkedProduct!.id);
-                            if (!isSaved) {
-                              _generateLead(LeadType.saved, 'Product Saved');
-                            }
-                          },
-                        );
-                  },
+                  onPressed: _triggerSave,
                 ),
             ],
           ),
@@ -583,39 +580,43 @@ class _ProductFeedCard extends ConsumerStatefulWidget {
   ConsumerState<_ProductFeedCard> createState() => _ProductFeedCardState();
 }
 
-class _ProductFeedCardState extends ConsumerState<_ProductFeedCard>
-    with SingleTickerProviderStateMixin {
-  bool _isLiked = false;
-  late AnimationController _likeController;
-  late Animation<double> _likeScale;
+class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
+  bool? _localIsLiked;
+  bool? _localIsSaved;
 
-  @override
-  void initState() {
-    super.initState();
-    _likeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 150),
-    );
-    _likeScale = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
-    ]).animate(_likeController);
+  bool get _isLiked {
+    final dbState = ref.read(databaseProvider);
+    return _localIsLiked ?? dbState.currentUser.likedProducts.contains(widget.product.id);
   }
 
-  @override
-  void dispose() {
-    _likeController.dispose();
-    super.dispose();
+  bool get _isSaved {
+    final dbState = ref.read(databaseProvider);
+    return _localIsSaved ?? dbState.currentUser.savedProducts.contains(widget.product.id);
   }
 
   void _triggerLike() {
     ref.read(authServiceProvider).checkGuest(
           context,
           onAllowed: () {
-            setState(() => _isLiked = !_isLiked);
-            if (_isLiked) {
-              _likeController.forward(from: 0.0);
-              ref.read(databaseProvider.notifier).toggleLikeProduct(widget.product.id);
+            setState(() {
+              _localIsLiked = !_isLiked;
+            });
+            ref.read(databaseProvider.notifier).toggleLikeProduct(widget.product.id);
+          },
+        );
+  }
+
+  void _triggerSave() {
+    ref.read(authServiceProvider).checkGuest(
+          context,
+          onAllowed: () {
+            final wasSaved = _isSaved;
+            setState(() {
+              _localIsSaved = !wasSaved;
+            });
+            ref.read(databaseProvider.notifier).toggleSaveProduct(widget.product.id);
+            if (!wasSaved) {
+              _generateLead(LeadType.saved, 'Product Bookmarked');
             }
           },
         );
@@ -655,8 +656,9 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard>
 
   @override
   Widget build(BuildContext context) {
-    final dbState = ref.watch(databaseProvider);
-    final isSaved = dbState.currentUser.savedProducts.contains(widget.product.id);
+    ref.watch(databaseProvider);
+    final isSaved = _isSaved;
+    final isLiked = _isLiked;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -761,15 +763,16 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard>
           padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
           child: Row(
             children: [
-              ScaleTransition(
-                scale: _likeScale,
-                child: IconButton(
-                  icon: Icon(
-                    _isLiked ? LucideIcons.heart : LucideIcons.heart,
-                    color: _isLiked ? context.colors.error : context.colors.primary,
-                  ),
-                  onPressed: _triggerLike,
+              IconButton(
+                icon: AnimatedActionIcon(
+                  icon: Icons.favorite_border,
+                  activeIcon: Icons.favorite,
+                  isActive: isLiked,
+                  inactiveColor: context.colors.primary,
+                  activeColor: context.colors.error,
+                  size: 24,
                 ),
+                onPressed: _triggerLike,
               ),
               IconButton(
                 icon: const Icon(LucideIcons.messageCircle),
@@ -785,23 +788,15 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard>
               ),
               const Spacer(),
               IconButton(
-                icon: Icon(
-                  isSaved ? LucideIcons.bookmark : LucideIcons.bookmark,
-                  color: isSaved ? context.colors.primary : context.colors.textSecondary,
+                icon: AnimatedActionIcon(
+                  icon: Icons.bookmark_border,
+                  activeIcon: Icons.bookmark,
+                  isActive: isSaved,
+                  inactiveColor: context.colors.textSecondary,
+                  activeColor: context.colors.primary,
+                  size: 24,
                 ),
-                onPressed: () {
-                  ref.read(authServiceProvider).checkGuest(
-                        context,
-                        onAllowed: () {
-                          ref
-                              .read(databaseProvider.notifier)
-                              .toggleSaveProduct(widget.product.id);
-                          if (!isSaved) {
-                            _generateLead(LeadType.saved, 'Product Bookmarked');
-                          }
-                        },
-                      );
-                },
+                onPressed: _triggerSave,
               ),
             ],
           ),

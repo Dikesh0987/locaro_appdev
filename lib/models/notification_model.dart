@@ -1,63 +1,82 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class NotificationModel {
   final String id;
+  final String userId;
   final String title;
   final String body;
-  final String time;
-  final String logoUrl;
-  final bool isUnread;
-  final String category; // 'Offers', 'Followers', 'Comments', 'System'
+  final String type;
+  final String referenceId;
+  final bool isRead;
+  final DateTime createdAt;
 
   NotificationModel({
     required this.id,
+    required this.userId,
     required this.title,
     required this.body,
-    required this.time,
-    required this.logoUrl,
-    required this.isUnread,
-    required this.category,
+    required this.type,
+    required this.referenceId,
+    required this.isRead,
+    required this.createdAt,
   });
 
   NotificationModel copyWith({
     String? id,
+    String? userId,
     String? title,
     String? body,
-    String? time,
-    String? logoUrl,
-    bool? isUnread,
-    String? category,
+    String? type,
+    String? referenceId,
+    bool? isRead,
+    DateTime? createdAt,
   }) {
     return NotificationModel(
       id: id ?? this.id,
+      userId: userId ?? this.userId,
       title: title ?? this.title,
       body: body ?? this.body,
-      time: time ?? this.time,
-      logoUrl: logoUrl ?? this.logoUrl,
-      isUnread: isUnread ?? this.isUnread,
-      category: category ?? this.category,
+      type: type ?? this.type,
+      referenceId: referenceId ?? this.referenceId,
+      isRead: isRead ?? this.isRead,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
   factory NotificationModel.fromMap(Map<String, dynamic> map) {
+    DateTime parseDateTime(dynamic val) {
+      if (val is Timestamp) {
+        return val.toDate();
+      } else if (val is String) {
+        return DateTime.parse(val);
+      } else {
+        return DateTime.now();
+      }
+    }
+
     return NotificationModel(
       id: map['id'] ?? '',
+      userId: map['userId'] ?? '',
       title: map['title'] ?? '',
       body: map['body'] ?? '',
-      time: map['time'] ?? '',
-      logoUrl: map['logoUrl'] ?? '',
-      isUnread: map['isUnread'] ?? false,
-      category: map['category'] ?? 'System',
+      type: map['type'] ?? 'System',
+      referenceId: map['referenceId'] ?? '',
+      isRead: map['isRead'] ?? false,
+      createdAt: parseDateTime(map['createdAt']),
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'userId': userId,
       'title': title,
       'body': body,
-      'time': time,
-      'logoUrl': logoUrl,
-      'isUnread': isUnread,
-      'category': category,
+      'type': type,
+      'referenceId': referenceId,
+      'isRead': isRead,
+      'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 }
+

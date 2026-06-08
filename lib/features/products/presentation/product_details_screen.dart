@@ -11,6 +11,7 @@ import '../../../models/lead_model.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
 import '../../auth/application/auth_service.dart';
 import '../../../core/widgets/common/skeleton_loaders.dart';
+import '../../../core/widgets/common/animated_action_icon.dart';
 
 class ProductDetailsScreen extends ConsumerStatefulWidget {
   final String productId;
@@ -77,6 +78,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
     );
 
     final isSaved = state.currentUser.savedProducts.contains(product.id);
+    final isLiked = state.currentUser.likedProducts.contains(product.id);
 
     if (_isLoading) {
       return const Scaffold(
@@ -170,10 +172,13 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                                 color: Colors.white,
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(
-                                isSaved ? LucideIcons.bookmark : LucideIcons.bookmark,
+                              child: AnimatedActionIcon(
+                                icon: LucideIcons.bookmark,
+                                activeIcon: LucideIcons.bookmark, // Or another icon if available
+                                isActive: isSaved,
+                                inactiveColor: context.colors.textSecondary,
+                                activeColor: context.colors.primary,
                                 size: 20,
-                                color: isSaved ? context.colors.primary : context.colors.textSecondary,
                               ),
                             ),
                           ),
@@ -344,8 +349,18 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          icon: Icon(LucideIcons.heart, size: 16, color: context.colors.primary),
-                          label: Text('Interested', style: TextStyle(color: context.colors.textPrimary)),
+                          icon: AnimatedActionIcon(
+                            icon: LucideIcons.heart,
+                            activeIcon: LucideIcons.heart, // Consider using a filled heart if available
+                            isActive: isLiked,
+                            inactiveColor: context.colors.primary,
+                            activeColor: Colors.red,
+                            size: 16,
+                          ),
+                          label: Text(
+                            isLiked ? 'Interested' : 'Interested',
+                            style: TextStyle(color: context.colors.textPrimary),
+                          ),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             side: BorderSide(color: context.colors.border),
@@ -355,7 +370,9 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                           ),
                           onPressed: () {
                             ref.read(databaseProvider.notifier).toggleLikeProduct(product.id);
-                            _generateLead(LeadType.interested, 'Interested action', product.shopId, product.name);
+                            if (!isLiked) {
+                              _generateLead(LeadType.interested, 'Interested action', product.shopId, product.name);
+                            }
                           },
                         ),
                       ),

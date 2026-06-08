@@ -229,11 +229,10 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
           'userId': userId,
           'title': title,
           'body': body,
-          'time': 'Just now',
+          'type': category,
+          'referenceId': shopId,
+          'isRead': false,
           'createdAt': FieldValue.serverTimestamp(),
-          'logoUrl': state.currentShop.logoUrl,
-          'isUnread': true,
-          'category': category,
         };
         final docRef = firestore.collection('notifications').doc(notificationId);
         batch.set(docRef, newNotification);
@@ -246,6 +245,10 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
 
   // Lead Generation writes to Firestore
   Future<void> addLead(LeadModel lead) async {
+    // Deduplicate leads: if this user already generated the same type of lead for this product, skip.
+    final exists = state.leads.any((l) => l.userId == lead.userId && l.productId == lead.productId && l.type == lead.type);
+    if (exists) return;
+
     await FirebaseFirestore.instance
         .collection('leads')
         .doc(lead.id)
@@ -254,7 +257,7 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
     // Notify the shop owner in real time
     try {
       final shop = state.shops.firstWhere((s) => s.id == lead.shopId);
-      final notificationId = 'notif_${DateTime.now().millisecondsSinceEpoch}_owner_lead';
+      final notificationId = 'notif_lead_${lead.type.name}_${lead.productId}_${lead.userId}';
       await FirebaseFirestore.instance
           .collection('notifications')
           .doc(notificationId)
@@ -263,11 +266,10 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
             'userId': shop.ownerUid,
             'title': 'New Lead: ${lead.userName}',
             'body': 'Interested in ${lead.productName} (${lead.type.name})',
-            'time': 'Just now',
+            'type': 'Followers',
+            'referenceId': lead.productId,
+            'isRead': false,
             'createdAt': FieldValue.serverTimestamp(),
-            'logoUrl': state.currentUser.photoUrl,
-            'isUnread': true,
-            'category': 'Followers',
           });
     } catch (_) {}
   }
@@ -313,11 +315,10 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
                 'userId': shop.ownerUid,
                 'title': user.name,
                 'body': 'Started following your shop updates.',
-                'time': 'Just now',
+                'type': 'Followers',
+                'referenceId': user.uid,
+                'isRead': false,
                 'createdAt': FieldValue.serverTimestamp(),
-                'logoUrl': user.photoUrl,
-                'isUnread': true,
-                'category': 'Followers',
               });
         } catch (_) {}
       }
@@ -349,7 +350,7 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
       try {
         final product = state.products.firstWhere((p) => p.id == productId);
         final shop = state.shops.firstWhere((s) => s.id == product.shopId);
-        final notificationId = 'notif_${DateTime.now().millisecondsSinceEpoch}_save';
+        final notificationId = 'notif_save_${productId}_${user.uid}';
         await FirebaseFirestore.instance
             .collection('notifications')
             .doc(notificationId)
@@ -358,11 +359,10 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
               'userId': shop.ownerUid,
               'title': 'Product Saved',
               'body': '${user.name} bookmarked ${product.name}.',
-              'time': 'Just now',
+              'type': 'System',
+              'referenceId': productId,
+              'isRead': false,
               'createdAt': FieldValue.serverTimestamp(),
-              'logoUrl': user.photoUrl,
-              'isUnread': true,
-              'category': 'System',
             });
       } catch (_) {}
     }
@@ -370,42 +370,85 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
 
   // Like a product
   Future<void> toggleLikeProduct(String productId) async {
+    final user = state.currentUser;
+    if (user.isGuest) return;
+
+    final liked = List<String>.from(user.likedProducts);
+    bool isLiking = !liked.contains(productId);
+
+    if (isLiking) {
+      liked.add(productId);
+    } else {
+      liked.remove(productId);
+    }
+
+    final updatedUser = user.copyWith(likedProducts: liked);
+    state = state.copyWith(currentUser: updatedUser);
+
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+      'likedProducts': liked,
+    });
+
     final productIndex = state.products.indexWhere((p) => p.id == productId);
     if (productIndex != -1) {
       final product = state.products[productIndex];
+      final newLikes = isLiking ? product.likes + 1 : (product.likes > 0 ? product.likes - 1 : 0);
+      
       await FirebaseFirestore.instance.collection('products').doc(productId).update({
-        'likes': product.likes + 1,
+        'likes': newLikes,
       });
 
       // Notify owner of the product like
-      try {
-        final shop = state.shops.firstWhere((s) => s.id == product.shopId);
-        final notificationId = 'notif_${DateTime.now().millisecondsSinceEpoch}_like';
-        await FirebaseFirestore.instance
-            .collection('notifications')
-            .doc(notificationId)
-            .set({
-              'id': notificationId,
-              'userId': shop.ownerUid,
-              'title': 'Product Liked',
-              'body': '${state.currentUser.name} liked ${product.name}.',
-              'time': 'Just now',
-              'createdAt': FieldValue.serverTimestamp(),
-              'logoUrl': state.currentUser.photoUrl,
-              'isUnread': true,
-              'category': 'System',
-            });
-      } catch (_) {}
+      if (isLiking) {
+        try {
+          final shop = state.shops.firstWhere((s) => s.id == product.shopId);
+          final notificationId = 'notif_like_${productId}_${user.uid}';
+          await FirebaseFirestore.instance
+              .collection('notifications')
+              .doc(notificationId)
+              .set({
+                'id': notificationId,
+                'userId': shop.ownerUid,
+                'title': 'Product Liked',
+                'body': '${state.currentUser.name} liked ${product.name}.',
+                'type': 'System',
+                'referenceId': productId,
+                'isRead': false,
+                'createdAt': FieldValue.serverTimestamp(),
+              });
+        } catch (_) {}
+      }
     }
   }
 
   // Like a post
   Future<void> toggleLikePost(String postId) async {
+    final user = state.currentUser;
+    if (user.isGuest) return;
+
+    final liked = List<String>.from(user.likedPosts);
+    bool isLiking = !liked.contains(postId);
+
+    if (isLiking) {
+      liked.add(postId);
+    } else {
+      liked.remove(postId);
+    }
+
+    final updatedUser = user.copyWith(likedPosts: liked);
+    state = state.copyWith(currentUser: updatedUser);
+
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+      'likedPosts': liked,
+    });
+
     final postIndex = state.posts.indexWhere((p) => p.id == postId);
     if (postIndex != -1) {
       final post = state.posts[postIndex];
+      final newLikes = isLiking ? post.likes + 1 : (post.likes > 0 ? post.likes - 1 : 0);
+      
       await FirebaseFirestore.instance.collection('posts').doc(postId).update({
-        'likes': post.likes + 1,
+        'likes': newLikes,
       });
     }
   }

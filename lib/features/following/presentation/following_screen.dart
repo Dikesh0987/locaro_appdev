@@ -13,6 +13,7 @@ import '../../../models/shop_model.dart';
 import '../../../models/offer_model.dart';
 import '../../../models/post_model.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
+import '../../../core/widgets/common/animated_action_icon.dart';
 
 class FollowingScreen extends ConsumerWidget {
   const FollowingScreen({super.key});
@@ -421,10 +422,10 @@ class _PostCard extends ConsumerStatefulWidget {
 }
 
 class _PostCardState extends ConsumerState<_PostCard> {
-  bool _isLiked = false;
-
   @override
   Widget build(BuildContext context) {
+    final dbState = ref.watch(databaseProvider);
+    final isLiked = dbState.currentUser.likedPosts.contains(widget.post.id);
     return BaseCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -467,18 +468,20 @@ class _PostCardState extends ConsumerState<_PostCard> {
             child: Row(
               children: [
                 IconButton(
-                  icon: Icon(
-                    _isLiked ? LucideIcons.heart : LucideIcons.heart,
-                    color: _isLiked ? context.colors.error : context.colors.primary,
+                  icon: AnimatedActionIcon(
+                    icon: LucideIcons.heart,
+                    activeIcon: LucideIcons.heart,
+                    isActive: isLiked,
+                    inactiveColor: context.colors.primary,
+                    activeColor: context.colors.error,
                     size: 20,
                   ),
                   onPressed: () {
-                    setState(() => _isLiked = !_isLiked);
                     ref.read(databaseProvider.notifier).toggleLikePost(widget.post.id);
                   },
                 ),
                 Text(
-                  '${widget.post.likes + (_isLiked ? 1 : 0)}',
+                  '${widget.post.likes}',
                   style: AppTypography.label.copyWith(fontWeight: FontWeight.bold),
                 ),
                 SizedBox(width: 16),

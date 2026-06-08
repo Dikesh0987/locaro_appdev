@@ -9,6 +9,8 @@ import 'routes/app_routes.dart';
 import 'providers/app_state_providers.dart';
 import 'core/services/fcm_service.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -17,7 +19,7 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   
   // Initialize FCM Service for foreground and permissions
-  await fcmService.init();
+  await fcmService.init(navigatorKey);
 
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
@@ -43,6 +45,7 @@ class LocaroApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
+      navigatorKey: navigatorKey,
       initialRoute: AppRoutes.initial,
       routes: AppRoutes.routes,
     );

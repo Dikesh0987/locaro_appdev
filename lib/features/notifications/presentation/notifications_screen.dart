@@ -1,11 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/cards/base_card.dart';
-import '../../../core/widgets/common/fallback_image.dart';
 import '../../../providers/notification_providers.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
@@ -22,12 +21,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final notifications = ref.watch(notificationsProvider);
-    final unreadCount = notifications.where((n) => n.isUnread).length;
+    final unreadCount = notifications.where((n) => !n.isRead).length;
 
     // Filter notifications
     final filteredNotifications = _selectedFilter == 'All'
         ? notifications
-        : notifications.where((n) => n.category.toLowerCase() == _selectedFilter.toLowerCase()).toList();
+        : notifications.where((n) => n.type.toLowerCase() == _selectedFilter.toLowerCase()).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -145,17 +144,34 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       separatorBuilder: (context, index) => SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final notification = filteredNotifications[index];
-                        return BaseCard(
-                          onTap: () {
-                            ref.read(notificationsProvider.notifier).toggleUnread(notification.id);
+                        final timeString = _formatTime(notification.createdAt);
+
+                        return Dismissible(
+                          key: Key(notification.id),
+                          direction: DismissDirection.endToStart,
+                          onDismissed: (direction) {
+                            ref.read(notificationsProvider.notifier).deleteNotification(notification.id);
                           },
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 20.0),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(LucideIcons.trash2, color: Colors.white),
+                          ),
+                          child: BaseCard(
+                            onTap: () {
+                              ref.read(notificationsProvider.notifier).toggleRead(notification.id);
+                            },
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 // Unread Indicator Dot
-                                if (notification.isUnread)
+                                if (!notification.isRead)
                                   Container(
                                     margin: const EdgeInsets.only(top: 18, right: 8),
                                     height: 8,
@@ -169,10 +185,18 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                   SizedBox(width: 16),
 
                                 // Sender Avatar
-                                FallbackAvatar(
-                                  imageUrl: notification.logoUrl,
-                                  radius: 22,
-                                  fallbackIcon: LucideIcons.sparkles,
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: context.colors.border,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    _getIconForType(notification.type),
+                                    color: context.colors.textSecondary,
+                                    size: 20,
+                                  ),
                                 ),
                                 SizedBox(width: AppSpacing.s12),
 
@@ -194,7 +218,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                             ),
                                           ),
                                           Text(
-                                            notification.time,
+                                            timeString,
                                             style: AppTypography.label.copyWith(
                                               color: context.colors.textSecondary,
                                               fontSize: 10,
@@ -219,7 +243,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Text(
-                                          notification.category,
+                                          notification.type,
                                           style: AppTypography.label.copyWith(
                                             color: context.colors.textSecondary,
                                             fontSize: 9,
@@ -233,8 +257,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                               ],
                             ),
                           ),
-                        );
-                      },
+                        ),
+                      );
+                    },
                     ),
                   ),
           ),
@@ -269,5 +294,29 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         ],
       ),
     );
+  }
+
+  String _formatTime(DateTime time) {
+    final diff = DateTime.now().difference(time);
+    if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}m ago';
+    } else if (diff.inHours < 24) {
+      return '${diff.inHours}h ago';
+    } else {
+      return '${diff.inDays}d ago';
+    }
+  }
+
+  IconData _getIconForType(String type) {
+    switch (type.toLowerCase()) {
+      case 'offers':
+        return LucideIcons.tag;
+      case 'followers':
+        return LucideIcons.users;
+      case 'comments':
+        return LucideIcons.messageCircle;
+      default:
+        return LucideIcons.bell;
+    }
   }
 }

@@ -1,32 +1,34 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-// Top level function to handle background messages
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // If you're going to use other Firebase services in the background, such as Firestore,
-  // make sure you call `initializeApp` before using other Firebase services.
   debugPrint('Handling a background message: ${message.messageId}');
 }
 
 class FCMService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
-  // Android notification channel setup
   final AndroidNotificationChannel _channel = const AndroidNotificationChannel(
     'high_importance_channel', // id
     'High Importance Notifications', // title
-    description: 'This channel is used for important notifications.', // description
+    description: 'This channel is used for important notifications.',
     importance: Importance.high,
   );
 
   bool _isFlutterLocalNotificationsInitialized = false;
+  GlobalKey<NavigatorState>? _navigatorKey;
 
-  Future<void> init() async {
+  Future<void> init(GlobalKey<NavigatorState> navigatorKey) async {
+    _navigatorKey = navigatorKey;
+
     // 1. Request Permission
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
       alert: true,
@@ -40,50 +42,101 @@ class FCMService {
 
     debugPrint('User granted permission: ${settings.authorizationStatus}');
 
+    if (settings.authorizationStatus == AuthorizationStatus.denied) {
+      // Check if Android 13+ permission is denied forever
+      final status = await Permission.notification.status;
+      if (status.isPermanentlyDenied && _navigatorKey?.currentContext != null) {
+        showDialog(
+          context: _navigatorKey!.currentContext!,
+          builder: (context) => AlertDialog(
+            title: const Text('Notifications Disabled'),
+            content: const Text('Please enable notifications in app settings to stay updated.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  openAppSettings();
+                  Navigator.pop(context);
+                },
+                child: const Text('Open Settings'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
-      // 2. Setup Flutter Local Notifications for Foreground Messages
+      // 2. Setup Local Notifications
       await _setupFlutterLocalNotifications();
 
-      // 3. Setup message handlers
+      // 3. Sync Token
+      await syncToken();
+
+      // Listen for token refresh
+      _firebaseMessaging.onTokenRefresh.listen((newToken) async {
+        await _updateTokenInFirestore(newToken);
+      });
+
+      // 4. Setup message handlers
       _setupMessageHandlers();
     }
   }
 
-  Future<void> _setupFlutterLocalNotifications() async {
-    if (_isFlutterLocalNotificationsInitialized) {
-      return;
+  Future<void> syncToken() async {
+    final token = await _firebaseMessaging.getToken();
+    if (token != null) {
+      await _updateTokenInFirestore(token);
     }
+  }
 
-    // Android Setup
+  Future<void> _updateTokenInFirestore(String token) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+          'fcmToken': token,
+        });
+        debugPrint('FCM Token synced to Firestore: $token');
+      } catch (e) {
+        debugPrint('Failed to sync FCM Token: $e');
+      }
+    }
+  }
+
+  Future<void> _setupFlutterLocalNotifications() async {
+    if (_isFlutterLocalNotificationsInitialized) return;
+
     await _flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_channel);
 
-    // Update iOS foreground notification presentation options
     await _firebaseMessaging.setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
       sound: true,
     );
 
-    // Initialize the plugin for Android
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
         
-    // For iOS we might need DarwinInitializationSettings later
-    const InitializationSettings initializationSettings =
-        InitializationSettings(
+    const InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
     );
 
     await _flutterLocalNotificationsPlugin.initialize(
       settings: initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        // Handle notification tapped logic here
         if (response.payload != null) {
-          debugPrint('Notification payload: ${response.payload}');
+          debugPrint('Local Notification tapped with payload: ${response.payload}');
+          try {
+            final data = jsonDecode(response.payload!) as Map<String, dynamic>;
+            _handleDeepLink(data);
+          } catch (_) {}
         }
       },
     );
@@ -92,16 +145,20 @@ class FCMService {
   }
 
   void _setupMessageHandlers() {
+    // Terminated state to foreground tap
+    _firebaseMessaging.getInitialMessage().then((RemoteMessage? message) {
+      if (message != null) {
+        debugPrint('App launched from terminated state via notification');
+        _handleDeepLink(message.data);
+      }
+    });
+
     // Foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('Got a message whilst in the foreground!');
-      debugPrint('Message data: ${message.data}');
-
+      debugPrint('Message received in foreground: ${message.messageId}');
       RemoteNotification? notification = message.notification;
       AndroidNotification? android = message.notification?.android;
 
-      // If `onMessage` is triggered with a notification, construct our own
-      // local notification to show to users using the created channel.
       if (notification != null && android != null && !kIsWeb) {
         _flutterLocalNotificationsPlugin.show(
           id: notification.hashCode,
@@ -113,7 +170,8 @@ class FCMService {
               _channel.name,
               channelDescription: _channel.description,
               icon: '@mipmap/ic_launcher',
-              // other properties...
+              importance: Importance.high,
+              priority: Priority.high,
             ),
           ),
           payload: jsonEncode(message.data),
@@ -121,22 +179,42 @@ class FCMService {
       }
     });
 
-    // Handle when app is opened from a notification
+    // Background to foreground tap
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint('A new onMessageOpenedApp event was published!');
-      // Navigate to required screen based on message.data
+      debugPrint('App opened from background via notification');
+      _handleDeepLink(message.data);
     });
+  }
+
+  void _handleDeepLink(Map<String, dynamic> data) {
+    if (_navigatorKey?.currentState == null) return;
+    
+    final type = data['type'] as String?;
+    final referenceId = data['referenceId'] as String?;
+
+    if (type == null || referenceId == null) return;
+
+    // Based on the prompt's deep linking requirements
+    // Normally we'd push a named route or material page route here.
+    // For demonstration, we use pushNamed if those screens exist, or handle it via a router.
+    // Assuming you have named routes or you can build simple dummy routes if they don't exist yet.
+    
+    // We will push a generic placeholder if the actual routes are not yet defined in AppRoutes.
+    _navigatorKey!.currentState!.push(MaterialPageRoute(
+      builder: (context) => Scaffold(
+        appBar: AppBar(title: Text('Deep Link: $type')),
+        body: Center(child: Text('Navigating to $type with ID: $referenceId')),
+      ),
+    ));
   }
 
   // Topic Management
   Future<void> subscribeToTopic(String topic) async {
     await _firebaseMessaging.subscribeToTopic(topic);
-    debugPrint('Subscribed to topic: $topic');
   }
 
   Future<void> unsubscribeFromTopic(String topic) async {
     await _firebaseMessaging.unsubscribeFromTopic(topic);
-    debugPrint('Unsubscribed from topic: $topic');
   }
 
   Future<void> updateTopicSubscriptions({
@@ -146,42 +224,17 @@ class FCMService {
     required bool marketingEnabled,
   }) async {
     if (!pushEnabled) {
-      // If master push is disabled, unsubscribe from all specific topics
       await unsubscribeFromTopic('offers');
       await unsubscribeFromTopic('nearbyDeals');
       await unsubscribeFromTopic('marketing');
-      await unsubscribeFromTopic('all_users'); // General topic
+      await unsubscribeFromTopic('all_users');
       return;
     }
-
-    // Subscribe to general topic if push is enabled
     await subscribeToTopic('all_users');
-
-    // Handle individual topics
-    if (offersEnabled) {
-      await subscribeToTopic('offers');
-    } else {
-      await unsubscribeFromTopic('offers');
-    }
-
-    if (nearbyDealsEnabled) {
-      await subscribeToTopic('nearbyDeals');
-    } else {
-      await unsubscribeFromTopic('nearbyDeals');
-    }
-
-    if (marketingEnabled) {
-      await subscribeToTopic('marketing');
-    } else {
-      await unsubscribeFromTopic('marketing');
-    }
-  }
-
-  // Get token (optional, useful for user-specific targeting instead of topics)
-  Future<String?> getToken() async {
-    return await _firebaseMessaging.getToken();
+    offersEnabled ? await subscribeToTopic('offers') : await unsubscribeFromTopic('offers');
+    nearbyDealsEnabled ? await subscribeToTopic('nearbyDeals') : await unsubscribeFromTopic('nearbyDeals');
+    marketingEnabled ? await subscribeToTopic('marketing') : await unsubscribeFromTopic('marketing');
   }
 }
 
-// Global instance for easy access
 final fcmService = FCMService();

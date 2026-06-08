@@ -20,7 +20,7 @@ class SkeletonContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
       baseColor: const Color(0xFFE8ECF3),
-      highlightColor: const Color(0xFF2A3556).withOpacity(0.06),
+      highlightColor: const Color(0xFF2A3556).withAlpha(15),
       period: const Duration(milliseconds: 1200),
       direction: ShimmerDirection.ltr,
       child: Container(
