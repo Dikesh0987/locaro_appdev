@@ -132,7 +132,7 @@ class AuthService {
     final guestUser = UserModel(
       uid: fbUser.uid,
       name: 'Guest Explorer',
-      email: 'guest@nearo.com',
+      email: 'guest@Locaro.com',
       phone: '',
       photoUrl: '',
       role: 'user',

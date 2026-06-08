@@ -1,4 +1,4 @@
-# nearo
+# locaro
 
 A new Flutter project.
 

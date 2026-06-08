@@ -41,14 +41,14 @@ class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
       title: title != null
           ? Text(title!, style: AppTypography.heading)
           : Text(
-              'Nearo',
+              'Locaro',
               style: AppTypography.heading.copyWith(
                 fontWeight: FontWeight.w900,
                 letterSpacing: -1.0,
                 color: context.colors.primary,
               ),
             ),
-      centerTitle: title == null, // Center only the Nearo logo
+      centerTitle: title == null, // Center only the Locaro logo
       leading: leadingWidget,
       actions: actions ?? [
         IconButton(

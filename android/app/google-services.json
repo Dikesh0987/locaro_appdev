@@ -7,17 +7,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:893246561309:android:bd00c03989b6f7f0897af4",
+        "mobilesdk_app_id": "1:893246561309:android:d5f2ef2291ebd8b4897af4",
         "android_client_info": {
-          "package_name": "com.nearo.app"
+          "package_name": "com.locaro.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "893246561309-a94nutcc1ktjjtqrfiegh6e14m6prkfs.apps.googleusercontent.com",
+          "client_id": "893246561309-fpv7cjsb2u9qvs5p9sr214phsg7dnsck.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.nearo.app",
+            "package_name": "com.locaro.app",
             "certificate_hash": "1518fe8ca2c139c7e1af6f234fb407332f6b7c18"
           }
         },

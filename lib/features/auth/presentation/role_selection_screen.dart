@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
@@ -31,7 +31,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
               const Spacer(),
               Center(
                 child: Text(
-                  'Nearo',
+                  'Locaro',
                   style: AppTypography.display.copyWith(
                     fontSize: 40,
                     letterSpacing: -1.2,

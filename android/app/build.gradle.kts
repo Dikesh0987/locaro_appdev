@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.nearo.app"
+    namespace = "com.locaro.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -17,7 +17,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.nearo.app"
+        applicationId = "com.locaro.app"
 
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion

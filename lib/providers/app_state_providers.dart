@@ -8,11 +8,11 @@ import '../models/product_model.dart';
 import '../models/post_model.dart';
 import '../models/offer_model.dart';
 import '../models/lead_model.dart';
-import '../repositories/nearo_repository.dart';
+import '../repositories/Locaro_repository.dart';
 
 
 // State wrapper for the in-memory database
-class NearoDataState {
+class LocaroDataState {
   final List<ShopModel> shops;
   final List<ProductModel> products;
   final List<OfferModel> offers;
@@ -21,7 +21,7 @@ class NearoDataState {
   final UserModel currentUser;
   final ShopModel currentShop;
 
-  NearoDataState({
+  LocaroDataState({
     required this.shops,
     required this.products,
     required this.offers,
@@ -31,7 +31,7 @@ class NearoDataState {
     required this.currentShop,
   });
 
-  NearoDataState copyWith({
+  LocaroDataState copyWith({
     List<ShopModel>? shops,
     List<ProductModel>? products,
     List<OfferModel>? offers,
@@ -40,7 +40,7 @@ class NearoDataState {
     UserModel? currentUser,
     ShopModel? currentShop,
   }) {
-    return NearoDataState(
+    return LocaroDataState(
       shops: shops ?? this.shops,
       products: products ?? this.products,
       offers: offers ?? this.offers,
@@ -53,7 +53,7 @@ class NearoDataState {
 }
 
 // Database notifier that handles all CRUD and in-memory updates synced with Firestore
-class NearoDatabaseNotifier extends Notifier<NearoDataState> {
+class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
   StreamSubscription? _shopsSub;
   StreamSubscription? _productsSub;
   StreamSubscription? _postsSub;
@@ -61,7 +61,7 @@ class NearoDatabaseNotifier extends Notifier<NearoDataState> {
   StreamSubscription? _leadsSub;
 
   @override
-  NearoDataState build() {
+  LocaroDataState build() {
     _listenToFirestore();
     // _seedDatabaseIfNeeded(); // Disabled to use only real user data
 
@@ -74,14 +74,14 @@ class NearoDatabaseNotifier extends Notifier<NearoDataState> {
       _leadsSub?.cancel();
     });
 
-    return NearoDataState(
+    return LocaroDataState(
       shops: [],
       products: [],
       offers: [],
       posts: [],
       leads: [],
-      currentUser: NearoDatabase.defaultUser,
-      currentShop: NearoDatabase.defaultShop,
+      currentUser: LocaroDatabase.defaultUser,
+      currentShop: LocaroDatabase.defaultShop,
     );
   }
 
@@ -431,8 +431,8 @@ class NearoDatabaseNotifier extends Notifier<NearoDataState> {
 }
 
 // Global Providers
-final databaseProvider = NotifierProvider<NearoDatabaseNotifier, NearoDataState>(() {
-  return NearoDatabaseNotifier();
+final databaseProvider = NotifierProvider<LocaroDatabaseNotifier, LocaroDataState>(() {
+  return LocaroDatabaseNotifier();
 });
 
 // App Role Provider ("user", "owner", or null for auth screen)

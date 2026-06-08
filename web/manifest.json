@@ -1,6 +1,6 @@
 {
-    "name": "nearo",
-    "short_name": "nearo",
+    "name": "locaro",
+    "short_name": "locaro",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

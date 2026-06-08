@@ -112,7 +112,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   const SizedBox(height: 28),
                   // App Title
                   Text(
-                    'Nearo',
+                    'Locaro',
                     style: AppTypography.display.copyWith(
                       color: Colors.white,
                       fontSize: 38,

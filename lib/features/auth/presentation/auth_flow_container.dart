@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -671,7 +671,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           Text('Enable Location & Alerts', style: AppTypography.heading),
           SizedBox(height: AppSpacing.s12),
           Text(
-            'Nearo is built for local discovery. We need location permission to show you stores and products near your block, and notification permission to alert you on active discounts.',
+            'Locaro is built for local discovery. We need location permission to show you stores and products near your block, and notification permission to alert you on active discounts.',
             style: AppTypography.body.copyWith(color: context.colors.textSecondary),
           ),
           const Spacer(),

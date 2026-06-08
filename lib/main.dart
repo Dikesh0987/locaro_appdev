@@ -27,18 +27,18 @@ void main() async {
   } catch (_) {
     // Ignore configuration errors on unsupported desktop/test platforms
   }
-  runApp(const ProviderScope(child: NearoApp()));
+  runApp(const ProviderScope(child: LocaroApp()));
 }
 
-class NearoApp extends ConsumerWidget {
-  const NearoApp({super.key});
+class LocaroApp extends ConsumerWidget {
+  const LocaroApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(appThemeModeProvider);
 
     return MaterialApp(
-      title: 'Nearo',
+      title: 'Locaro',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

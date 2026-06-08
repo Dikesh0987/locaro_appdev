@@ -5,7 +5,7 @@ import '../models/post_model.dart';
 import '../models/offer_model.dart';
 import '../models/lead_model.dart';
 
-class NearoDatabase {
+class LocaroDatabase {
   static final UserModel defaultUser = UserModel.empty();
   static final ShopModel defaultShop = ShopModel.empty();
 

@@ -42,7 +42,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             children: [
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.nearo.app',
+                userAgentPackageName: 'com.Locaro.app',
               ),
               MarkerLayer(
                 markers: shops.where((s) => s.latitude != 0.0 && s.longitude != 0.0).map((shop) {

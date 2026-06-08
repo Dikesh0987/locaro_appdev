@@ -68,7 +68,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   // ==========================================
   // --- USER PROFILE VIEW ---
   // ==========================================
-  Widget _buildUserProfile(BuildContext context, WidgetRef ref, NearoDataState dbState) {
+  Widget _buildUserProfile(BuildContext context, WidgetRef ref, LocaroDataState dbState) {
     final user = dbState.currentUser;
     final savedProducts = dbState.products.where((p) => user.savedProducts.contains(p.id)).toList();
     final followedShops = dbState.shops.where((s) => user.followingShops.contains(s.id)).toList();
@@ -355,7 +355,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   // ==========================================
   // --- SHOP OWNER PROFILE VIEW ---
   // ==========================================
-  Widget _buildOwnerProfile(BuildContext context, WidgetRef ref, NearoDataState dbState) {
+  Widget _buildOwnerProfile(BuildContext context, WidgetRef ref, LocaroDataState dbState) {
     final shop = dbState.currentShop;
 
     if (_isLoading) {
@@ -1286,9 +1286,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  static const String _dummyTerms = 'Welcome to Nearo. By accessing or using our hyperlocal discovery application, you agree to comply with and be bound by these terms. We match users with nearby merchant product catalogs without charging commission. We do not process direct transactions or store card detail info. Purchases are conducted offline or directly via the merchant\'s chosen channels (e.g. WhatsApp).';
+  static const String _dummyTerms = 'Welcome to Locaro. By accessing or using our hyperlocal discovery application, you agree to comply with and be bound by these terms. We match users with nearby merchant product catalogs without charging commission. We do not process direct transactions or store card detail info. Purchases are conducted offline or directly via the merchant\'s chosen channels (e.g. WhatsApp).';
   
-  static const String _dummyPrivacyPolicy = 'At Nearo, we take privacy and local security seriously. We collect approximate location coordinates to retrieve catalog details from shops in your immediate vicinity. This coordinate info is processed locally and never sold or shared. Profile pictures, names, and contact detail info are only visible to merchants you explicitly contact.';
+  static const String _dummyPrivacyPolicy = 'At Locaro, we take privacy and local security seriously. We collect approximate location coordinates to retrieve catalog details from shops in your immediate vicinity. This coordinate info is processed locally and never sold or shared. Profile pictures, names, and contact detail info are only visible to merchants you explicitly contact.';
 }
 
 class _ThemeOptionPill extends StatelessWidget {

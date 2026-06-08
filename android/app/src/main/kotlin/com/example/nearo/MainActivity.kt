@@ -1,4 +1,4 @@
-package com.nearo.app
+package com.locaro.app
 
 import io.flutter.embedding.android.FlutterActivity
 
