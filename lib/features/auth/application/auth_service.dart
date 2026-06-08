@@ -11,6 +11,7 @@ import '../../../providers/auth_provider.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
+import '../../../core/services/fcm_service.dart';
 
 class AuthService {
   final AuthRepository _repository;
@@ -52,6 +53,14 @@ class AuthService {
 
       // Update local theme state
       _setThemeFromStr(updatedUser.themeMode);
+
+      // Sync FCM topics
+      fcmService.updateTopicSubscriptions(
+        pushEnabled: updatedUser.notificationEnabled,
+        offersEnabled: updatedUser.notificationSettings['offers'] ?? true,
+        nearbyDealsEnabled: updatedUser.notificationSettings['nearbyDeals'] ?? true,
+        marketingEnabled: updatedUser.notificationSettings['marketing'] ?? false,
+      );
 
       return updatedUser;
     } else {
@@ -99,6 +108,14 @@ class AuthService {
       
       // Role is not set in shell until onboarding is finished!
       _ref.read(appRoleProvider.notifier).state = null; 
+
+      // Sync FCM topics
+      fcmService.updateTopicSubscriptions(
+        pushEnabled: newUser.notificationEnabled,
+        offersEnabled: newUser.notificationSettings['offers'] ?? true,
+        nearbyDealsEnabled: newUser.notificationSettings['nearbyDeals'] ?? true,
+        marketingEnabled: newUser.notificationSettings['marketing'] ?? false,
+      );
 
       return newUser;
     }
@@ -178,6 +195,14 @@ class AuthService {
       // Sync state
       _ref.read(databaseProvider.notifier).setCurrentUser(updatedUser);
       _setThemeFromStr(updatedUser.themeMode);
+      
+      // Sync FCM topics
+      fcmService.updateTopicSubscriptions(
+        pushEnabled: updatedUser.notificationEnabled,
+        offersEnabled: updatedUser.notificationSettings['offers'] ?? true,
+        nearbyDealsEnabled: updatedUser.notificationSettings['nearbyDeals'] ?? true,
+        marketingEnabled: updatedUser.notificationSettings['marketing'] ?? false,
+      );
       
       if (updatedUser.isOnboardingCompleted) {
         _ref.read(appRoleProvider.notifier).state = updatedUser.role;
@@ -262,6 +287,13 @@ class AuthService {
   Future<void> handleSignOut() async {
     await _repository.signOut();
     _clearLocalProviders();
+    // Unsubscribe from all topics on sign out
+    fcmService.updateTopicSubscriptions(
+      pushEnabled: false,
+      offersEnabled: false,
+      nearbyDealsEnabled: false,
+      marketingEnabled: false,
+    );
   }
 
   // Delete User Account Completely

@@ -6,6 +6,17 @@
 	<string>This app needs access to location when open to show nearby shops and users.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>This app needs access to location when in the background to send alerts for nearby shops.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app requires access to the camera to take photos for your profile or shop.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app requires access to the photo library to select photos for your profile or shop.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app requires access to the microphone for recording videos if needed.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

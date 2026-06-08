@@ -7,6 +7,7 @@ import '../../../core/theme/typography.dart';
 import '../../../core/widgets/common/scale_button.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../auth/application/auth_service.dart';
+import '../../../core/services/fcm_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -65,6 +66,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       newSettings['marketing'] = newMarketing;
 
       await ref.read(authServiceProvider).updateNotificationSettings(newSettings);
+      
+      await fcmService.updateTopicSubscriptions(
+        pushEnabled: newPush,
+        offersEnabled: newOffers,
+        nearbyDealsEnabled: newNearby,
+        marketingEnabled: newMarketing,
+      );
       
       final updatedUser = user.copyWith(
         notificationEnabled: newPush,
