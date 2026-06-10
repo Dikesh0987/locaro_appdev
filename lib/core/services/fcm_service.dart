@@ -6,10 +6,51 @@ import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import '../../features/products/presentation/product_details_screen.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  debugPrint('Handling a background message: ${message.messageId}');
+  await Firebase.initializeApp();
+  debugPrint('================ BACKGROUND NOTIFICATION ================');
+  debugPrint('Message ID: ${message.messageId}');
+  
+  // Extract title and body from notification or data
+  final String? title = message.notification?.title ?? message.data['title'];
+  final String? body = message.notification?.body ?? message.data['body'];
+
+  // If the message is data-only (notification block is null), the OS will NOT show it.
+  // We must show it manually using flutter_local_notifications.
+  if (message.notification == null && title != null && body != null) {
+    final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    
+    await flutterLocalNotificationsPlugin.initialize(
+      settings: const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      ),
+    );
+
+    await flutterLocalNotificationsPlugin.show(
+      id: message.hashCode,
+      title: title,
+      body: body,
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'high_importance_channel',
+          'High Importance Notifications',
+          channelDescription: 'This channel is used for important notifications.',
+          importance: Importance.high,
+          priority: Priority.high,
+          playSound: true,
+          icon: '@mipmap/ic_launcher',
+        ),
+      ),
+      payload: jsonEncode(message.data),
+    );
+    debugPrint('Manually displayed notification for data-only message');
+  }
+
+  debugPrint('=======================================================');
 }
 
 class FCMService {
@@ -21,6 +62,13 @@ class FCMService {
     'High Importance Notifications', // title
     description: 'This channel is used for important notifications.',
     importance: Importance.high,
+  );
+
+  final AndroidNotificationChannel _defaultChannel = const AndroidNotificationChannel(
+    'default_importance_channel', // id
+    'Default Notifications', // title
+    description: 'This channel is used for general notifications.',
+    importance: Importance.defaultImportance,
   );
 
   bool _isFlutterLocalNotificationsInitialized = false;
@@ -111,9 +159,10 @@ class FCMService {
   Future<void> _setupFlutterLocalNotifications() async {
     if (_isFlutterLocalNotificationsInitialized) return;
 
-    await _flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_channel);
+    final androidPlugin = _flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    await androidPlugin?.createNotificationChannel(_channel);
+    await androidPlugin?.createNotificationChannel(_defaultChannel);
 
     await _firebaseMessaging.setForegroundNotificationPresentationOptions(
       alert: true,
@@ -155,7 +204,16 @@ class FCMService {
 
     // Foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('Message received in foreground: ${message.messageId}');
+      debugPrint('================ FOREGROUND NOTIFICATION ================');
+      debugPrint('Notification State: Foreground');
+      debugPrint('Message ID: ${message.messageId}');
+      debugPrint('Message Payload (Data): ${message.data}');
+      if (message.notification != null) {
+        debugPrint('Notification Title: ${message.notification?.title}');
+        debugPrint('Notification Body: ${message.notification?.body}');
+      }
+      debugPrint('=======================================================');
+
       RemoteNotification? notification = message.notification;
       AndroidNotification? android = message.notification?.android;
 
@@ -194,18 +252,18 @@ class FCMService {
 
     if (type == null || referenceId == null) return;
 
-    // Based on the prompt's deep linking requirements
-    // Normally we'd push a named route or material page route here.
-    // For demonstration, we use pushNamed if those screens exist, or handle it via a router.
-    // Assuming you have named routes or you can build simple dummy routes if they don't exist yet.
-    
-    // We will push a generic placeholder if the actual routes are not yet defined in AppRoutes.
-    _navigatorKey!.currentState!.push(MaterialPageRoute(
-      builder: (context) => Scaffold(
-        appBar: AppBar(title: Text('Deep Link: $type')),
-        body: Center(child: Text('Navigating to $type with ID: $referenceId')),
-      ),
-    ));
+    if (type == 'product') {
+      _navigatorKey!.currentState!.push(MaterialPageRoute(
+        builder: (context) => ProductDetailsScreen(productId: referenceId),
+      ));
+    } else {
+      _navigatorKey!.currentState!.push(MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(title: Text('Deep Link: $type')),
+          body: Center(child: Text('Navigating to $type with ID: $referenceId')),
+        ),
+      ));
+    }
   }
 
   // Topic Management

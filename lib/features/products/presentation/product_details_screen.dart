@@ -38,7 +38,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
     ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
       final dbState = ref.read(databaseProvider);
       final newLead = LeadModel(
-        id: 'lead_${DateTime.now().millisecondsSinceEpoch}',
+        id: 'lead_${dbState.currentUser.id}_${widget.productId}_${type.name}',
         userId: dbState.currentUser.id,
         userName: dbState.currentUser.name,
         userPhone: dbState.currentUser.phone,

@@ -17,6 +17,9 @@ class ShopModel {
   final double rating;
   final bool isVerified;
   final String description;
+  final String openTime;
+  final String closeTime;
+  final bool showOnlineStatus;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -37,6 +40,9 @@ class ShopModel {
     required this.rating,
     required this.isVerified,
     required this.description,
+    required this.openTime,
+    required this.closeTime,
+    required this.showOnlineStatus,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -59,6 +65,9 @@ class ShopModel {
       rating: 0.0,
       isVerified: false,
       description: '',
+      openTime: '09:00',
+      closeTime: '21:00',
+      showOnlineStatus: true,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -67,6 +76,28 @@ class ShopModel {
   // Backward compatibility getters
   String get logo => logoUrl;
   String get banner => bannerUrl;
+
+  bool get isOnline {
+    if (!showOnlineStatus) return false;
+    try {
+      final now = DateTime.now();
+      final currentMinutes = now.hour * 60 + now.minute;
+
+      final openParts = openTime.split(':');
+      final openMinutes = int.parse(openParts[0]) * 60 + int.parse(openParts[1]);
+
+      final closeParts = closeTime.split(':');
+      final closeMinutes = int.parse(closeParts[0]) * 60 + int.parse(closeParts[1]);
+
+      if (openMinutes <= closeMinutes) {
+        return currentMinutes >= openMinutes && currentMinutes <= closeMinutes;
+      } else {
+        return currentMinutes >= openMinutes || currentMinutes <= closeMinutes;
+      }
+    } catch (e) {
+      return true;
+    }
+  }
 
   ShopModel copyWith({
     String? id,
@@ -85,6 +116,9 @@ class ShopModel {
     double? rating,
     bool? isVerified,
     String? description,
+    String? openTime,
+    String? closeTime,
+    bool? showOnlineStatus,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -105,6 +139,9 @@ class ShopModel {
       rating: rating ?? this.rating,
       isVerified: isVerified ?? this.isVerified,
       description: description ?? this.description,
+      openTime: openTime ?? this.openTime,
+      closeTime: closeTime ?? this.closeTime,
+      showOnlineStatus: showOnlineStatus ?? this.showOnlineStatus,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -138,6 +175,9 @@ class ShopModel {
       rating: (map['rating'] as num?)?.toDouble() ?? 5.0,
       isVerified: map['isVerified'] ?? false,
       description: map['description'] ?? '',
+      openTime: map['openTime'] ?? '09:00',
+      closeTime: map['closeTime'] ?? '21:00',
+      showOnlineStatus: map['showOnlineStatus'] ?? true,
       createdAt: parseDateTime(map['createdAt']),
       updatedAt: parseDateTime(map['updatedAt']),
     );
@@ -161,6 +201,9 @@ class ShopModel {
       'rating': rating,
       'isVerified': isVerified,
       'description': description,
+      'openTime': openTime,
+      'closeTime': closeTime,
+      'showOnlineStatus': showOnlineStatus,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };

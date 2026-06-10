@@ -44,14 +44,19 @@ class _BaseCardState extends State<BaseCard> {
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 150),
-        opacity: _isPressed ? 0.8 : 1.0, // Subtle opacity feedback as requested
-        child: Card(
-          // Appearance driven by AppTheme.cardTheme
-          child: Padding(
-            padding: widget.padding,
-            child: widget.child,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.96 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeInOut,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 150),
+          opacity: _isPressed ? 0.8 : 1.0, // Subtle opacity feedback
+          child: Card(
+            // Appearance driven by AppTheme.cardTheme
+            child: Padding(
+              padding: widget.padding,
+              child: widget.child,
+            ),
           ),
         ),
       ),

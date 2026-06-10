@@ -201,6 +201,7 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
   }
 
   Future<void> _saveProduct() async {
+    if (_isUploading) return;
     if (!_formKey.currentState!.validate()) return;
     
     if (_imageUrl == null && _selectedImageFile == null) {

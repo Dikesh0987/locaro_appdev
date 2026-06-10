@@ -133,9 +133,37 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
-                        child: Text(
-                          shop.shopName,
-                          style: AppTypography.heading.copyWith(fontSize: 26, fontWeight: FontWeight.w800),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              shop.shopName,
+                              style: AppTypography.heading.copyWith(fontSize: 26, fontWeight: FontWeight.w800),
+                            ),
+                            if (shop.showOnlineStatus) ...[
+                              SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: shop.isOnline ? Colors.green : Colors.grey,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    shop.isOnline ? 'Online Now' : 'Currently Offline',
+                                    style: AppTypography.label.copyWith(
+                                      color: shop.isOnline ? Colors.green : Colors.grey,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ]
+                          ],
                         ),
                       ),
                       SizedBox(width: 12),

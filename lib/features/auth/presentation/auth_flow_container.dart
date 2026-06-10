@@ -106,6 +106,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   }
 
   Future<void> _handleGoogleSignIn() async {
+    if (_isLoading) return;
     setState(() => _isLoading = true);
     try {
       await ref.read(authControllerProvider.notifier).signInWithGoogle(_role);
@@ -154,6 +155,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   }
 
   Future<void> _handleGuestSignIn() async {
+    if (_isLoading) return;
     setState(() => _isLoading = true);
     try {
       await ref.read(authControllerProvider.notifier).signInAsGuest();
@@ -184,6 +186,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   }
 
   Future<void> _completeAuth() async {
+    if (_isLoading) return;
     setState(() => _isLoading = true);
     try {
       double latitude = 0.0;
@@ -255,6 +258,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           phone: _userPhoneController.text.trim(),
           whatsapp: _userPhoneController.text.trim(),
           description: _shopDescController.text.trim(),
+          openTime: '09:00',
+          closeTime: '21:00',
+          showOnlineStatus: true,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );

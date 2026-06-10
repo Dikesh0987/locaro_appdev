@@ -8,6 +8,7 @@ import 'core/theme/app_theme.dart';
 import 'routes/app_routes.dart';
 import 'providers/app_state_providers.dart';
 import 'core/services/fcm_service.dart';
+import 'core/widgets/common/network_overlay_wrapper.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -48,6 +49,11 @@ class LocaroApp extends ConsumerWidget {
       navigatorKey: navigatorKey,
       initialRoute: AppRoutes.initial,
       routes: AppRoutes.routes,
+      builder: (context, child) {
+        return NetworkOverlayWrapper(
+          child: child ?? const SizedBox(),
+        );
+      },
     );
   }
 }

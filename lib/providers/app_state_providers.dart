@@ -306,7 +306,7 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
       // Notify owner if they started following
       if (following.contains(shopId)) {
         try {
-          final notificationId = 'notif_${DateTime.now().millisecondsSinceEpoch}_follow';
+          final notificationId = 'notif_follow_${shopId}_${user.uid}';
           await FirebaseFirestore.instance
               .collection('notifications')
               .doc(notificationId)

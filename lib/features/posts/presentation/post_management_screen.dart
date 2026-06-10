@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -45,6 +45,7 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
   }
 
   Future<void> _submitPost() async {
+    if (_isUploading) return;
     if (!_formKey.currentState!.validate()) return;
     if (_imageUrl == null && _selectedImageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(

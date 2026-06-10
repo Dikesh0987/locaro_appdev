@@ -20,6 +20,8 @@ import '../../auth/application/auth_service.dart';
 import '../../auth/data/auth_repository.dart';
 import 'settings_screen.dart';
 import '../../../core/widgets/common/skeleton_loaders.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '../../../core/services/permission_service.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -45,6 +47,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
     return 'Member since ${months[dt.month - 1]} ${dt.year}';
+  }
+
+  String _formatTime(String time) {
+    try {
+      final parts = time.split(':');
+      final hour = int.parse(parts[0]);
+      final minute = int.parse(parts[1]);
+      final period = hour >= 12 ? 'PM' : 'AM';
+      final formattedHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+      final formattedMinute = minute.toString().padLeft(2, '0');
+      return '$formattedHour:$formattedMinute $period';
+    } catch (e) {
+      return time;
+    }
   }
 
   @override
@@ -77,11 +93,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Profile',
-            style: AppTypography.display.copyWith(fontWeight: FontWeight.w900, fontSize: 28, letterSpacing: -0.8),
-          ),
-          const SizedBox(height: 20),
           const ProfileSkeletonHeader(),
         ],
       );
@@ -90,16 +101,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Title
-        Text(
-          'Profile',
-          style: AppTypography.display.copyWith(
-            fontWeight: FontWeight.w900,
-            fontSize: 28,
-            letterSpacing: -0.8,
-          ),
-        ),
-        SizedBox(height: 20),
+
 
         // PROFILE HEADER
         Row(
@@ -362,11 +364,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Merchant Profile',
-            style: AppTypography.display.copyWith(fontWeight: FontWeight.w900, fontSize: 28, letterSpacing: -0.8),
-          ),
-          const SizedBox(height: 20),
           const ProfileSkeletonHeader(),
         ],
       );
@@ -375,16 +372,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Title
-        Text(
-          'Merchant Profile',
-          style: AppTypography.display.copyWith(
-            fontWeight: FontWeight.w900,
-            fontSize: 28,
-            letterSpacing: -0.8,
-          ),
-        ),
-        SizedBox(height: 20),
+
 
         // PROFILE HEADER
         Row(
@@ -552,7 +540,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           children: [
             _buildInfoRow(context, LucideIcons.mapPin, 'Address', shop.address),
             const Divider(height: 1, indent: 48),
-            _buildInfoRow(context, LucideIcons.clock, 'Working Hours', '09:00 AM - 09:00 PM'),
+            _buildInfoRow(context, LucideIcons.clock, 'Working Hours', '${_formatTime(shop.openTime)} - ${_formatTime(shop.closeTime)}'),
             const Divider(height: 1, indent: 48),
             _buildInfoRow(context, LucideIcons.messageCircle, 'WhatsApp Channel', '+91 ${shop.whatsapp}'),
             const Divider(height: 1, indent: 48),
@@ -581,8 +569,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               context,
               icon: LucideIcons.eye,
               label: 'Show Online Status',
-              val: true,
-              onChanged: (v) {},
+              val: shop.showOnlineStatus,
+              onChanged: (v) async {
+                final updatedShop = shop.copyWith(showOnlineStatus: v);
+                await ref.read(databaseProvider.notifier).updateCurrentShop(updatedShop);
+              },
             ),
             const Divider(height: 1, indent: 48),
             _buildMenuRow(
@@ -893,6 +884,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final addressCont = TextEditingController(text: shop.address);
     final phoneCont = TextEditingController(text: shop.whatsapp);
     final descCont = TextEditingController(text: shop.description);
+    final openTimeCont = TextEditingController(text: shop.openTime);
+    final closeTimeCont = TextEditingController(text: shop.closeTime);
 
     showModalBottomSheet(
       context: context,
@@ -933,6 +926,50 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 SizedBox(height: 12),
                 AppTextField(controller: phoneCont, hintText: 'WhatsApp Number'),
                 SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () async {
+                           final TimeOfDay? picked = await showTimePicker(
+                             context: context,
+                             initialTime: TimeOfDay(
+                               hour: int.tryParse(openTimeCont.text.split(':').first) ?? 9,
+                               minute: int.tryParse(openTimeCont.text.split(':').last) ?? 0,
+                             ),
+                           );
+                           if (picked != null) {
+                             openTimeCont.text = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+                           }
+                        },
+                        child: AbsorbPointer(
+                          child: AppTextField(controller: openTimeCont, hintText: 'Open Time (HH:mm)'),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () async {
+                           final TimeOfDay? picked = await showTimePicker(
+                             context: context,
+                             initialTime: TimeOfDay(
+                               hour: int.tryParse(closeTimeCont.text.split(':').first) ?? 21,
+                               minute: int.tryParse(closeTimeCont.text.split(':').last) ?? 0,
+                             ),
+                           );
+                           if (picked != null) {
+                             closeTimeCont.text = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+                           }
+                        },
+                        child: AbsorbPointer(
+                          child: AppTextField(controller: closeTimeCont, hintText: 'Close Time (HH:mm)'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12),
                 TextFormField(
                   controller: descCont,
                   maxLines: 3,
@@ -951,6 +988,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         address: addressCont.text,
                         whatsapp: phoneCont.text,
                         description: descCont.text,
+                        openTime: openTimeCont.text,
+                        closeTime: closeTimeCont.text,
                       );
                       ref.read(databaseProvider.notifier).updateCurrentShop(updatedShop);
                       Navigator.pop(context);
@@ -1211,6 +1250,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _changePhoto(BuildContext context, WidgetRef ref) async {
+    final granted = await PermissionService.requestPermission(
+      context: context,
+      permission: Permission.photos,
+      title: 'Photo Library Access',
+      rationale: 'Locaro needs access to your photos so you can choose a new profile picture.',
+      icon: LucideIcons.image,
+    );
+    if (!granted) return;
+
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (image != null) {
@@ -1230,6 +1278,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _changeShopLogo(BuildContext context, WidgetRef ref, ShopModel shop) async {
+    final granted = await PermissionService.requestPermission(
+      context: context,
+      permission: Permission.photos,
+      title: 'Photo Library Access',
+      rationale: 'Locaro needs access to your photos so you can select a shop logo.',
+      icon: LucideIcons.image,
+    );
+    if (!granted) return;
+
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (image != null) {
@@ -1255,6 +1312,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _changeShopBanner(BuildContext context, WidgetRef ref, ShopModel shop) async {
+    final granted = await PermissionService.requestPermission(
+      context: context,
+      permission: Permission.photos,
+      title: 'Photo Library Access',
+      rationale: 'Locaro needs access to your photos so you can select a shop cover banner.',
+      icon: LucideIcons.image,
+    );
+    if (!granted) return;
+
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
     if (image != null) {

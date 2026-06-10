@@ -30,16 +30,7 @@ class DashboardScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Screen Title
-            Text(
-              'Merchant Center',
-              style: AppTypography.display.copyWith(
-                fontWeight: FontWeight.w900,
-                fontSize: 28,
-                letterSpacing: -0.8,
-              ),
-            ),
-            const SizedBox(height: 20),
+
 
             // MERCHANT HEADER (matches User Profile style)
             Row(

@@ -22,6 +22,7 @@ class DiscoverScreen extends ConsumerStatefulWidget {
 
 class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   bool _isLoading = true;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -37,9 +38,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(databaseProvider);
-    final shops = state.shops;
-    final products = state.products;
-    final offers = state.offers;
+    final shops = state.shops.where((s) => s.shopName.toLowerCase().contains(_searchQuery) || s.category.toLowerCase().contains(_searchQuery)).toList();
+    final products = state.products.where((p) => p.name.toLowerCase().contains(_searchQuery)).toList();
+    final offers = state.offers.where((o) => o.title.toLowerCase().contains(_searchQuery) || o.description.toLowerCase().contains(_searchQuery)).toList();
 
     return Scaffold(
       appBar: const TopAppBar(),
@@ -55,6 +56,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
               child: SizedBox(
                 height: 52,
                 child: TextFormField(
+                  onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
                   decoration: InputDecoration(
                     hintText: 'Discover shops, products, offers...',
                     prefixIcon: const Icon(LucideIcons.search, size: 20),
@@ -178,9 +180,36 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                               ),
                             ),
                             const SizedBox(height: AppSpacing.s8),
-                            Text(
-                              s.shopName,
-                              style: AppTypography.caption.copyWith(fontWeight: FontWeight.w700),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    s.shopName,
+                                    style: AppTypography.caption.copyWith(fontWeight: FontWeight.w700),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (s.showOnlineStatus) ...[
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: s.isOnline ? Colors.green : Colors.grey,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    s.isOnline ? 'Online' : 'Offline',
+                                    style: AppTypography.label.copyWith(
+                                      color: s.isOnline ? Colors.green : Colors.grey,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ]
+                              ],
                             ),
                             const SizedBox(height: 2),
                             Row(
@@ -326,11 +355,36 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                               ),
                             ),
                             const SizedBox(height: AppSpacing.s8),
-                            Text(
-                              s.shopName,
-                              style: AppTypography.caption.copyWith(fontWeight: FontWeight.w700),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    s.shopName,
+                                    style: AppTypography.caption.copyWith(fontWeight: FontWeight.w700),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (s.showOnlineStatus) ...[
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: s.isOnline ? Colors.green : Colors.grey,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    s.isOnline ? 'Online' : 'Offline',
+                                    style: AppTypography.label.copyWith(
+                                      color: s.isOnline ? Colors.green : Colors.grey,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ]
+                              ],
                             ),
                             Text(
                               s.category,

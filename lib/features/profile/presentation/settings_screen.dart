@@ -78,7 +78,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   // Privacy States
   bool _isPrivateAccount = false;
-  final List<String> _blockedUsers = ['John Doe', 'Spam Bot 404', 'Irritating Merchant'];
   
   // Language State
   String _selectedLanguage = 'English';
@@ -123,82 +122,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               );
             }).toList(),
           ),
-        );
-      },
-    );
-  }
-
-  void _showBlockedUsers() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).dividerColor,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text('Blocked Users', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text('Users you block will not be able to follow you or contact you.', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
-                  const Divider(height: 24),
-                  if (_blockedUsers.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 32.0),
-                      child: Center(
-                        child: Text('No blocked users.', style: AppTypography.body.copyWith(color: context.colors.textSecondary)),
-                      ),
-                    )
-                  else
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _blockedUsers.length,
-                      itemBuilder: (context, index) {
-                        final name = _blockedUsers[index];
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: CircleAvatar(
-                            backgroundColor: context.colors.border,
-                            child: Text(name[0], style: const TextStyle(fontWeight: FontWeight.bold)),
-                          ),
-                          title: Text(name, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
-                          trailing: TextButton(
-                            child: const Text('Unblock', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                            onPressed: () {
-                              setModalState(() {
-                                _blockedUsers.remove(name);
-                              });
-                              setState(() {}); // Update main screen if needed
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            );
-          },
         );
       },
     );
@@ -397,13 +320,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     icon: LucideIcons.eyeOff,
                     val: _isPrivateAccount,
                     onChanged: (v) => setState(() => _isPrivateAccount = v),
-                  ),
-                  const Divider(height: 1, indent: 48),
-                  _buildClickTile(
-                    label: 'Blocked Users',
-                    subtitle: '${_blockedUsers.length} users',
-                    icon: LucideIcons.shieldAlert,
-                    onTap: _showBlockedUsers,
                   ),
                 ],
               ),

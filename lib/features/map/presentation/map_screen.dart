@@ -21,11 +21,12 @@ class MapScreen extends ConsumerStatefulWidget {
 
 class _MapScreenState extends ConsumerState<MapScreen> {
   ShopModel? _selectedShop;
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(databaseProvider);
-    final shops = state.shops;
+    final shops = state.shops.where((s) => s.shopName.toLowerCase().contains(_searchQuery) || s.category.toLowerCase().contains(_searchQuery)).toList();
     final offers = state.offers;
 
     return Scaffold(
@@ -139,9 +140,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   Icon(LucideIcons.search, color: context.colors.textSecondary),
                   const SizedBox(width: AppSpacing.s12),
                   Expanded(
-                    child: Text(
-                      'Search area...',
-                      style: AppTypography.body.copyWith(color: context.colors.textSecondary),
+                    child: TextField(
+                      onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
+                      decoration: InputDecoration(
+                        hintText: 'Search shops, categories...',
+                        hintStyle: AppTypography.body.copyWith(color: context.colors.textSecondary),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
                     ),
                   ),
                   Icon(LucideIcons.slidersHorizontal, color: context.colors.textSecondary),

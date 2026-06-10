@@ -280,7 +280,7 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
           onAllowed: () {
             final dbState = ref.read(databaseProvider);
             final newLead = LeadModel(
-              id: 'lead_${DateTime.now().millisecondsSinceEpoch}',
+              id: 'lead_${dbState.currentUser.id}_${widget.linkedProduct!.id}_${type.name}',
               userId: dbState.currentUser.id,
               userName: dbState.currentUser.name,
               userPhone: dbState.currentUser.phone,
@@ -628,7 +628,7 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
           onAllowed: () {
             final dbState = ref.read(databaseProvider);
             final newLead = LeadModel(
-              id: 'lead_${DateTime.now().millisecondsSinceEpoch}',
+              id: 'lead_${dbState.currentUser.id}_${widget.product.id}_${type.name}',
               userId: dbState.currentUser.id,
               userName: dbState.currentUser.name,
               userPhone: dbState.currentUser.phone,
@@ -993,7 +993,7 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
           onAllowed: () {
             final dbState = ref.read(databaseProvider);
             final newLead = LeadModel(
-              id: 'lead_${DateTime.now().millisecondsSinceEpoch}',
+              id: 'lead_${dbState.currentUser.id}_${widget.offer.id}_${type.name}',
               userId: dbState.currentUser.id,
               userName: dbState.currentUser.name,
               userPhone: dbState.currentUser.phone,
