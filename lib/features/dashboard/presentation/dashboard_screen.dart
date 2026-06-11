@@ -9,6 +9,7 @@ import '../../../core/widgets/navigation/top_app_bar.dart';
 import '../../../core/widgets/common/fallback_image.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../models/lead_model.dart';
+import '../../queries/presentation/query_center_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -164,6 +165,23 @@ class DashboardScreen extends ConsumerWidget {
                 onPressed: () {
                   // Navigate to Leads Screen tab (index 3 in shell screen)
                   ref.read(bottomNavIndexProvider.notifier).state = 3;
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            // View Query Center Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(LucideIcons.messageCircle, size: 14, color: Colors.white),
+                label: const Text('Manage Customer Queries', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.colors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                ),
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const QueryCenterScreen()));
                 },
               ),
             ),

@@ -12,6 +12,7 @@ import '../../../core/widgets/common/skeleton_loaders.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
 import '../../products/presentation/product_details_screen.dart';
+import '../../search/presentation/search_screen.dart';
 
 class DiscoverScreen extends ConsumerStatefulWidget {
   const DiscoverScreen({super.key});
@@ -27,12 +28,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   @override
   void initState() {
     super.initState();
-    // Simulate progressive network loading
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    });
+    _isLoading = false;
   }
 
   @override
@@ -56,7 +52,15 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
               child: SizedBox(
                 height: 52,
                 child: TextFormField(
-                  onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
+                  readOnly: true,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SearchScreen(),
+                      ),
+                    );
+                  },
                   decoration: InputDecoration(
                     hintText: 'Discover shops, products, offers...',
                     prefixIcon: const Icon(LucideIcons.search, size: 20),

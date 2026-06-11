@@ -7,6 +7,7 @@ import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
+import '../../../core/widgets/buttons/secondary_button.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../../core/widgets/common/scale_button.dart';
 import '../../../providers/app_state_providers.dart';
@@ -16,6 +17,7 @@ import '../data/auth_repository.dart';
 import 'auth_controller.dart';
 import 'auth_state.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 
 
 class AuthFlowContainer extends ConsumerStatefulWidget {
@@ -49,6 +51,12 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   final TextEditingController _shopOwnerNameController = TextEditingController();
   final TextEditingController _shopAddressController = TextEditingController();
   final TextEditingController _shopDescController = TextEditingController();
+  final TextEditingController _whatsappController = TextEditingController();
+  final TextEditingController _otpController = TextEditingController();
+  bool _isWhatsappVerified = false;
+  bool _isOtpSent = false;
+  String? _verificationId;
+  int? _resendToken;
   String _selectedCategory = 'Cafe';
   String? _logoUrl;
   String? _bannerUrl;
@@ -82,20 +90,16 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
     _shopOwnerNameController.dispose();
     _shopAddressController.dispose();
     _shopDescController.dispose();
+    _whatsappController.dispose();
+    _otpController.dispose();
     super.dispose();
   }
 
   void _nextPage() {
-    setState(() => _isLoading = true);
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        _pageController.nextPage(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
+    _pageController.nextPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   void _prevPage() {
@@ -256,7 +260,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           category: _selectedCategory,
           isVerified: true,
           phone: _userPhoneController.text.trim(),
-          whatsapp: _userPhoneController.text.trim(),
+          whatsapp: _whatsappController.text.trim(),
           description: _shopDescController.text.trim(),
           openTime: '09:00',
           closeTime: '21:00',
@@ -330,6 +334,288 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _sendRealOtp() async {
+    final phone = _whatsappController.text.trim();
+    if (phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter phone number')));
+      return;
+    }
+    
+    // Add country code if not present (defaulting to +91 for India as an example)
+    String formattedPhone = phone;
+    if (!formattedPhone.startsWith('+')) {
+      formattedPhone = '+91$phone'; 
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // NOTE: If a web browser opens for reCAPTCHA, it means Play Integrity/SafetyNet failed.
+      // To fix this permanently: 
+      // 1. Add your SHA-1 and SHA-256 keys to the Firebase Console settings.
+      // 2. Enable 'Play Integrity API' in Google Cloud Console for this project.
+      await fb.FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: formattedPhone,
+        verificationCompleted: (fb.PhoneAuthCredential credential) async {
+          try {
+            await fb.FirebaseAuth.instance.currentUser?.linkWithCredential(credential);
+            if (mounted) {
+              setState(() {
+                _isWhatsappVerified = true;
+                _isLoading = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('WhatsApp Auto-Verified Successfully!')));
+            }
+          } catch (e) {
+            if (mounted) {
+              setState(() {
+                _isWhatsappVerified = true;
+                _isLoading = false;
+              });
+            }
+          }
+        },
+        verificationFailed: (fb.FirebaseAuthException e) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _isOtpSent = false;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Verification Failed: ${e.message}')));
+          }
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          if (mounted) {
+            setState(() {
+              _verificationId = verificationId;
+              _resendToken = resendToken;
+              _isOtpSent = true;
+              _isLoading = false;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OTP sent successfully!')));
+          }
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          _verificationId = verificationId;
+        },
+      );
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _isOtpSent = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
+  Future<void> _verifyRealOtp() async {
+    final code = _otpController.text.trim();
+    if (code.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter the OTP')));
+      return;
+    }
+    if (_verificationId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please wait for OTP to be sent')));
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final credential = fb.PhoneAuthProvider.credential(
+        verificationId: _verificationId!,
+        smsCode: code,
+      );
+
+      try {
+        await fb.FirebaseAuth.instance.currentUser?.linkWithCredential(credential);
+      } catch (e) {
+        debugPrint('Link credential error: $e');
+        // Continue anyway since OTP was valid
+      }
+
+      if (mounted) {
+        setState(() {
+          _isWhatsappVerified = true;
+          _isOtpSent = false;
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('WhatsApp Verified Successfully!')));
+      }
+    } on fb.FirebaseAuthException catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Invalid OTP: ${e.message}')));
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error verifying OTP: $e')));
+      }
+    }
+  }
+
+  void _showPhoneLoginSheet() {
+    final TextEditingController phoneController = TextEditingController();
+    final TextEditingController otpController = TextEditingController();
+    bool isOtpSent = false;
+    bool isSheetLoading = false;
+    String? verificationId;
+
+    Future<void> handlePhoneSuccess(fb.PhoneAuthCredential credential) async {
+      try {
+        await ref.read(authServiceProvider).handlePhoneSignIn(credential, _role);
+        final user = ref.read(databaseProvider).currentUser;
+        if (mounted) {
+           Navigator.pop(context);
+           if (!user.isOnboardingCompleted) {
+              if (user.phone.isNotEmpty) {
+                _userPhoneController.text = user.phone;
+                _whatsappController.text = user.phone;
+              }
+              _nextPage();
+           }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login failed: ${e.toString()}')));
+        }
+      }
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                padding: const EdgeInsets.all(AppSpacing.mobilePadding),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40, height: 4,
+                        decoration: BoxDecoration(color: Theme.of(context).dividerColor, borderRadius: BorderRadius.circular(2)),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(isOtpSent ? 'Enter OTP' : 'Continue with Phone', style: AppTypography.heading),
+                    const SizedBox(height: 8),
+                    Text(
+                      isOtpSent ? 'We sent a verification code to your number.' : 'You will receive a 6-digit code to verify your number.',
+                      style: AppTypography.caption.copyWith(color: Theme.of(context).textTheme.bodySmall?.color),
+                    ),
+                    const SizedBox(height: 24),
+
+                    if (!isOtpSent) ...[
+                      TextField(
+                        controller: phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          hintText: 'Phone Number',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      PrimaryButton(
+                        text: 'Send OTP',
+                        isLoading: isSheetLoading,
+                        onPressed: () async {
+                          final phone = phoneController.text.trim();
+                          if (phone.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter phone number')));
+                            return;
+                          }
+                          String formattedPhone = phone.startsWith('+') ? phone : '+91$phone';
+                          
+                          setSheetState(() => isSheetLoading = true);
+                          
+                          try {
+                            await fb.FirebaseAuth.instance.verifyPhoneNumber(
+                              phoneNumber: formattedPhone,
+                              verificationCompleted: (fb.PhoneAuthCredential credential) async {
+                                await handlePhoneSuccess(credential);
+                              },
+                              verificationFailed: (fb.FirebaseAuthException e) {
+                                setSheetState(() => isSheetLoading = false);
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Verification Failed: ${e.message}')));
+                              },
+                              codeSent: (String verId, int? resendToken) {
+                                setSheetState(() {
+                                  verificationId = verId;
+                                  isOtpSent = true;
+                                  isSheetLoading = false;
+                                });
+                              },
+                              codeAutoRetrievalTimeout: (String verId) {
+                                verificationId = verId;
+                              },
+                            );
+                          } catch (e) {
+                            setSheetState(() => isSheetLoading = false);
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                          }
+                        },
+                      ),
+                    ] else ...[
+                      TextField(
+                        controller: otpController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          hintText: '6-digit OTP',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      PrimaryButton(
+                        text: 'Verify & Login',
+                        isLoading: isSheetLoading,
+                        onPressed: () async {
+                          final code = otpController.text.trim();
+                          if (code.isEmpty || verificationId == null) return;
+                          
+                          setSheetState(() => isSheetLoading = true);
+                          
+                          try {
+                            final credential = fb.PhoneAuthProvider.credential(
+                              verificationId: verificationId!,
+                              smsCode: code,
+                            );
+                            await handlePhoneSuccess(credential);
+                          } catch (e) {
+                            setSheetState(() => isSheetLoading = false);
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Invalid OTP or error: $e')));
+                          }
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            );
+          }
+        );
+      }
+    );
   }
 
   @override
@@ -479,6 +765,11 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
             text: 'Continue with Google',
             isLoading: _isLoading,
             onPressed: _handleGoogleSignIn,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          SecondaryButton(
+            text: 'Continue with Phone Number',
+            onPressed: _isLoading ? () {} : _showPhoneLoginSheet,
           ),
           if (!isShop) ...[
             SizedBox(height: AppSpacing.s16),
@@ -735,7 +1026,54 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 ),
               ),
             ),
-            SizedBox(height: 80),
+            SizedBox(height: AppSpacing.s16),
+            AppTextField(
+              controller: _whatsappController,
+              hintText: 'Phone Number (Required)',
+              keyboardType: TextInputType.phone,
+            ),
+            if (!_isWhatsappVerified) ...[
+              SizedBox(height: AppSpacing.s8),
+              if (!_isOtpSent)
+                SecondaryButton(
+                  text: 'Verify Number',
+                  onPressed: _sendRealOtp,
+                ),
+              if (_isOtpSent) ...[
+                SizedBox(height: AppSpacing.s16),
+                AppTextField(
+                  controller: _otpController,
+                  hintText: 'Enter OTP received on SMS',
+                  keyboardType: TextInputType.number,
+                ),
+                SizedBox(height: AppSpacing.s8),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: _sendRealOtp,
+                      child: Text('Resend OTP', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.colors.primary)),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: SecondaryButton(
+                        text: 'Verify OTP',
+                        onPressed: _verifyRealOtp,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ] else ...[
+              SizedBox(height: AppSpacing.s8),
+              Row(
+                children: [
+                  const Icon(LucideIcons.checkCircle, color: Colors.green, size: 20),
+                  const SizedBox(width: 8),
+                  Text('Number Verified', style: AppTypography.label.copyWith(color: Colors.green, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+            SizedBox(height: 40),
             PrimaryButton(
               text: 'Continue',
               isLoading: _isLoading,
@@ -743,6 +1081,10 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 if (_shopNameController.text.isEmpty || _shopOwnerNameController.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Please fill out business details')),
+                  );
+                } else if (_whatsappController.text.isEmpty || !_isWhatsappVerified) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please verify your number to continue')),
                   );
                 } else {
                   _nextPage();

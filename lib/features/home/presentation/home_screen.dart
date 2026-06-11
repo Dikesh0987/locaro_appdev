@@ -12,6 +12,7 @@ import '../../../models/post_model.dart';
 import '../../../models/lead_model.dart';
 import '../../../models/product_model.dart';
 import '../../../models/offer_model.dart';
+import '../../queries/presentation/query_bottom_sheet.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
 import '../../auth/application/auth_service.dart';
 import '../../../core/widgets/common/skeleton_loaders.dart';
@@ -48,15 +49,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         setState(() {
           _isLoadingMore = true;
         });
-        // Simulate network delay for loading more
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            setState(() {
-              _visibleCount += 5;
-              _isLoadingMore = false;
-            });
-          }
-        });
+        if (mounted) {
+          setState(() {
+            _visibleCount += 5;
+            _isLoadingMore = false;
+          });
+        }
       }
     }
   }
@@ -104,7 +102,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             )
                   : RefreshIndicator(
                       onRefresh: () async {
-                        await Future.delayed(const Duration(milliseconds: 800));
+                        // data refreshes instantly
                       },
                       child: ListView.separated(
                         key: const PageStorageKey('home_feed'),
@@ -416,7 +414,12 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
               IconButton(
                 icon: const Icon(LucideIcons.messageCircle),
                 onPressed: () {
-                  _generateLead(LeadType.interested, 'Interest query');
+                  showQueryBottomSheet(
+                    context,
+                    shopId: widget.post.shopId,
+                    productId: widget.linkedProduct?.id,
+                    category: widget.linkedProduct?.category ?? 'OFFERS',
+                  );
                 },
               ),
               IconButton(
@@ -486,12 +489,12 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
                     Expanded(
                       child: OutlinedButton.icon(
                         icon: Icon(
-                          LucideIcons.percent,
+                          LucideIcons.store,
                           size: 14,
-                          color: context.colors.offerOrange,
+                          color: context.colors.textPrimary,
                         ),
                         label: Text(
-                          'Ask Discount',
+                          'Visit Shop',
                           style: TextStyle(color: context.colors.textPrimary),
                         ),
                         style: OutlinedButton.styleFrom(
@@ -503,10 +506,7 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
                             ),
                           ),
                         ),
-                        onPressed: () => _generateLead(
-                          LeadType.discountRequest,
-                          'Discount Request',
-                        ),
+                        onPressed: widget.onShopTap,
                       ),
                     ),
                     SizedBox(width: AppSpacing.s12),
@@ -518,7 +518,7 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
                           color: Colors.white,
                         ),
                         label: const Text(
-                          'WhatsApp',
+                          'Message Shop',
                           style: TextStyle(color: Colors.white),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -530,10 +530,14 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
                             ),
                           ),
                         ),
-                        onPressed: () => _generateLead(
-                          LeadType.whatsappClick,
-                          'WhatsApp query',
-                        ),
+                        onPressed: () {
+                          showQueryBottomSheet(
+                            context,
+                            shopId: widget.post.shopId,
+                            productId: widget.linkedProduct?.id,
+                            category: widget.linkedProduct?.category ?? 'OFFERS',
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -777,7 +781,12 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
               IconButton(
                 icon: const Icon(LucideIcons.messageCircle),
                 onPressed: () {
-                  _generateLead(LeadType.interested, 'Product inquiry');
+                  showQueryBottomSheet(
+                    context,
+                    shopId: widget.product.shopId,
+                    productId: widget.product.id,
+                    category: widget.product.category,
+                  );
                 },
               ),
               IconButton(
@@ -857,12 +866,12 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: Icon(
-                        LucideIcons.percent,
+                        LucideIcons.store,
                         size: 14,
-                        color: context.colors.offerOrange,
+                        color: context.colors.textPrimary,
                       ),
                       label: Text(
-                        'Ask Discount',
+                        'Visit Shop',
                         style: TextStyle(color: context.colors.textPrimary),
                       ),
                       style: OutlinedButton.styleFrom(
@@ -874,10 +883,7 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
                           ),
                         ),
                       ),
-                      onPressed: () => _generateLead(
-                        LeadType.discountRequest,
-                        'Discount Request',
-                      ),
+                      onPressed: widget.onShopTap,
                     ),
                   ),
                   SizedBox(width: AppSpacing.s12),
@@ -889,7 +895,7 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
                         color: Colors.white,
                       ),
                       label: const Text(
-                        'WhatsApp',
+                        'Message Shop',
                         style: TextStyle(color: Colors.white),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -901,10 +907,14 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
                           ),
                         ),
                       ),
-                      onPressed: () => _generateLead(
-                        LeadType.whatsappClick,
-                        'WhatsApp query',
-                      ),
+                      onPressed: () {
+                        showQueryBottomSheet(
+                          context,
+                          shopId: widget.product.shopId,
+                          productId: widget.product.id,
+                          category: widget.product.category,
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -1123,7 +1133,11 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
               IconButton(
                 icon: const Icon(LucideIcons.messageCircle),
                 onPressed: () {
-                  _generateLead(LeadType.interested, 'Offer inquiry');
+                  showQueryBottomSheet(
+                    context,
+                    shopId: widget.offer.shopId,
+                    category: 'OFFERS',
+                  );
                 },
               ),
               IconButton(
@@ -1195,7 +1209,7 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
                         color: Colors.white,
                       ),
                       label: const Text(
-                        'WhatsApp Shop',
+                        'Message Shop',
                         style: TextStyle(color: Colors.white),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -1207,10 +1221,13 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
                           ),
                         ),
                       ),
-                      onPressed: () => _generateLead(
-                        LeadType.whatsappClick,
-                        'WhatsApp Coupon query',
-                      ),
+                      onPressed: () {
+                        showQueryBottomSheet(
+                          context,
+                          shopId: widget.offer.shopId,
+                          category: 'OFFERS',
+                        );
+                      },
                     ),
                   ),
                 ],

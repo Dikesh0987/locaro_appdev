@@ -23,6 +23,11 @@ class AuthRepository {
     return await _auth.signInWithCredential(credential);
   }
 
+  // Phone Sign-In
+  Future<UserCredential> signInWithPhoneCredential(PhoneAuthCredential credential) async {
+    return await _auth.signInWithCredential(credential);
+  }
+
   // Anonymous Auth (Guest Mode)
   Future<UserCredential> signInAnonymously() async {
     return await _auth.signInAnonymously();

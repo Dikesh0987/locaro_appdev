@@ -136,7 +136,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 ? _buildEmptyState('No notifications found', 'Change your filters or search options.')
                 : RefreshIndicator(
                     onRefresh: () async {
-                      await Future.delayed(const Duration(milliseconds: 600));
+                      // data refreshes instantly
                     },
                     child: ListView.separated(
                       padding: const EdgeInsets.all(AppSpacing.mobilePadding),

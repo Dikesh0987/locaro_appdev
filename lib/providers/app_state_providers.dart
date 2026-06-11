@@ -8,6 +8,7 @@ import '../models/product_model.dart';
 import '../models/post_model.dart';
 import '../models/offer_model.dart';
 import '../models/lead_model.dart';
+import '../models/query_model.dart';
 import '../repositories/Locaro_repository.dart';
 
 
@@ -18,6 +19,7 @@ class LocaroDataState {
   final List<OfferModel> offers;
   final List<PostModel> posts;
   final List<LeadModel> leads;
+  final List<QueryModel> queries;
   final UserModel currentUser;
   final ShopModel currentShop;
 
@@ -27,6 +29,7 @@ class LocaroDataState {
     required this.offers,
     required this.posts,
     required this.leads,
+    required this.queries,
     required this.currentUser,
     required this.currentShop,
   });
@@ -37,6 +40,7 @@ class LocaroDataState {
     List<OfferModel>? offers,
     List<PostModel>? posts,
     List<LeadModel>? leads,
+    List<QueryModel>? queries,
     UserModel? currentUser,
     ShopModel? currentShop,
   }) {
@@ -46,6 +50,7 @@ class LocaroDataState {
       offers: offers ?? this.offers,
       posts: posts ?? this.posts,
       leads: leads ?? this.leads,
+      queries: queries ?? this.queries,
       currentUser: currentUser ?? this.currentUser,
       currentShop: currentShop ?? this.currentShop,
     );
@@ -59,6 +64,7 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
   StreamSubscription? _postsSub;
   StreamSubscription? _offersSub;
   StreamSubscription? _leadsSub;
+  StreamSubscription? _queriesSub;
 
   @override
   LocaroDataState build() {
@@ -72,6 +78,7 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
       _postsSub?.cancel();
       _offersSub?.cancel();
       _leadsSub?.cancel();
+      _queriesSub?.cancel();
     });
 
     return LocaroDataState(
@@ -80,6 +87,7 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
       offers: [],
       posts: [],
       leads: [],
+      queries: [],
       currentUser: LocaroDatabase.defaultUser,
       currentShop: LocaroDatabase.defaultShop,
     );
@@ -120,6 +128,11 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
     _leadsSub = firestore.collection('leads').snapshots().listen((snapshot) {
       final leads = snapshot.docs.map((doc) => LeadModel.fromMap(doc.data())).toList();
       state = state.copyWith(leads: leads);
+    });
+
+    _queriesSub = firestore.collection('queries').snapshots().listen((snapshot) {
+      final queries = snapshot.docs.map((doc) => QueryModel.fromMap(doc.data())).toList();
+      state = state.copyWith(queries: queries);
     });
   }
 
@@ -272,6 +285,67 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
             'createdAt': FieldValue.serverTimestamp(),
           });
     } catch (_) {}
+  }
+
+  // Submit a Query
+  Future<void> submitQuery(QueryModel query) async {
+    await FirebaseFirestore.instance
+        .collection('queries')
+        .doc(query.id)
+        .set(query.toMap());
+
+    try {
+      final shop = state.shops.firstWhere((s) => s.id == query.shopId);
+      final notificationId = 'notif_query_${query.id}_${query.userId}';
+      await FirebaseFirestore.instance
+          .collection('notifications')
+          .doc(notificationId)
+          .set({
+            'id': notificationId,
+            'userId': shop.ownerUid,
+            'title': 'New Query Received',
+            'body': 'A customer asked: ${query.question}',
+            'type': 'System',
+            'referenceId': query.id,
+            'isRead': false,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+    } catch (_) {}
+  }
+
+  // Answer a Query
+  Future<void> answerQuery(String queryId, String answer) async {
+    await FirebaseFirestore.instance.collection('queries').doc(queryId).update({
+      'answer': answer,
+      'status': 'answered',
+      'answeredAt': DateTime.now().millisecondsSinceEpoch,
+    });
+
+    try {
+      final query = state.queries.firstWhere((q) => q.id == queryId);
+      final shop = state.shops.firstWhere((s) => s.id == query.shopId);
+      final notificationId = 'notif_query_reply_${query.id}';
+      await FirebaseFirestore.instance
+          .collection('notifications')
+          .doc(notificationId)
+          .set({
+            'id': notificationId,
+            'userId': query.userId,
+            'title': '${shop.shopName} replied to your query',
+            'body': answer,
+            'type': 'query_reply',
+            'referenceId': query.id,
+            'isRead': false,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+    } catch (_) {}
+  }
+
+  // Close a Query
+  Future<void> closeQuery(String queryId) async {
+    await FirebaseFirestore.instance.collection('queries').doc(queryId).update({
+      'status': 'closed',
+    });
   }
 
   // Toggle user follow shop

@@ -20,6 +20,7 @@ import '../../auth/application/auth_service.dart';
 import '../../auth/data/auth_repository.dart';
 import 'settings_screen.dart';
 import '../../../core/widgets/common/skeleton_loaders.dart';
+import '../../queries/presentation/sent_queries_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../core/services/permission_service.dart';
 
@@ -36,9 +37,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (mounted) setState(() => _isLoading = false);
-    });
+    _isLoading = false;
   }
 
   String _formatMemberSince(DateTime dt) {
@@ -282,6 +281,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         _buildSectionCard(
           context,
           children: [
+            _buildMenuRow(
+              context,
+              icon: LucideIcons.messageSquare,
+              label: 'My Queries',
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const SentQueriesScreen()));
+              },
+            ),
+            const Divider(height: 1, indent: 48),
             _buildMenuRow(
               context,
               icon: LucideIcons.languages,

@@ -5,9 +5,11 @@ import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/common/scale_button.dart';
+import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../auth/application/auth_service.dart';
 import '../../../core/services/fcm_service.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -169,6 +171,175 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  void _showUpdatePhoneSheet() {
+    final TextEditingController phoneController = TextEditingController();
+    final TextEditingController otpController = TextEditingController();
+    bool isOtpSent = false;
+    bool isLoading = false;
+    String? verificationId;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                padding: const EdgeInsets.all(AppSpacing.mobilePadding),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40, height: 4,
+                        decoration: BoxDecoration(color: Theme.of(context).dividerColor, borderRadius: BorderRadius.circular(2)),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(isOtpSent ? 'Enter OTP' : 'Update Phone Number', style: AppTypography.heading),
+                    const SizedBox(height: 8),
+                    Text(
+                      isOtpSent ? 'We sent a verification code to your new number.' : 'Enter your new phone number to receive an OTP.',
+                      style: AppTypography.caption.copyWith(color: Theme.of(context).textTheme.bodySmall?.color),
+                    ),
+                    const SizedBox(height: 24),
+
+                    if (!isOtpSent) ...[
+                      TextField(
+                        controller: phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          hintText: 'New Phone Number',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      PrimaryButton(
+                        text: 'Send OTP',
+                        isLoading: isLoading,
+                        onPressed: () async {
+                          final phone = phoneController.text.trim();
+                          if (phone.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a phone number')));
+                            return;
+                          }
+                          String formattedPhone = phone.startsWith('+') ? phone : '+91$phone';
+                          
+                          setState(() => isLoading = true);
+                          
+                          try {
+                            await fb.FirebaseAuth.instance.verifyPhoneNumber(
+                              phoneNumber: formattedPhone,
+                              verificationCompleted: (fb.PhoneAuthCredential credential) async {
+                                try {
+                                  await ref.read(authServiceProvider).updatePhoneNumber(formattedPhone);
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Phone number updated successfully!')));
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    setState(() => isLoading = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                                  }
+                                }
+                              },
+                              verificationFailed: (fb.FirebaseAuthException e) {
+                                setState(() => isLoading = false);
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Verification Failed: ${e.message}')));
+                              },
+                              codeSent: (String verId, int? resendToken) {
+                                setState(() {
+                                  verificationId = verId;
+                                  isOtpSent = true;
+                                  isLoading = false;
+                                });
+                              },
+                              codeAutoRetrievalTimeout: (String verId) {
+                                verificationId = verId;
+                              },
+                            );
+                          } catch (e) {
+                            setState(() => isLoading = false);
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                          }
+                        },
+                      ),
+                    ] else ...[
+                      TextField(
+                        controller: otpController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          hintText: '6-digit OTP',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      PrimaryButton(
+                        text: 'Verify & Update',
+                        isLoading: isLoading,
+                        onPressed: () async {
+                          final code = otpController.text.trim();
+                          if (code.isEmpty || verificationId == null) return;
+                          
+                          setState(() => isLoading = true);
+                          
+                          try {
+                            final credential = fb.PhoneAuthProvider.credential(
+                              verificationId: verificationId!,
+                              smsCode: code,
+                            );
+                            
+                            final currentUser = fb.FirebaseAuth.instance.currentUser;
+                            if (currentUser != null) {
+                               try {
+                                 await currentUser.linkWithCredential(credential);
+                               } on fb.FirebaseAuthException catch (e) {
+                                 if (e.code == 'provider-already-linked' || e.code == 'credential-already-in-use') {
+                                   // Already linked, proceed.
+                                 } else {
+                                   rethrow;
+                                 }
+                               }
+                            }
+                            
+                            String formattedPhone = phoneController.text.trim();
+                            if (!formattedPhone.startsWith('+')) formattedPhone = '+91$formattedPhone';
+                            
+                            await ref.read(authServiceProvider).updatePhoneNumber(formattedPhone);
+                            
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Phone number updated successfully!')));
+                            }
+                          } catch (e) {
+                            setState(() => isLoading = false);
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Invalid OTP or error: $e')));
+                          }
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            );
+          }
+        );
+      }
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeThemeMode = ref.watch(appThemeModeProvider);
@@ -320,6 +491,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     icon: LucideIcons.eyeOff,
                     val: _isPrivateAccount,
                     onChanged: (v) => setState(() => _isPrivateAccount = v),
+                  ),
+                  const Divider(height: 1, indent: 48),
+                  _buildClickTile(
+                    label: 'Update Phone Number',
+                    subtitle: 'Change your registered phone number',
+                    icon: LucideIcons.phone,
+                    onTap: _showUpdatePhoneSheet,
                   ),
                 ],
               ),

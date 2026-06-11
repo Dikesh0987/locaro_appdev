@@ -9,11 +9,13 @@ import '../../../core/widgets/cards/base_card.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../core/widgets/common/fallback_image.dart';
 import '../../products/presentation/product_details_screen.dart';
+import '../../queries/presentation/query_bottom_sheet.dart';
 import '../../../models/product_model.dart';
 import '../../../models/offer_model.dart';
 import '../../../models/post_model.dart';
 import '../../auth/application/auth_service.dart';
 import '../../../core/widgets/common/skeleton_loaders.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 
 class ShopProfileScreen extends ConsumerStatefulWidget {
@@ -33,9 +35,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (mounted) setState(() => _isLoading = false);
-    });
+    _isLoading = false;
   }
 
   @override
@@ -99,6 +99,51 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                         shape: BoxShape.circle,
                       ),
                       child: Icon(LucideIcons.arrowLeft, size: 20, color: context.colors.primary),
+                    ),
+                  ),
+                ),
+                // WhatsApp Button
+                Positioned(
+                  top: 50,
+                  right: AppSpacing.mobilePadding + 44, // offset to the left of the message button
+                  child: GestureDetector(
+                    onTap: () async {
+                      final whatsappUrl = 'https://wa.me/${shop.whatsapp.replaceAll(RegExp(r'[^0-9]'), '')}';
+                      if (await canLaunchUrlString(whatsappUrl)) {
+                        await launchUrlString(whatsappUrl);
+                      } else {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Could not launch WhatsApp')),
+                          );
+                        }
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF25D366),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(LucideIcons.messageCircle, size: 20, color: Colors.white),
+                    ),
+                  ),
+                ),
+                // Message Button
+                Positioned(
+                  top: 50,
+                  right: AppSpacing.mobilePadding,
+                  child: GestureDetector(
+                    onTap: () {
+                      showQueryBottomSheet(context, shopId: shop.id, category: 'SHOP PROFILE');
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(LucideIcons.messageSquare, size: 20, color: context.colors.primary),
                     ),
                   ),
                 ),

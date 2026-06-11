@@ -9,6 +9,7 @@ import '../../../providers/app_state_providers.dart';
 import '../../../models/shop_model.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
 import '../../../core/widgets/common/fallback_image.dart';
+import '../../search/presentation/search_screen.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 
@@ -141,7 +142,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   const SizedBox(width: AppSpacing.s12),
                   Expanded(
                     child: TextField(
-                      onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
+                      readOnly: true,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SearchScreen(),
+                          ),
+                        );
+                      },
                       decoration: InputDecoration(
                         hintText: 'Search shops, categories...',
                         hintStyle: AppTypography.body.copyWith(color: context.colors.textSecondary),

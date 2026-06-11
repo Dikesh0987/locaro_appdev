@@ -127,6 +127,103 @@ class AuthService {
     }
   }
 
+  // Sign In with Phone
+  Future<UserModel> handlePhoneSignIn(fb.PhoneAuthCredential credential, String selectedRole) async {
+    final userCredential = await _repository.signInWithPhoneCredential(credential);
+    final fbUser = userCredential.user;
+    if (fbUser == null) {
+      throw Exception("Failed to retrieve Phone user credentials.");
+    }
+
+    final doc = await _repository.getUserDoc(fbUser.uid);
+    
+    if (doc.exists) {
+      // Existing User
+      final data = doc.data()!;
+      final existingUser = UserModel.fromMap(data);
+      
+      final int currentLoginCount = data['loginCount'] ?? 0;
+      await _repository.updateUserDoc(fbUser.uid, {
+        'lastLoginAt': Timestamp.fromDate(DateTime.now()),
+        'loginCount': currentLoginCount + 1,
+        'updatedAt': Timestamp.fromDate(DateTime.now()),
+      });
+
+      final updatedUser = existingUser.copyWith(
+        lastLoginAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      _ref.read(databaseProvider.notifier).setCurrentUser(updatedUser);
+      _ref.read(appRoleProvider.notifier).state = updatedUser.role;
+
+      _setThemeFromStr(updatedUser.themeMode);
+
+      fcmService.updateTopicSubscriptions(
+        pushEnabled: updatedUser.notificationEnabled,
+        offersEnabled: updatedUser.notificationSettings['offers'] ?? true,
+        nearbyDealsEnabled: updatedUser.notificationSettings['nearbyDeals'] ?? true,
+        marketingEnabled: updatedUser.notificationSettings['marketing'] ?? false,
+      );
+
+      await fcmService.syncToken();
+
+      return updatedUser;
+    } else {
+      // New User - Auto create account
+      final newUser = UserModel(
+        uid: fbUser.uid,
+        name: 'New Explorer',
+        email: '',
+        phone: fbUser.phoneNumber ?? '',
+        photoUrl: '',
+        role: selectedRole,
+        isGuest: false,
+        interests: [],
+        location: '',
+        createdAt: DateTime.now(),
+        lastLoginAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        isOnboardingCompleted: false,
+        isProfileCompleted: false,
+        notificationEnabled: true,
+        language: 'English',
+        themeMode: 'system',
+        followingShops: [],
+        savedProducts: [],
+        notificationSettings: {
+          'offers': true,
+          'nearbyDeals': true,
+          'comments': true,
+          'followers': true,
+          'announcements': true,
+          'marketing': false,
+        }, likedProducts: [], likedPosts: [],
+      );
+
+      final mapData = newUser.toMap();
+      mapData['loginCount'] = 1;
+      mapData['platform'] = Platform.isAndroid ? 'Android' : 'iOS';
+      mapData['accountType'] = 'phone';
+      
+      await _repository.setUserDoc(fbUser.uid, mapData);
+
+      _ref.read(databaseProvider.notifier).setCurrentUser(newUser);
+      _ref.read(appRoleProvider.notifier).state = null; 
+
+      fcmService.updateTopicSubscriptions(
+        pushEnabled: newUser.notificationEnabled,
+        offersEnabled: newUser.notificationSettings['offers'] ?? true,
+        nearbyDealsEnabled: newUser.notificationSettings['nearbyDeals'] ?? true,
+        marketingEnabled: newUser.notificationSettings['marketing'] ?? false,
+      );
+
+      await fcmService.syncToken();
+
+      return newUser;
+    }
+  }
+
   // Guest Mode Sign-In
   Future<UserModel> handleGuestSignIn() async {
     final credential = await _repository.signInAnonymously();
@@ -291,6 +388,22 @@ class AuthService {
     _ref.read(databaseProvider.notifier).setCurrentUser(updatedUser);
 
     return downloadUrl;
+  }
+
+  // Update Phone Number
+  Future<void> updatePhoneNumber(String newPhone) async {
+    final user = _ref.read(databaseProvider).currentUser;
+    if (!user.isGuest) {
+      await _repository.updateUserDoc(user.uid, {
+        'phone': newPhone,
+        'updatedAt': Timestamp.fromDate(DateTime.now()),
+      });
+      final updatedUser = user.copyWith(
+        phone: newPhone,
+        updatedAt: DateTime.now(),
+      );
+      _ref.read(databaseProvider.notifier).setCurrentUser(updatedUser);
+    }
   }
 
   // Sign Out

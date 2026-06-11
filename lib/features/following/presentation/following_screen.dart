@@ -42,7 +42,7 @@ class FollowingScreen extends ConsumerWidget {
           ? _buildEmptyState(context, ref)
           : RefreshIndicator(
               onRefresh: () async {
-                await Future.delayed(const Duration(milliseconds: 600));
+                // data refreshes instantly
               },
               child: SingleChildScrollView(
                 key: const PageStorageKey('following_feed'),

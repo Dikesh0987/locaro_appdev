@@ -12,6 +12,8 @@ import '../../shop/presentation/shop_profile_screen.dart';
 import '../../auth/application/auth_service.dart';
 import '../../../core/widgets/common/skeleton_loaders.dart';
 import '../../../core/widgets/common/animated_action_icon.dart';
+import '../../queries/presentation/query_bottom_sheet.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class ProductDetailsScreen extends ConsumerStatefulWidget {
   final String productId;
@@ -29,9 +31,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (mounted) setState(() => _isLoading = false);
-    });
+    _isLoading = false;
   }
 
   void _generateLead(LeadType type, String typeLabel, String shopId, String productName) {
@@ -379,8 +379,8 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                       SizedBox(width: AppSpacing.s12),
                       Expanded(
                         child: OutlinedButton.icon(
-                          icon: Icon(LucideIcons.percent, size: 16, color: context.colors.offerOrange),
-                          label: Text('Ask Discount', style: TextStyle(color: context.colors.textPrimary)),
+                          icon: Icon(LucideIcons.store, size: 16, color: context.colors.textPrimary),
+                          label: Text('Visit Shop', style: TextStyle(color: context.colors.textPrimary)),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             side: BorderSide(color: context.colors.border),
@@ -389,29 +389,68 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                             ),
                           ),
                           onPressed: () {
-                            _generateLead(LeadType.discountRequest, 'Discount Request', product.shopId, product.name);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ShopProfileScreen(shopId: shop.id),
+                              ),
+                            );
                           },
                         ),
                       ),
                     ],
                   ),
                   SizedBox(height: AppSpacing.s12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton.icon(
-                      icon: const Icon(LucideIcons.messageSquare, color: Colors.white),
-                      label: const Text('WhatsApp Shop', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          icon: const Icon(LucideIcons.messageSquare, color: Colors.white, size: 18),
+                          label: const Text('Message', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+                            ),
+                          ),
+                          onPressed: () {
+                            showQueryBottomSheet(
+                              context,
+                              shopId: product.shopId,
+                              productId: product.id,
+                              category: product.category,
+                            );
+                          },
                         ),
                       ),
-                      onPressed: () {
-                        _generateLead(LeadType.whatsappClick, 'WhatsApp query', product.shopId, product.name);
-                      },
-                    ),
+                      SizedBox(width: AppSpacing.s12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          icon: const Icon(LucideIcons.messageCircle, color: Colors.white, size: 18),
+                          label: const Text('WhatsApp', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF25D366), // WhatsApp Green
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+                            ),
+                          ),
+                          onPressed: () async {
+                            final whatsappUrl = 'https://wa.me/${shop.whatsapp.replaceAll(RegExp(r'[^0-9]'), '')}';
+                            if (await canLaunchUrlString(whatsappUrl)) {
+                              await launchUrlString(whatsappUrl);
+                            } else {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Could not launch WhatsApp')),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

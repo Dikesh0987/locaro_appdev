@@ -6,6 +6,7 @@ import '../../theme/typography.dart';
 import '../../theme/spacing.dart';
 import '../../../providers/notification_providers.dart';
 import '../../../features/notifications/presentation/notifications_screen.dart';
+import '../../../features/search/presentation/search_screen.dart';
 
 class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final String? title;
@@ -30,12 +31,7 @@ class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
             icon: Icon(LucideIcons.chevronLeft, color: context.colors.primary),
             onPressed: () => Navigator.pop(context),
           )
-        : IconButton(
-            icon: Icon(LucideIcons.menu, color: context.colors.primary),
-            onPressed: () {
-              Scaffold.of(context).openDrawer();
-            },
-          ));
+        : null);
 
     return AppBar(
       title: title != null
@@ -68,7 +64,12 @@ class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
         ),
         IconButton(
           icon: Icon(LucideIcons.search, color: context.colors.primary),
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SearchScreen()),
+            );
+          },
         ),
         const SizedBox(width: AppSpacing.s8),
       ],
