@@ -21,6 +21,8 @@ class UserModel {
   final double latitude;
   final double longitude;
   final String? fcmToken;
+  final bool phoneVerified;
+  final DateTime? verifiedAt;
 
   // Backward compatibility fields for followed shops and saved products
   final List<String> followingShops;
@@ -57,6 +59,8 @@ class UserModel {
     this.latitude = 0.0,
     this.longitude = 0.0,
     this.fcmToken,
+    this.phoneVerified = false,
+    this.verifiedAt,
   });
 
   factory UserModel.empty() {
@@ -86,6 +90,8 @@ class UserModel {
       latitude: 0.0,
       longitude: 0.0,
       fcmToken: null,
+      phoneVerified: false,
+      verifiedAt: null,
     );
   }
 
@@ -119,6 +125,8 @@ class UserModel {
     double? latitude,
     double? longitude,
     String? fcmToken,
+    bool? phoneVerified,
+    DateTime? verifiedAt,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -146,6 +154,8 @@ class UserModel {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       fcmToken: fcmToken ?? this.fcmToken,
+      phoneVerified: phoneVerified ?? this.phoneVerified,
+      verifiedAt: verifiedAt ?? this.verifiedAt,
     );
   }
 
@@ -193,6 +203,8 @@ class UserModel {
       latitude: (map['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (map['longitude'] as num?)?.toDouble() ?? 0.0,
       fcmToken: map['fcmToken'] as String?,
+      phoneVerified: map['phoneVerified'] ?? false,
+      verifiedAt: map['verifiedAt'] != null ? parseDateTime(map['verifiedAt']) : null,
     );
   }
 
@@ -223,6 +235,8 @@ class UserModel {
       'latitude': latitude,
       'longitude': longitude,
       'fcmToken': fcmToken,
+      'phoneVerified': phoneVerified,
+      'verifiedAt': verifiedAt != null ? Timestamp.fromDate(verifiedAt!) : null,
     };
   }
 }

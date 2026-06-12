@@ -34,12 +34,47 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         setState(() {
           _pushNotifications = user.notificationEnabled;
           _offerNotifications = user.notificationSettings['offers'] ?? true;
-          _nearbyDealsNotifications = user.notificationSettings['nearbyDeals'] ?? true;
-          _marketingNotifications = user.notificationSettings['marketing'] ?? false;
+          _nearbyDealsNotifications =
+              user.notificationSettings['nearbyDeals'] ?? true;
+          _marketingNotifications =
+              user.notificationSettings['marketing'] ?? false;
           _selectedLanguage = user.language;
         });
+        // Also refresh email status
+        ref.read(authServiceProvider).refreshUserEmailVerificationStatus().then(
+          (_) {
+            if (mounted) setState(() {});
+          },
+        );
       }
     });
+  }
+
+  Future<void> _sendVerificationEmail() async {
+    final user = ref.read(databaseProvider).currentUser;
+    if (user.email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No email address found to verify.')),
+      );
+      return;
+    }
+    try {
+      await ref.read(authServiceProvider).sendEmailVerification(user.email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Verification link sent. Please check your inbox.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+      }
+    }
   }
 
   Future<void> _updateNotifications({
@@ -67,8 +102,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       newSettings['nearbyDeals'] = newNearby;
       newSettings['marketing'] = newMarketing;
 
-      await ref.read(authServiceProvider).updateNotificationSettings(newPush, newSettings);
-      
+      await ref
+          .read(authServiceProvider)
+          .updateNotificationSettings(newPush, newSettings);
+
       await fcmService.updateTopicSubscriptions(
         pushEnabled: newPush,
         offersEnabled: newOffers,
@@ -80,10 +117,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   // Privacy States
   bool _isPrivateAccount = false;
-  
+
   // Language State
   String _selectedLanguage = 'English';
-  final List<String> _languages = ['English', 'Hindi (हिन्दी)', 'Spanish (Español)', 'French (Français)'];
+  final List<String> _languages = [
+    'English',
+    'Hindi (हिन्दी)',
+    'Spanish (Español)',
+    'French (Français)',
+  ];
 
   // Permission States
   bool _locationPermission = true;
@@ -108,15 +150,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   if (val != null) {
                     setState(() => _selectedLanguage = val);
                     Navigator.pop(dialogContext);
-                    
+
                     final user = ref.read(databaseProvider).currentUser;
                     if (!user.isGuest) {
                       final updatedUser = user.copyWith(language: val);
-                      await ref.read(databaseProvider.notifier).updateCurrentUser(updatedUser);
+                      await ref
+                          .read(databaseProvider.notifier)
+                          .updateCurrentUser(updatedUser);
                     }
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Language changed to $val'), duration: const Duration(seconds: 1)),
+                        SnackBar(
+                          content: Text('Language changed to $val'),
+                          duration: const Duration(seconds: 1),
+                        ),
                       );
                     }
                   }
@@ -134,7 +181,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Delete Account?', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          title: const Text(
+            'Delete Account?',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+          ),
           content: const Text(
             'This action is permanent and cannot be undone. All your profile details, settings, and local history will be wiped out.',
             style: TextStyle(height: 1.4),
@@ -145,7 +195,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onPressed: () => Navigator.pop(dialogContext),
             ),
             TextButton(
-              child: const Text('Delete', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Delete',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               onPressed: () async {
                 Navigator.pop(dialogContext); // Close dialog
                 try {
@@ -153,13 +209,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   if (mounted) {
                     Navigator.pop(context); // Close settings screen
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Account successfully deleted.'), backgroundColor: Colors.red),
+                      const SnackBar(
+                        content: Text('Account successfully deleted.'),
+                        backgroundColor: Colors.red,
+                      ),
                     );
                   }
                 } catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to delete account: ${e.toString()}')),
+                      SnackBar(
+                        content: Text(
+                          'Failed to delete account: ${e.toString()}',
+                        ),
+                      ),
                     );
                   }
                 }
@@ -186,11 +249,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return Padding(
-              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
               child: Container(
                 decoration: BoxDecoration(
                   color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
                 ),
                 padding: const EdgeInsets.all(AppSpacing.mobilePadding),
                 child: Column(
@@ -199,16 +266,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   children: [
                     Center(
                       child: Container(
-                        width: 40, height: 4,
-                        decoration: BoxDecoration(color: Theme.of(context).dividerColor, borderRadius: BorderRadius.circular(2)),
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).dividerColor,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Text(isOtpSent ? 'Enter OTP' : 'Update Phone Number', style: AppTypography.heading),
+                    Text(
+                      isOtpSent ? 'Enter OTP' : 'Update Phone Number',
+                      style: AppTypography.heading,
+                    ),
                     const SizedBox(height: 8),
                     Text(
-                      isOtpSent ? 'We sent a verification code to your new number.' : 'Enter your new phone number to receive an OTP.',
-                      style: AppTypography.caption.copyWith(color: Theme.of(context).textTheme.bodySmall?.color),
+                      isOtpSent
+                          ? 'We sent a verification code to your new number.'
+                          : 'Enter your new phone number to receive an OTP.',
+                      style: AppTypography.caption.copyWith(
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
                     ),
                     const SizedBox(height: 24),
 
@@ -218,8 +296,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         keyboardType: TextInputType.phone,
                         decoration: InputDecoration(
                           hintText: 'New Phone Number',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -229,33 +312,60 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         onPressed: () async {
                           final phone = phoneController.text.trim();
                           if (phone.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a phone number')));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter a phone number'),
+                              ),
+                            );
                             return;
                           }
-                          String formattedPhone = phone.startsWith('+') ? phone : '+91$phone';
-                          
+                          String formattedPhone = phone.startsWith('+')
+                              ? phone
+                              : '+91$phone';
+
                           setState(() => isLoading = true);
-                          
+
                           try {
                             await fb.FirebaseAuth.instance.verifyPhoneNumber(
                               phoneNumber: formattedPhone,
-                              verificationCompleted: (fb.PhoneAuthCredential credential) async {
-                                try {
-                                  await ref.read(authServiceProvider).updatePhoneNumber(formattedPhone);
-                                  if (context.mounted) {
-                                    Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Phone number updated successfully!')));
-                                  }
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    setState(() => isLoading = false);
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-                                  }
-                                }
-                              },
+                              verificationCompleted:
+                                  (fb.PhoneAuthCredential credential) async {
+                                    try {
+                                      await ref
+                                          .read(authServiceProvider)
+                                          .updatePhoneNumber(formattedPhone);
+                                      if (context.mounted) {
+                                        Navigator.pop(context);
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Phone number updated successfully!',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        setState(() => isLoading = false);
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(content: Text('Error: $e')),
+                                        );
+                                      }
+                                    }
+                                  },
                               verificationFailed: (fb.FirebaseAuthException e) {
                                 setState(() => isLoading = false);
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Verification Failed: ${e.message}')));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Verification Failed: ${e.message}',
+                                    ),
+                                  ),
+                                );
                               },
                               codeSent: (String verId, int? resendToken) {
                                 setState(() {
@@ -270,7 +380,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             );
                           } catch (e) {
                             setState(() => isLoading = false);
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: $e')),
+                            );
                           }
                         },
                       ),
@@ -280,8 +392,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           hintText: '6-digit OTP',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -291,40 +408,57 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         onPressed: () async {
                           final code = otpController.text.trim();
                           if (code.isEmpty || verificationId == null) return;
-                          
+
                           setState(() => isLoading = true);
-                          
+
                           try {
                             final credential = fb.PhoneAuthProvider.credential(
                               verificationId: verificationId!,
                               smsCode: code,
                             );
-                            
-                            final currentUser = fb.FirebaseAuth.instance.currentUser;
+
+                            final currentUser =
+                                fb.FirebaseAuth.instance.currentUser;
                             if (currentUser != null) {
-                               try {
-                                 await currentUser.linkWithCredential(credential);
-                               } on fb.FirebaseAuthException catch (e) {
-                                 if (e.code == 'provider-already-linked' || e.code == 'credential-already-in-use') {
-                                   // Already linked, proceed.
-                                 } else {
-                                   rethrow;
-                                 }
-                               }
+                              try {
+                                await currentUser.linkWithCredential(
+                                  credential,
+                                );
+                              } on fb.FirebaseAuthException catch (e) {
+                                if (e.code == 'provider-already-linked' ||
+                                    e.code == 'credential-already-in-use') {
+                                  // Already linked, proceed.
+                                } else {
+                                  rethrow;
+                                }
+                              }
                             }
-                            
+
                             String formattedPhone = phoneController.text.trim();
-                            if (!formattedPhone.startsWith('+')) formattedPhone = '+91$formattedPhone';
-                            
-                            await ref.read(authServiceProvider).updatePhoneNumber(formattedPhone);
-                            
+                            if (!formattedPhone.startsWith('+'))
+                              formattedPhone = '+91$formattedPhone';
+
+                            await ref
+                                .read(authServiceProvider)
+                                .updatePhoneNumber(formattedPhone);
+
                             if (context.mounted) {
                               Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Phone number updated successfully!')));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Phone number updated successfully!',
+                                  ),
+                                ),
+                              );
                             }
                           } catch (e) {
                             setState(() => isLoading = false);
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Invalid OTP or error: $e')));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Invalid OTP or error: $e'),
+                              ),
+                            );
                           }
                         },
                       ),
@@ -334,9 +468,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
             );
-          }
+          },
         );
-      }
+      },
     );
   }
 
@@ -358,7 +492,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // --- THEME SELECTOR ---
-            Text('Appearance', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: context.colors.textSecondary)),
+            Text(
+              'Appearance',
+              style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.bold,
+                color: context.colors.textSecondary,
+              ),
+            ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -374,18 +514,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(LucideIcons.palette, color: Theme.of(context).iconTheme.color),
+                          Icon(
+                            LucideIcons.palette,
+                            color: Theme.of(context).iconTheme.color,
+                          ),
                           const SizedBox(width: 12),
-                          Text('Theme Mode', style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
+                          Text(
+                            'Theme Mode',
+                            style: AppTypography.body.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
                       ),
                       Text(
                         activeThemeMode == ThemeMode.system
                             ? 'System'
                             : activeThemeMode == ThemeMode.dark
-                                ? 'Dark'
-                                : 'Light',
-                        style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
+                            ? 'Dark'
+                            : 'Light',
+                        style: AppTypography.caption.copyWith(
+                          color: context.colors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -396,7 +546,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         child: _buildThemeOptionButton(
                           label: 'Light',
                           isSelected: activeThemeMode == ThemeMode.light,
-                          onTap: () => ref.read(authServiceProvider).updateThemeMode('light'),
+                          onTap: () => ref
+                              .read(authServiceProvider)
+                              .updateThemeMode('light'),
                           icon: LucideIcons.sun,
                         ),
                       ),
@@ -405,7 +557,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         child: _buildThemeOptionButton(
                           label: 'Dark',
                           isSelected: activeThemeMode == ThemeMode.dark,
-                          onTap: () => ref.read(authServiceProvider).updateThemeMode('dark'),
+                          onTap: () => ref
+                              .read(authServiceProvider)
+                              .updateThemeMode('dark'),
                           icon: LucideIcons.moon,
                         ),
                       ),
@@ -414,7 +568,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         child: _buildThemeOptionButton(
                           label: 'System',
                           isSelected: activeThemeMode == ThemeMode.system,
-                          onTap: () => ref.read(authServiceProvider).updateThemeMode('system'),
+                          onTap: () => ref
+                              .read(authServiceProvider)
+                              .updateThemeMode('system'),
                           icon: LucideIcons.laptop,
                         ),
                       ),
@@ -426,7 +582,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: AppSpacing.sectionGap),
 
             // --- NOTIFICATIONS ---
-            Text('Notifications', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: context.colors.textSecondary)),
+            Text(
+              'Notifications',
+              style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.bold,
+                color: context.colors.textSecondary,
+              ),
+            ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -469,7 +631,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: AppSpacing.sectionGap),
 
             // --- PREFERENCES ---
-            Text('Preferences', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: context.colors.textSecondary)),
+            Text(
+              'Preferences',
+              style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.bold,
+                color: context.colors.textSecondary,
+              ),
+            ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -499,13 +667,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     icon: LucideIcons.phone,
                     onTap: _showUpdatePhoneSheet,
                   ),
+                  const Divider(height: 1, indent: 48),
+                  _buildClickTile(
+                    label: 'Email Verification',
+                    subtitle:
+                        fb.FirebaseAuth.instance.currentUser?.emailVerified ==
+                            true
+                        ? 'Verified'
+                        : 'Unverified (Tap to verify)',
+                    icon: LucideIcons.mail,
+                    onTap:
+                        fb.FirebaseAuth.instance.currentUser?.emailVerified ==
+                            true
+                        ? () {}
+                        : _sendVerificationEmail,
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: AppSpacing.sectionGap),
 
             // --- PERMISSIONS ---
-            Text('App Permissions', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: context.colors.textSecondary)),
+            Text(
+              'App Permissions',
+              style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.bold,
+                color: context.colors.textSecondary,
+              ),
+            ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -533,7 +722,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     label: 'Notifications Access',
                     icon: LucideIcons.bellRing,
                     val: _notificationPermission,
-                    onChanged: (v) => setState(() => _notificationPermission = v),
+                    onChanged: (v) =>
+                        setState(() => _notificationPermission = v),
                   ),
                 ],
               ),
@@ -554,7 +744,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: const Center(
                   child: Text(
                     'Delete Account',
-                    style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -572,8 +765,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required VoidCallback onTap,
     required IconData icon,
   }) {
-    final activeTextColor = isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color;
-
+    final activeTextColor = isSelected
+        ? Colors.white
+        : Theme.of(context).textTheme.bodyLarge?.color;
 
     return ScaleButtonPressed(
       onTap: onTap,
@@ -581,10 +775,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? context.colors.primary : Theme.of(context).dividerColor.withValues(alpha: 0.05),
+          color: isSelected
+              ? context.colors.primary
+              : Theme.of(context).dividerColor.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(100),
           border: Border.all(
-            color: isSelected ? context.colors.primary : Theme.of(context).dividerColor,
+            color: isSelected
+                ? context.colors.primary
+                : Theme.of(context).dividerColor,
           ),
         ),
         child: Row(
@@ -615,7 +813,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       color: Colors.transparent,
       child: ListTile(
         leading: Icon(icon, color: Theme.of(context).iconTheme.color),
-        title: Text(label, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
+        title: Text(
+          label,
+          style: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
+        ),
         trailing: Switch.adaptive(
           value: val,
           onChanged: onChanged,
@@ -635,8 +836,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       color: Colors.transparent,
       child: ListTile(
         leading: Icon(icon, color: Theme.of(context).iconTheme.color),
-        title: Text(label, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle, style: AppTypography.caption.copyWith(color: context.colors.textSecondary, fontSize: 11)),
+        title: Text(
+          label,
+          style: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: AppTypography.caption.copyWith(
+            color: context.colors.textSecondary,
+            fontSize: 11,
+          ),
+        ),
         trailing: const Icon(LucideIcons.chevronRight, size: 16),
         onTap: onTap,
       ),

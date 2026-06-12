@@ -23,9 +23,24 @@ class AuthRepository {
     return await _auth.signInWithCredential(credential);
   }
 
+  // Link Google Account
+  Future<UserCredential> linkWithGoogle() async {
+    final GoogleSignInAccount googleUser = await GoogleSignIn.instance.authenticate();
+    final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+    final AuthCredential credential = GoogleAuthProvider.credential(
+      idToken: googleAuth.idToken,
+    );
+    return await _auth.currentUser!.linkWithCredential(credential);
+  }
+
   // Phone Sign-In
   Future<UserCredential> signInWithPhoneCredential(PhoneAuthCredential credential) async {
     return await _auth.signInWithCredential(credential);
+  }
+
+  // Link Phone Account
+  Future<UserCredential> linkWithPhoneCredential(PhoneAuthCredential credential) async {
+    return await _auth.currentUser!.linkWithCredential(credential);
   }
 
   // Anonymous Auth (Guest Mode)
@@ -62,6 +77,17 @@ class AuthRepository {
 
   Future<void> deleteUserDoc(String uid) async {
     await _firestore.collection('users').doc(uid).delete();
+  }
+
+  // Check if a phone number is already verified by another account
+  Future<bool> isPhoneNumberUsed(String phoneNumber) async {
+    final querySnapshot = await _firestore
+        .collection('users')
+        .where('phone', isEqualTo: phoneNumber)
+        .where('phoneVerified', isEqualTo: true)
+        .limit(1)
+        .get();
+    return querySnapshot.docs.isNotEmpty;
   }
 
   // Firebase Storage operations

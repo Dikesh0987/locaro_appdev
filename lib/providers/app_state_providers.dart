@@ -96,7 +96,7 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
   void _listenToFirestore() {
     final firestore = FirebaseFirestore.instance;
 
-    _shopsSub = firestore.collection('shops').snapshots().listen((snapshot) {
+    _shopsSub = firestore.collection('shops').limit(100).snapshots().listen((snapshot) {
       final shops = snapshot.docs.map((doc) => ShopModel.fromMap(doc.data())).toList();
       state = state.copyWith(shops: shops);
       
@@ -110,27 +110,27 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
       }
     });
 
-    _productsSub = firestore.collection('products').snapshots().listen((snapshot) {
+    _productsSub = firestore.collection('products').orderBy('createdAt', descending: true).limit(200).snapshots().listen((snapshot) {
       final products = snapshot.docs.map((doc) => ProductModel.fromMap(doc.data())).toList();
       state = state.copyWith(products: products);
     });
 
-    _postsSub = firestore.collection('posts').snapshots().listen((snapshot) {
+    _postsSub = firestore.collection('posts').orderBy('createdAt', descending: true).limit(200).snapshots().listen((snapshot) {
       final posts = snapshot.docs.map((doc) => PostModel.fromMap(doc.data())).toList();
       state = state.copyWith(posts: posts);
     });
 
-    _offersSub = firestore.collection('offers').snapshots().listen((snapshot) {
+    _offersSub = firestore.collection('offers').orderBy('createdAt', descending: true).limit(100).snapshots().listen((snapshot) {
       final offers = snapshot.docs.map((doc) => OfferModel.fromMap(doc.data())).toList();
       state = state.copyWith(offers: offers);
     });
 
-    _leadsSub = firestore.collection('leads').snapshots().listen((snapshot) {
+    _leadsSub = firestore.collection('leads').orderBy('createdAt', descending: true).limit(100).snapshots().listen((snapshot) {
       final leads = snapshot.docs.map((doc) => LeadModel.fromMap(doc.data())).toList();
       state = state.copyWith(leads: leads);
     });
 
-    _queriesSub = firestore.collection('queries').snapshots().listen((snapshot) {
+    _queriesSub = firestore.collection('queries').orderBy('createdAt', descending: true).limit(100).snapshots().listen((snapshot) {
       final queries = snapshot.docs.map((doc) => QueryModel.fromMap(doc.data())).toList();
       state = state.copyWith(queries: queries);
     });

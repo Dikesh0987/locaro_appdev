@@ -16,9 +16,10 @@ import '../application/auth_service.dart';
 import '../data/auth_repository.dart';
 import 'auth_controller.dart';
 import 'auth_state.dart';
+import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
-
+import '../../../core/utils/firebase_error_handler.dart';
 
 class AuthFlowContainer extends ConsumerStatefulWidget {
   final String role; // fallback/initial role
@@ -39,7 +40,6 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   // Google Account simulated state
   String? _googleProfileImage;
 
-
   // Controllers for User flow
   final TextEditingController _userNameController = TextEditingController();
   final TextEditingController _userEmailController = TextEditingController();
@@ -48,7 +48,8 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
 
   // Controllers for Shop Owner flow
   final TextEditingController _shopNameController = TextEditingController();
-  final TextEditingController _shopOwnerNameController = TextEditingController();
+  final TextEditingController _shopOwnerNameController =
+      TextEditingController();
   final TextEditingController _shopAddressController = TextEditingController();
   final TextEditingController _shopDescController = TextEditingController();
   final TextEditingController _whatsappController = TextEditingController();
@@ -61,8 +62,23 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   String? _logoUrl;
   String? _bannerUrl;
 
-  final List<String> _availableCategories = ['Cafe', 'Groceries', 'Electronics', 'Fashion', 'Bakery'];
-  final List<String> _availableInterests = ['Coffee', 'Fresh Produce', 'Electronics', 'Fashion', 'Bakery', 'Organic Food', 'Tech Gadgets', 'Desserts'];
+  final List<String> _availableCategories = [
+    'Cafe',
+    'Groceries',
+    'Electronics',
+    'Fashion',
+    'Bakery',
+  ];
+  final List<String> _availableInterests = [
+    'Coffee',
+    'Fresh Produce',
+    'Electronics',
+    'Fashion',
+    'Bakery',
+    'Organic Food',
+    'Tech Gadgets',
+    'Desserts',
+  ];
 
   @override
   void initState() {
@@ -114,14 +130,14 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
     setState(() => _isLoading = true);
     try {
       await ref.read(authControllerProvider.notifier).signInWithGoogle(_role);
-      
+
       final authState = ref.read(authControllerProvider);
       if (authState is AuthFailure) {
         throw Exception(authState.errorMessage);
       }
-      
+
       final user = ref.read(databaseProvider).currentUser;
-      
+
       setState(() {
         _userNameController.text = user.name;
         _userEmailController.text = user.email;
@@ -129,7 +145,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           _userPhoneController.text = user.phone;
         }
         _googleProfileImage = user.photoUrl.isNotEmpty ? user.photoUrl : null;
-        
+
         _shopOwnerNameController.text = user.name;
         _shopNameController.text = "${user.name}'s Shop";
       });
@@ -163,12 +179,12 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
     setState(() => _isLoading = true);
     try {
       await ref.read(authControllerProvider.notifier).signInAsGuest();
-      
+
       final authState = ref.read(authControllerProvider);
       if (authState is AuthFailure) {
         throw Exception(authState.errorMessage);
       }
-      
+
       if (mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
@@ -205,8 +221,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           if (permission == LocationPermission.denied) {
             permission = await Geolocator.requestPermission();
           }
-          
-          if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+
+          if (permission == LocationPermission.whileInUse ||
+              permission == LocationPermission.always) {
             Position? position;
             try {
               position = await Geolocator.getCurrentPosition(
@@ -222,7 +239,8 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
             if (position != null) {
               latitude = position.latitude;
               longitude = position.longitude;
-              locationStr = '${latitude.toStringAsFixed(4)}, ${longitude.toStringAsFixed(4)}';
+              locationStr =
+                  '${latitude.toStringAsFixed(4)}, ${longitude.toStringAsFixed(4)}';
             }
           }
         }
@@ -232,16 +250,27 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
       }
 
       final user = ref.read(databaseProvider).currentUser;
+      
+      String finalEmail = _userEmailController.text.trim();
+      if (finalEmail.isEmpty) finalEmail = user.email;
+      
+      String finalPhone = _role == 'shop_owner' 
+          ? _whatsappController.text.trim() 
+          : _userPhoneController.text.trim();
+      if (finalPhone.isEmpty) finalPhone = user.phone;
+
       final updatedUser = user.copyWith(
         name: _userNameController.text.trim(),
-        email: _userEmailController.text.trim(),
-        phone: _userPhoneController.text.trim(),
+        email: finalEmail,
+        phone: finalPhone,
         interests: _selectedInterests,
         location: locationStr, // updated dynamically
         photoUrl: _googleProfileImage ?? '',
         role: _role,
         latitude: latitude,
         longitude: longitude,
+        phoneVerified: _isWhatsappVerified || user.phoneVerified,
+        verifiedAt: (_isWhatsappVerified && !user.phoneVerified) ? DateTime.now() : user.verifiedAt,
       );
 
       if (_role == 'shop_owner') {
@@ -259,8 +288,8 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           followers: 0,
           category: _selectedCategory,
           isVerified: true,
-          phone: _userPhoneController.text.trim(),
-          whatsapp: _whatsappController.text.trim(),
+          phone: finalPhone,
+          whatsapp: finalPhone,
           description: _shopDescController.text.trim(),
           openTime: '09:00',
           closeTime: '21:00',
@@ -268,7 +297,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
-        
+
         await ref.read(databaseProvider.notifier).updateCurrentShop(newShop);
       }
 
@@ -288,16 +317,21 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
 
   Future<void> _pickLogo() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+    );
     if (image != null) {
       setState(() => _isLoading = true);
       try {
         final currentUser = ref.read(databaseProvider).currentUser;
-        final url = await ref.read(authRepositoryProvider).uploadShopAsset(
-          'shop_${currentUser.uid}',
-          'logo',
-          File(image.path)
-        );
+        final url = await ref
+            .read(authRepositoryProvider)
+            .uploadShopAsset(
+              'shop_${currentUser.uid}',
+              'logo',
+              File(image.path),
+            );
         setState(() => _logoUrl = url);
       } catch (e) {
         if (mounted) {
@@ -313,16 +347,21 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
 
   Future<void> _pickBanner() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 75,
+    );
     if (image != null) {
       setState(() => _isLoading = true);
       try {
         final currentUser = ref.read(databaseProvider).currentUser;
-        final url = await ref.read(authRepositoryProvider).uploadShopAsset(
-          'shop_${currentUser.uid}',
-          'banner',
-          File(image.path)
-        );
+        final url = await ref
+            .read(authRepositoryProvider)
+            .uploadShopAsset(
+              'shop_${currentUser.uid}',
+              'banner',
+              File(image.path),
+            );
         setState(() => _bannerUrl = url);
       } catch (e) {
         if (mounted) {
@@ -339,14 +378,16 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   Future<void> _sendRealOtp() async {
     final phone = _whatsappController.text.trim();
     if (phone.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter phone number')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter phone number')),
+      );
       return;
     }
-    
+
     // Add country code if not present (defaulting to +91 for India as an example)
     String formattedPhone = phone;
     if (!formattedPhone.startsWith('+')) {
-      formattedPhone = '+91$phone'; 
+      formattedPhone = '+91$phone';
     }
 
     setState(() {
@@ -354,21 +395,43 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
     });
 
     try {
+      final isUsed = await ref.read(authRepositoryProvider).isPhoneNumberUsed(formattedPhone);
+      if (isUsed) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('This phone number is already verified by another account.')),
+          );
+        }
+        return;
+      }
+    } catch (e) {
+      debugPrint('Phone uniqueness check failed: $e');
+    }
+
+    try {
       // NOTE: If a web browser opens for reCAPTCHA, it means Play Integrity/SafetyNet failed.
-      // To fix this permanently: 
+      // To fix this permanently:
       // 1. Add your SHA-1 and SHA-256 keys to the Firebase Console settings.
       // 2. Enable 'Play Integrity API' in Google Cloud Console for this project.
       await fb.FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: formattedPhone,
+        timeout: const Duration(seconds: 60),
         verificationCompleted: (fb.PhoneAuthCredential credential) async {
           try {
-            await fb.FirebaseAuth.instance.currentUser?.linkWithCredential(credential);
+            await fb.FirebaseAuth.instance.currentUser?.linkWithCredential(
+              credential,
+            );
             if (mounted) {
               setState(() {
                 _isWhatsappVerified = true;
                 _isLoading = false;
               });
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('WhatsApp Auto-Verified Successfully!')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('WhatsApp Auto-Verified Successfully!'),
+                ),
+              );
             }
           } catch (e) {
             if (mounted) {
@@ -385,7 +448,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
               _isLoading = false;
               _isOtpSent = false;
             });
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Verification Failed: ${e.message}')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Verification Failed: ${e.message}')),
+            );
           }
         },
         codeSent: (String verificationId, int? resendToken) {
@@ -396,7 +461,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
               _isOtpSent = true;
               _isLoading = false;
             });
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OTP sent successfully!')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('OTP sent successfully!')),
+            );
           }
         },
         codeAutoRetrievalTimeout: (String verificationId) {
@@ -409,7 +476,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
         _isOtpSent = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -417,11 +486,15 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   Future<void> _verifyRealOtp() async {
     final code = _otpController.text.trim();
     if (code.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter the OTP')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter the OTP')));
       return;
     }
     if (_verificationId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please wait for OTP to be sent')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please wait for OTP to be sent')),
+      );
       return;
     }
 
@@ -434,10 +507,16 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
       );
 
       try {
-        await fb.FirebaseAuth.instance.currentUser?.linkWithCredential(credential);
-      } catch (e) {
-        debugPrint('Link credential error: $e');
-        // Continue anyway since OTP was valid
+        await ref.read(authServiceProvider).linkPhoneAccount(credential);
+      } on fb.FirebaseAuthException catch (e) {
+        debugPrint('Link credential error: ${e.code}');
+        if (e.code == 'invalid-verification-code' || e.code == 'session-expired') {
+          rethrow;
+        }
+        // If it throws provider-already-linked or credential-already-in-use,
+        // it means the OTP was actually valid (Firebase verified it), 
+        // but we can't link it to this specific auth account. 
+        // Since we just want to verify they own the WhatsApp number, we can safely continue.
       }
 
       if (mounted) {
@@ -446,17 +525,23 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           _isOtpSent = false;
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('WhatsApp Verified Successfully!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('WhatsApp Verified Successfully!')),
+        );
       }
     } on fb.FirebaseAuthException catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Invalid OTP: ${e.message}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(FirebaseErrorHandler.handleAuthException(e))),
+        );
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error verifying OTP: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error verifying OTP: $e')));
       }
     }
   }
@@ -467,24 +552,38 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
     bool isOtpSent = false;
     bool isSheetLoading = false;
     String? verificationId;
+    int cooldownSeconds = 0;
+    Timer? cooldownTimer;
 
     Future<void> handlePhoneSuccess(fb.PhoneAuthCredential credential) async {
       try {
-        await ref.read(authServiceProvider).handlePhoneSignIn(credential, _role);
+        await ref
+            .read(authServiceProvider)
+            .handlePhoneSignIn(credential, _role);
         final user = ref.read(databaseProvider).currentUser;
         if (mounted) {
-           Navigator.pop(context);
-           if (!user.isOnboardingCompleted) {
-              if (user.phone.isNotEmpty) {
-                _userPhoneController.text = user.phone;
-                _whatsappController.text = user.phone;
-              }
-              _nextPage();
-           }
+          Navigator.pop(context);
+          if (!user.isOnboardingCompleted) {
+            if (user.phone.isNotEmpty) {
+              _userPhoneController.text = user.phone;
+              _whatsappController.text = user.phone;
+            }
+            _nextPage();
+          } else {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          }
+        }
+      } on fb.FirebaseAuthException catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(FirebaseErrorHandler.handleAuthException(e))),
+          );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login failed: ${e.toString()}')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(FirebaseErrorHandler.handleGenericException(e))),
+          );
         }
       }
     }
@@ -496,12 +595,30 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
+            void startCooldown() {
+              cooldownSeconds = 30;
+              cooldownTimer?.cancel();
+              cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+                setSheetState(() {
+                  if (cooldownSeconds > 0) {
+                    cooldownSeconds--;
+                  } else {
+                    timer.cancel();
+                  }
+                });
+              });
+            }
+
             return Padding(
-              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
               child: Container(
                 decoration: BoxDecoration(
                   color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
                 ),
                 padding: const EdgeInsets.all(AppSpacing.mobilePadding),
                 child: Column(
@@ -510,16 +627,27 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                   children: [
                     Center(
                       child: Container(
-                        width: 40, height: 4,
-                        decoration: BoxDecoration(color: Theme.of(context).dividerColor, borderRadius: BorderRadius.circular(2)),
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).dividerColor,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Text(isOtpSent ? 'Enter OTP' : 'Continue with Phone', style: AppTypography.heading),
+                    Text(
+                      isOtpSent ? 'Enter OTP' : 'Continue with Phone',
+                      style: AppTypography.heading,
+                    ),
                     const SizedBox(height: 8),
                     Text(
-                      isOtpSent ? 'We sent a verification code to your number.' : 'You will receive a 6-digit code to verify your number.',
-                      style: AppTypography.caption.copyWith(color: Theme.of(context).textTheme.bodySmall?.color),
+                      isOtpSent
+                          ? 'We sent a verification code to your number.'
+                          : 'You will receive a 6-digit code to verify your number.',
+                      style: AppTypography.caption.copyWith(
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
                     ),
                     const SizedBox(height: 24),
 
@@ -529,39 +657,65 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                         keyboardType: TextInputType.phone,
                         decoration: InputDecoration(
                           hintText: 'Phone Number',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
                       PrimaryButton(
-                        text: 'Send OTP',
+                        text: cooldownSeconds > 0 ? 'Resend in ${cooldownSeconds}s' : 'Send OTP',
                         isLoading: isSheetLoading,
-                        onPressed: () async {
+                        onPressed: cooldownSeconds > 0 ? () {} : () async {
                           final phone = phoneController.text.trim();
                           if (phone.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter phone number')));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter phone number'),
+                              ),
+                            );
                             return;
                           }
-                          String formattedPhone = phone.startsWith('+') ? phone : '+91$phone';
-                          
+                          String formattedPhone = phone.startsWith('+')
+                              ? phone
+                              : '+91$phone';
+
                           setSheetState(() => isSheetLoading = true);
-                          
+
+
+
                           try {
                             await fb.FirebaseAuth.instance.verifyPhoneNumber(
                               phoneNumber: formattedPhone,
-                              verificationCompleted: (fb.PhoneAuthCredential credential) async {
-                                await handlePhoneSuccess(credential);
-                              },
+                              timeout: const Duration(seconds: 60),
+                              verificationCompleted:
+                                  (fb.PhoneAuthCredential credential) async {
+                                    await handlePhoneSuccess(credential);
+                                  },
                               verificationFailed: (fb.FirebaseAuthException e) {
-                                setSheetState(() => isSheetLoading = false);
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Verification Failed: ${e.message}')));
+                                setSheetState(() {
+                                  isSheetLoading = false;
+                                  if (e.code == 'too-many-requests') {
+                                    startCooldown();
+                                  }
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(FirebaseErrorHandler.handleAuthException(e)),
+                                    duration: const Duration(seconds: 4),
+                                  ),
+                                );
                               },
                               codeSent: (String verId, int? resendToken) {
                                 setSheetState(() {
                                   verificationId = verId;
                                   isOtpSent = true;
                                   isSheetLoading = false;
+                                  startCooldown();
                                 });
                               },
                               codeAutoRetrievalTimeout: (String verId) {
@@ -570,7 +724,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                             );
                           } catch (e) {
                             setSheetState(() => isSheetLoading = false);
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(FirebaseErrorHandler.handleGenericException(e))),
+                            );
                           }
                         },
                       ),
@@ -580,8 +736,13 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           hintText: '6-digit OTP',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -591,18 +752,30 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                         onPressed: () async {
                           final code = otpController.text.trim();
                           if (code.isEmpty || verificationId == null) return;
-                          
+
                           setSheetState(() => isSheetLoading = true);
-                          
+
                           try {
                             final credential = fb.PhoneAuthProvider.credential(
                               verificationId: verificationId!,
                               smsCode: code,
                             );
                             await handlePhoneSuccess(credential);
+                          } on fb.FirebaseAuthException catch (e) {
+                            setSheetState(() => isSheetLoading = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(FirebaseErrorHandler.handleAuthException(e)),
+                                duration: const Duration(seconds: 3),
+                              ),
+                            );
                           } catch (e) {
                             setSheetState(() => isSheetLoading = false);
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Invalid OTP or error: $e')));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(FirebaseErrorHandler.handleGenericException(e)),
+                              ),
+                            );
                           }
                         },
                       ),
@@ -612,9 +785,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 ),
               ),
             );
-          }
+          },
         );
-      }
+      },
     );
   }
 
@@ -641,7 +814,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
             child: Center(
               child: Text(
                 '${_currentStep + 1}/$totalSteps',
-                style: AppTypography.label.copyWith(color: context.colors.textSecondary),
+                style: AppTypography.label.copyWith(
+                  color: context.colors.textSecondary,
+                ),
               ),
             ),
           ),
@@ -762,14 +937,14 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           const Spacer(),
           // Login Actions
           PrimaryButton(
-            text: 'Continue with Google',
+            text: 'Continue with Phone Number',
             isLoading: _isLoading,
-            onPressed: _handleGoogleSignIn,
+            onPressed: _isLoading ? () {} : _showPhoneLoginSheet,
           ),
           const SizedBox(height: AppSpacing.s12),
           SecondaryButton(
-            text: 'Continue with Phone Number',
-            onPressed: _isLoading ? () {} : _showPhoneLoginSheet,
+            text: 'Continue with Google',
+            onPressed: _handleGoogleSignIn,
           ),
           if (!isShop) ...[
             SizedBox(height: AppSpacing.s16),
@@ -797,6 +972,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
 
   // --- USER PROFILE STEP ---
   Widget _buildProfileStep() {
+    final user = ref.read(databaseProvider).currentUser;
+    final isGoogleSignIn = user.email.isNotEmpty && user.phone.isEmpty;
+
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.mobilePadding),
       child: SingleChildScrollView(
@@ -806,7 +984,12 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
             SizedBox(height: AppSpacing.s24),
             Text('Create Profile', style: AppTypography.heading),
             SizedBox(height: AppSpacing.s8),
-            Text('Verify and complete your profile details', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+            Text(
+              'Verify and complete your profile details',
+              style: AppTypography.caption.copyWith(
+                color: context.colors.textSecondary,
+              ),
+            ),
             SizedBox(height: AppSpacing.s32),
             Center(
               child: Stack(
@@ -818,7 +1001,11 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                         ? NetworkImage(_googleProfileImage!)
                         : null,
                     child: _googleProfileImage == null
-                        ? Icon(LucideIcons.user, size: 40, color: context.colors.textSecondary)
+                        ? Icon(
+                            LucideIcons.user,
+                            size: 40,
+                            color: context.colors.textSecondary,
+                          )
                         : null,
                   ),
                   Positioned(
@@ -830,7 +1017,11 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                         color: context.colors.primary,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(LucideIcons.camera, size: 16, color: Colors.white),
+                      child: const Icon(
+                        LucideIcons.camera,
+                        size: 16,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -842,17 +1033,19 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
               hintText: 'Full Name',
             ),
             SizedBox(height: AppSpacing.s16),
-            AppTextField(
-              controller: _userEmailController,
-              hintText: 'Email Address',
-              keyboardType: TextInputType.emailAddress,
-            ),
-            SizedBox(height: AppSpacing.s16),
-            AppTextField(
-              controller: _userPhoneController,
-              hintText: 'Phone Number (Optional)',
-              keyboardType: TextInputType.phone,
-            ),
+            if (isGoogleSignIn) ...[
+              AppTextField(
+                controller: _userPhoneController,
+                hintText: 'Phone Number (Optional)',
+                keyboardType: TextInputType.phone,
+              ),
+            ] else ...[
+              AppTextField(
+                controller: _userEmailController,
+                hintText: 'Email Address',
+                keyboardType: TextInputType.emailAddress,
+              ),
+            ],
             SizedBox(height: 80),
             PrimaryButton(
               text: 'Continue',
@@ -862,7 +1055,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Please enter your name')),
                   );
-                } else if (_userEmailController.text.isEmpty) {
+                } else if (!isGoogleSignIn && _userEmailController.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Please enter your email')),
                   );
@@ -888,7 +1081,12 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           SizedBox(height: AppSpacing.s24),
           Text('Select Interests', style: AppTypography.heading),
           SizedBox(height: AppSpacing.s8),
-          Text('Help us curate a custom local feed for you', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+          Text(
+            'Help us curate a custom local feed for you',
+            style: AppTypography.caption.copyWith(
+              color: context.colors.textSecondary,
+            ),
+          ),
           SizedBox(height: AppSpacing.s32),
           Wrap(
             spacing: AppSpacing.s8,
@@ -906,18 +1104,27 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                   });
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s16,
+                    vertical: AppSpacing.s12,
+                  ),
                   decoration: BoxDecoration(
-                    color: isSelected ? context.colors.primary : Theme.of(context).cardColor,
+                    color: isSelected
+                        ? context.colors.primary
+                        : Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(100),
                     border: Border.all(
-                      color: isSelected ? context.colors.primary : Theme.of(context).dividerColor,
+                      color: isSelected
+                          ? context.colors.primary
+                          : Theme.of(context).dividerColor,
                     ),
                   ),
                   child: Text(
                     interest,
                     style: AppTypography.caption.copyWith(
-                      color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
+                      color: isSelected
+                          ? Colors.white
+                          : Theme.of(context).textTheme.bodyLarge?.color,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -932,7 +1139,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
             onPressed: () {
               if (_selectedInterests.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please select at least 1 interest')),
+                  const SnackBar(
+                    content: Text('Please select at least 1 interest'),
+                  ),
                 );
               } else {
                 _nextPage();
@@ -961,7 +1170,11 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 color: context.colors.border,
                 borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
               ),
-              child: Icon(LucideIcons.mapPin, size: 56, color: context.colors.primary),
+              child: Icon(
+                LucideIcons.mapPin,
+                size: 56,
+                color: context.colors.primary,
+              ),
             ),
           ),
           SizedBox(height: 32),
@@ -969,7 +1182,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           SizedBox(height: AppSpacing.s12),
           Text(
             'Locaro is built for local discovery. We need location permission to show you stores and products near your block, and notification permission to alert you on active discounts.',
-            style: AppTypography.body.copyWith(color: context.colors.textSecondary),
+            style: AppTypography.body.copyWith(
+              color: context.colors.textSecondary,
+            ),
           ),
           const Spacer(),
           PrimaryButton(
@@ -983,7 +1198,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
               onPressed: _completeAuth,
               child: Text(
                 'Skip for now',
-                style: AppTypography.body.copyWith(color: context.colors.textSecondary),
+                style: AppTypography.body.copyWith(
+                  color: context.colors.textSecondary,
+                ),
               ),
             ),
           ),
@@ -995,6 +1212,9 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
 
   // --- BUSINESS SETUP STEP ---
   Widget _buildBusinessSetupStep() {
+    final user = ref.read(databaseProvider).currentUser;
+    final isGoogleSignIn = user.email.isNotEmpty && user.phone.isEmpty;
+
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.mobilePadding),
       child: SingleChildScrollView(
@@ -1004,7 +1224,12 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
             SizedBox(height: AppSpacing.s24),
             Text('Business Setup', style: AppTypography.heading),
             SizedBox(height: AppSpacing.s8),
-            Text('Let customers discover your shop brand', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+            Text(
+              'Let customers discover your shop brand',
+              style: AppTypography.caption.copyWith(
+                color: context.colors.textSecondary,
+              ),
+            ),
             SizedBox(height: AppSpacing.s32),
             AppTextField(
               controller: _shopNameController,
@@ -1016,6 +1241,20 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
               hintText: 'Owner Name',
             ),
             SizedBox(height: AppSpacing.s16),
+            if (isGoogleSignIn) ...[
+              AppTextField(
+                controller: _whatsappController,
+                hintText: 'Phone Number (Required)',
+                keyboardType: TextInputType.phone,
+              ),
+            ] else ...[
+              AppTextField(
+                controller: _userEmailController,
+                hintText: 'Business Email (Optional)',
+                keyboardType: TextInputType.emailAddress,
+              ),
+            ],
+            SizedBox(height: AppSpacing.s16),
             SizedBox(
               height: 100,
               child: TextFormField(
@@ -1026,65 +1265,23 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 ),
               ),
             ),
-            SizedBox(height: AppSpacing.s16),
-            AppTextField(
-              controller: _whatsappController,
-              hintText: 'Phone Number (Required)',
-              keyboardType: TextInputType.phone,
-            ),
-            if (!_isWhatsappVerified) ...[
-              SizedBox(height: AppSpacing.s8),
-              if (!_isOtpSent)
-                SecondaryButton(
-                  text: 'Verify Number',
-                  onPressed: _sendRealOtp,
-                ),
-              if (_isOtpSent) ...[
-                SizedBox(height: AppSpacing.s16),
-                AppTextField(
-                  controller: _otpController,
-                  hintText: 'Enter OTP received on SMS',
-                  keyboardType: TextInputType.number,
-                ),
-                SizedBox(height: AppSpacing.s8),
-                Row(
-                  children: [
-                    TextButton(
-                      onPressed: _sendRealOtp,
-                      child: Text('Resend OTP', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.colors.primary)),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: SecondaryButton(
-                        text: 'Verify OTP',
-                        onPressed: _verifyRealOtp,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ] else ...[
-              SizedBox(height: AppSpacing.s8),
-              Row(
-                children: [
-                  const Icon(LucideIcons.checkCircle, color: Colors.green, size: 20),
-                  const SizedBox(width: 8),
-                  Text('Number Verified', style: AppTypography.label.copyWith(color: Colors.green, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ],
             SizedBox(height: 40),
             PrimaryButton(
               text: 'Continue',
               isLoading: _isLoading,
               onPressed: () {
-                if (_shopNameController.text.isEmpty || _shopOwnerNameController.text.isEmpty) {
+                if (_shopNameController.text.isEmpty ||
+                    _shopOwnerNameController.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please fill out business details')),
+                    const SnackBar(
+                      content: Text('Please fill out business details'),
+                    ),
                   );
-                } else if (_whatsappController.text.isEmpty || !_isWhatsappVerified) {
+                } else if (isGoogleSignIn && _whatsappController.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please verify your number to continue')),
+                    const SnackBar(
+                      content: Text('Please enter phone number to continue'),
+                    ),
                   );
                 } else {
                   _nextPage();
@@ -1109,7 +1306,12 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
             SizedBox(height: AppSpacing.s24),
             Text('Address & Category', style: AppTypography.heading),
             SizedBox(height: AppSpacing.s8),
-            Text('Set where you are located and shop type', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+            Text(
+              'Set where you are located and shop type',
+              style: AppTypography.caption.copyWith(
+                color: context.colors.textSecondary,
+              ),
+            ),
             SizedBox(height: AppSpacing.s32),
             AppTextField(
               controller: _shopAddressController,
@@ -1126,18 +1328,27 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 return ScaleButtonPressed(
                   onTap: () => setState(() => _selectedCategory = cat),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s16,
+                      vertical: AppSpacing.s12,
+                    ),
                     decoration: BoxDecoration(
-                      color: isSelected ? context.colors.primary : Theme.of(context).cardColor,
+                      color: isSelected
+                          ? context.colors.primary
+                          : Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(100),
                       border: Border.all(
-                        color: isSelected ? context.colors.primary : Theme.of(context).dividerColor,
+                        color: isSelected
+                            ? context.colors.primary
+                            : Theme.of(context).dividerColor,
                       ),
                     ),
                     child: Text(
                       cat,
                       style: AppTypography.caption.copyWith(
-                        color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
+                        color: isSelected
+                            ? Colors.white
+                            : Theme.of(context).textTheme.bodyLarge?.color,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1176,9 +1387,14 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           SizedBox(height: AppSpacing.s24),
           Text('Upload Logo & Banner', style: AppTypography.heading),
           SizedBox(height: AppSpacing.s8),
-          Text('Visual assets build trust with customers', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+          Text(
+            'Visual assets build trust with customers',
+            style: AppTypography.caption.copyWith(
+              color: context.colors.textSecondary,
+            ),
+          ),
           SizedBox(height: AppSpacing.s32),
-          
+
           Row(
             children: [
               ScaleButtonPressed(
@@ -1189,14 +1405,29 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                   decoration: BoxDecoration(
                     color: context.colors.border,
                     borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                    image: _logoUrl != null ? DecorationImage(image: NetworkImage(_logoUrl!), fit: BoxFit.cover) : null,
+                    image: _logoUrl != null
+                        ? DecorationImage(
+                            image: NetworkImage(_logoUrl!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                   ),
                   child: _logoUrl == null
                       ? Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(LucideIcons.image, size: 24, color: context.colors.textSecondary),
-                            Text('Logo', style: TextStyle(fontSize: 10, color: context.colors.textSecondary)),
+                            Icon(
+                              LucideIcons.image,
+                              size: 24,
+                              color: context.colors.textSecondary,
+                            ),
+                            Text(
+                              'Logo',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: context.colors.textSecondary,
+                              ),
+                            ),
                           ],
                         )
                       : null,
@@ -1205,8 +1436,12 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
               SizedBox(width: AppSpacing.s16),
               Expanded(
                 child: Text(
-                  _logoUrl != null ? 'Logo uploaded' : 'Tap to upload shop logo',
-                  style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
+                  _logoUrl != null
+                      ? 'Logo uploaded'
+                      : 'Tap to upload shop logo',
+                  style: AppTypography.caption.copyWith(
+                    color: context.colors.textSecondary,
+                  ),
                 ),
               ),
             ],
@@ -1221,27 +1456,50 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
               decoration: BoxDecoration(
                 color: context.colors.border,
                 borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                image: _bannerUrl != null ? DecorationImage(image: NetworkImage(_bannerUrl!), fit: BoxFit.cover) : null,
+                image: _bannerUrl != null
+                    ? DecorationImage(
+                        image: NetworkImage(_bannerUrl!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
               alignment: Alignment.center,
               child: _bannerUrl == null
                   ? Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(LucideIcons.image, size: 32, color: context.colors.textSecondary),
+                        Icon(
+                          LucideIcons.image,
+                          size: 32,
+                          color: context.colors.textSecondary,
+                        ),
                         SizedBox(height: AppSpacing.s4),
-                        Text('Tap to upload store banner image', style: TextStyle(fontSize: 12, color: context.colors.textSecondary)),
+                        Text(
+                          'Tap to upload store banner image',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: context.colors.textSecondary,
+                          ),
+                        ),
                       ],
                     )
                   : null,
             ),
           ),
-          
+
           const Spacer(),
           PrimaryButton(
             text: 'Continue',
             isLoading: _isLoading,
-            onPressed: _nextPage,
+            onPressed: () {
+              if (_logoUrl == null || _bannerUrl == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please upload both a logo and a banner')),
+                );
+              } else {
+                _nextPage();
+              }
+            },
           ),
           SizedBox(height: AppSpacing.s16),
         ],

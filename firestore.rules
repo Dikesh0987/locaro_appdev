@@ -1,0 +1,86 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Function to check if user is logged in
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Function to check if user is the owner of the document
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // Function to check if user has a shop_owner role
+    function isShopOwner() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'shop_owner';
+    }
+
+    // USERS COLLECTION
+    match /users/{userId} {
+      // Anyone can read a user doc (needed for displaying user names on posts/comments)
+      allow read: if isAuthenticated();
+      // Users can only create/update their own document
+      allow create, update: if isOwner(userId);
+      // Optional: Prevent deletion or let them delete their own account
+      allow delete: if isOwner(userId);
+    }
+
+    // SHOPS COLLECTION
+    match /shops/{shopId} {
+      // Anyone can read shop data
+      allow read: if true;
+      // Only shop owners can create their shop, and their uid must match ownerUid
+      allow create: if isAuthenticated() && 
+                       request.resource.data.ownerUid == request.auth.uid &&
+                       shopId == 'shop_' + request.auth.uid;
+      // Only the shop owner can update or delete their shop
+      allow update, delete: if isAuthenticated() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // PRODUCTS COLLECTION
+    match /products/{productId} {
+      // Anyone can read product data
+      allow read: if true;
+      // Only shop owners can create/update products, and it must belong to their shop
+      allow create, update: if isShopOwner() && 
+                               request.resource.data.shopId == 'shop_' + request.auth.uid;
+      // Only owner can delete
+      allow delete: if isShopOwner() && resource.data.shopId == 'shop_' + request.auth.uid;
+    }
+
+    // POSTS COLLECTION (Deals/Announcements)
+    match /posts/{postId} {
+      allow read: if true;
+      allow create, update: if isShopOwner() && 
+                               request.resource.data.shopId == 'shop_' + request.auth.uid;
+      allow delete: if isShopOwner() && resource.data.shopId == 'shop_' + request.auth.uid;
+    }
+
+    // OFFERS COLLECTION
+    match /offers/{offerId} {
+      allow read: if true;
+      allow create, update, delete: if isShopOwner() && 
+                                       request.resource.data.shopId == 'shop_' + request.auth.uid;
+    }
+
+    // LEADS COLLECTION
+    match /leads/{leadId} {
+      // Users can read their own leads, shop owners can read leads targeted to their shop
+      allow read: if isAuthenticated() && 
+                     (resource.data.userId == request.auth.uid || resource.data.shopId == 'shop_' + request.auth.uid);
+      // Users create leads
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      // Shop owners can update lead status
+      allow update: if isAuthenticated() && resource.data.shopId == 'shop_' + request.auth.uid;
+    }
+
+    // Default deny for everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

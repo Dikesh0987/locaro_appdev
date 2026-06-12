@@ -28,28 +28,36 @@ class AuthService {
     }
 
     final doc = await _repository.getUserDoc(fbUser.uid);
-    
+
     if (doc.exists) {
       // Existing User
       final data = doc.data()!;
       final existingUser = UserModel.fromMap(data);
-      
+
+      bool roleChangedToShopOwner = existingUser.role == 'user' && selectedRole == 'shop_owner';
+      bool newIsOnboardingCompleted = roleChangedToShopOwner ? false : existingUser.isOnboardingCompleted;
+      String newRole = roleChangedToShopOwner ? 'shop_owner' : existingUser.role;
+
       // Update analytics fields in Firestore
       final int currentLoginCount = data['loginCount'] ?? 0;
       await _repository.updateUserDoc(fbUser.uid, {
         'lastLoginAt': Timestamp.fromDate(DateTime.now()),
         'loginCount': currentLoginCount + 1,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
+        if (roleChangedToShopOwner) 'role': newRole,
+        if (roleChangedToShopOwner) 'isOnboardingCompleted': newIsOnboardingCompleted,
       });
 
       final updatedUser = existingUser.copyWith(
         lastLoginAt: DateTime.now(),
         updatedAt: DateTime.now(),
+        role: newRole,
+        isOnboardingCompleted: newIsOnboardingCompleted,
       );
 
       // Sync with Riverpod state
       _ref.read(databaseProvider.notifier).setCurrentUser(updatedUser);
-      _ref.read(appRoleProvider.notifier).state = updatedUser.role;
+      _ref.read(appRoleProvider.notifier).state = newIsOnboardingCompleted ? updatedUser.role : null;
 
       // Update local theme state
       _setThemeFromStr(updatedUser.themeMode);
@@ -58,8 +66,10 @@ class AuthService {
       fcmService.updateTopicSubscriptions(
         pushEnabled: updatedUser.notificationEnabled,
         offersEnabled: updatedUser.notificationSettings['offers'] ?? true,
-        nearbyDealsEnabled: updatedUser.notificationSettings['nearbyDeals'] ?? true,
-        marketingEnabled: updatedUser.notificationSettings['marketing'] ?? false,
+        nearbyDealsEnabled:
+            updatedUser.notificationSettings['nearbyDeals'] ?? true,
+        marketingEnabled:
+            updatedUser.notificationSettings['marketing'] ?? false,
       );
 
       // Sync FCM Token
@@ -95,7 +105,9 @@ class AuthService {
           'followers': true,
           'announcements': true,
           'marketing': false,
-        }, likedProducts: [], likedPosts: [],
+        },
+        likedProducts: [],
+        likedPosts: [],
       );
 
       // Write user profile to Firestore
@@ -103,14 +115,14 @@ class AuthService {
       mapData['loginCount'] = 1;
       mapData['platform'] = Platform.isAndroid ? 'Android' : 'iOS';
       mapData['accountType'] = selectedRole;
-      
+
       await _repository.setUserDoc(fbUser.uid, mapData);
 
       // Sync with Riverpod state
       _ref.read(databaseProvider.notifier).setCurrentUser(newUser);
-      
+
       // Role is not set in shell until onboarding is finished!
-      _ref.read(appRoleProvider.notifier).state = null; 
+      _ref.read(appRoleProvider.notifier).state = null;
 
       // Sync FCM topics
       fcmService.updateTopicSubscriptions(
@@ -128,42 +140,57 @@ class AuthService {
   }
 
   // Sign In with Phone
-  Future<UserModel> handlePhoneSignIn(fb.PhoneAuthCredential credential, String selectedRole) async {
-    final userCredential = await _repository.signInWithPhoneCredential(credential);
+  Future<UserModel> handlePhoneSignIn(
+    fb.PhoneAuthCredential credential,
+    String selectedRole,
+  ) async {
+    final userCredential = await _repository.signInWithPhoneCredential(
+      credential,
+    );
     final fbUser = userCredential.user;
     if (fbUser == null) {
       throw Exception("Failed to retrieve Phone user credentials.");
     }
 
     final doc = await _repository.getUserDoc(fbUser.uid);
-    
+
     if (doc.exists) {
       // Existing User
       final data = doc.data()!;
       final existingUser = UserModel.fromMap(data);
-      
+
+      bool roleChangedToShopOwner = existingUser.role == 'user' && selectedRole == 'shop_owner';
+      bool newIsOnboardingCompleted = roleChangedToShopOwner ? false : existingUser.isOnboardingCompleted;
+      String newRole = roleChangedToShopOwner ? 'shop_owner' : existingUser.role;
+
       final int currentLoginCount = data['loginCount'] ?? 0;
       await _repository.updateUserDoc(fbUser.uid, {
         'lastLoginAt': Timestamp.fromDate(DateTime.now()),
         'loginCount': currentLoginCount + 1,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
+        if (roleChangedToShopOwner) 'role': newRole,
+        if (roleChangedToShopOwner) 'isOnboardingCompleted': newIsOnboardingCompleted,
       });
 
       final updatedUser = existingUser.copyWith(
         lastLoginAt: DateTime.now(),
         updatedAt: DateTime.now(),
+        role: newRole,
+        isOnboardingCompleted: newIsOnboardingCompleted,
       );
 
       _ref.read(databaseProvider.notifier).setCurrentUser(updatedUser);
-      _ref.read(appRoleProvider.notifier).state = updatedUser.role;
+      _ref.read(appRoleProvider.notifier).state = newIsOnboardingCompleted ? updatedUser.role : null;
 
       _setThemeFromStr(updatedUser.themeMode);
 
       fcmService.updateTopicSubscriptions(
         pushEnabled: updatedUser.notificationEnabled,
         offersEnabled: updatedUser.notificationSettings['offers'] ?? true,
-        nearbyDealsEnabled: updatedUser.notificationSettings['nearbyDeals'] ?? true,
-        marketingEnabled: updatedUser.notificationSettings['marketing'] ?? false,
+        nearbyDealsEnabled:
+            updatedUser.notificationSettings['nearbyDeals'] ?? true,
+        marketingEnabled:
+            updatedUser.notificationSettings['marketing'] ?? false,
       );
 
       await fcmService.syncToken();
@@ -198,18 +225,22 @@ class AuthService {
           'followers': true,
           'announcements': true,
           'marketing': false,
-        }, likedProducts: [], likedPosts: [],
+        },
+        likedProducts: [],
+        likedPosts: [],
+        phoneVerified: true,
+        verifiedAt: DateTime.now(),
       );
 
       final mapData = newUser.toMap();
       mapData['loginCount'] = 1;
       mapData['platform'] = Platform.isAndroid ? 'Android' : 'iOS';
       mapData['accountType'] = 'phone';
-      
+
       await _repository.setUserDoc(fbUser.uid, mapData);
 
       _ref.read(databaseProvider.notifier).setCurrentUser(newUser);
-      _ref.read(appRoleProvider.notifier).state = null; 
+      _ref.read(appRoleProvider.notifier).state = null;
 
       fcmService.updateTopicSubscriptions(
         pushEnabled: newUser.notificationEnabled,
@@ -221,6 +252,46 @@ class AuthService {
       await fcmService.syncToken();
 
       return newUser;
+    }
+  }
+
+  // Link Google Account
+  Future<void> linkGoogleAccount() async {
+    final userCredential = await _repository.linkWithGoogle();
+    final fbUser = userCredential.user;
+    if (fbUser != null && fbUser.email != null) {
+      final doc = await _repository.getUserDoc(fbUser.uid);
+      if (doc.exists) {
+        final existingUser = UserModel.fromMap(doc.data()!);
+        final updatedUser = existingUser.copyWith(
+          email: fbUser.email,
+        );
+        await _repository.updateUserDoc(fbUser.uid, {'email': fbUser.email});
+        _ref.read(databaseProvider.notifier).setCurrentUser(updatedUser);
+      }
+    }
+  }
+
+  // Link Phone Account
+  Future<void> linkPhoneAccount(fb.PhoneAuthCredential credential) async {
+    final userCredential = await _repository.linkWithPhoneCredential(credential);
+    final fbUser = userCredential.user;
+    if (fbUser != null && fbUser.phoneNumber != null) {
+      final doc = await _repository.getUserDoc(fbUser.uid);
+      if (doc.exists) {
+        final existingUser = UserModel.fromMap(doc.data()!);
+        final updatedUser = existingUser.copyWith(
+          phone: fbUser.phoneNumber,
+          phoneVerified: true,
+          verifiedAt: DateTime.now(),
+        );
+        await _repository.updateUserDoc(fbUser.uid, {
+          'phone': fbUser.phoneNumber,
+          'phoneVerified': true,
+          'verifiedAt': Timestamp.fromDate(DateTime.now()),
+        });
+        _ref.read(databaseProvider.notifier).setCurrentUser(updatedUser);
+      }
     }
   }
 
@@ -259,7 +330,9 @@ class AuthService {
         'followers': false,
         'announcements': false,
         'marketing': false,
-      }, likedProducts: [], likedPosts: [],
+      },
+      likedProducts: [],
+      likedPosts: [],
     );
 
     // Save Guest user to Firestore
@@ -283,7 +356,7 @@ class AuthService {
     final doc = await _repository.getUserDoc(fbUser.uid);
     if (doc.exists) {
       final user = UserModel.fromMap(doc.data()!);
-      
+
       // Update lastLoginAt
       await _repository.updateUserDoc(fbUser.uid, {
         'lastLoginAt': Timestamp.fromDate(DateTime.now()),
@@ -298,15 +371,17 @@ class AuthService {
       // Sync state
       _ref.read(databaseProvider.notifier).setCurrentUser(updatedUser);
       _setThemeFromStr(updatedUser.themeMode);
-      
+
       // Sync FCM topics
       fcmService.updateTopicSubscriptions(
         pushEnabled: updatedUser.notificationEnabled,
         offersEnabled: updatedUser.notificationSettings['offers'] ?? true,
-        nearbyDealsEnabled: updatedUser.notificationSettings['nearbyDeals'] ?? true,
-        marketingEnabled: updatedUser.notificationSettings['marketing'] ?? false,
+        nearbyDealsEnabled:
+            updatedUser.notificationSettings['nearbyDeals'] ?? true,
+        marketingEnabled:
+            updatedUser.notificationSettings['marketing'] ?? false,
       );
-      
+
       if (updatedUser.isOnboardingCompleted) {
         _ref.read(appRoleProvider.notifier).state = updatedUser.role;
       } else {
@@ -332,6 +407,10 @@ class AuthService {
       'role': finalUser.role,
       'interests': finalUser.interests,
       'location': finalUser.location,
+      'latitude': finalUser.latitude,
+      'longitude': finalUser.longitude,
+      'phoneVerified': finalUser.phoneVerified,
+      'verifiedAt': finalUser.verifiedAt != null ? Timestamp.fromDate(finalUser.verifiedAt!) : null,
       'isOnboardingCompleted': true,
       'isProfileCompleted': true,
       'updatedAt': Timestamp.fromDate(DateTime.now()),
@@ -356,7 +435,10 @@ class AuthService {
   }
 
   // Save Notification Preference
-  Future<void> updateNotificationSettings(bool enabled, Map<String, bool> settings) async {
+  Future<void> updateNotificationSettings(
+    bool enabled,
+    Map<String, bool> settings,
+  ) async {
     final user = _ref.read(databaseProvider).currentUser;
     if (!user.isGuest) {
       await _repository.updateUserDoc(user.uid, {
@@ -364,7 +446,7 @@ class AuthService {
         'notificationSettings': settings,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
-      
+
       final updatedUser = user.copyWith(
         notificationEnabled: enabled,
         notificationSettings: settings,
@@ -376,15 +458,21 @@ class AuthService {
   // Upload Custom Photo & Save to storage
   Future<String> changeProfilePhoto(File imageFile) async {
     final user = _ref.read(databaseProvider).currentUser;
-    final downloadUrl = await _repository.uploadProfilePhoto(user.uid, imageFile);
-    
+    final downloadUrl = await _repository.uploadProfilePhoto(
+      user.uid,
+      imageFile,
+    );
+
     // Update Firestore user document
     await _repository.updateUserDoc(user.uid, {
       'photoUrl': downloadUrl,
       'updatedAt': Timestamp.fromDate(DateTime.now()),
     });
 
-    final updatedUser = user.copyWith(photoUrl: downloadUrl, updatedAt: DateTime.now());
+    final updatedUser = user.copyWith(
+      photoUrl: downloadUrl,
+      updatedAt: DateTime.now(),
+    );
     _ref.read(databaseProvider.notifier).setCurrentUser(updatedUser);
 
     return downloadUrl;
@@ -406,6 +494,40 @@ class AuthService {
     }
   }
 
+  // Send Email Verification Link
+  Future<void> sendEmailVerification(String email) async {
+    final fbUser = fb.FirebaseAuth.instance.currentUser;
+    if (fbUser != null) {
+      // This sends a verification email to the new address and, upon verification, updates the email on the Firebase account.
+      await fbUser.verifyBeforeUpdateEmail(email);
+    } else {
+      throw Exception('User is not signed in.');
+    }
+  }
+
+  // Refresh Email Verification Status
+  Future<void> refreshUserEmailVerificationStatus() async {
+    final fbUser = fb.FirebaseAuth.instance.currentUser;
+    if (fbUser != null) {
+      await fbUser.reload();
+      if (fbUser.emailVerified) {
+        // Update Firestore if the email was successfully verified in Firebase Auth
+        final user = _ref.read(databaseProvider).currentUser;
+        if (user.email != fbUser.email) {
+          await _repository.updateUserDoc(user.uid, {
+            'email': fbUser.email,
+            'updatedAt': Timestamp.fromDate(DateTime.now()),
+          });
+          final updatedUser = user.copyWith(
+            email: fbUser.email ?? '',
+            updatedAt: DateTime.now(),
+          );
+          _ref.read(databaseProvider.notifier).setCurrentUser(updatedUser);
+        }
+      }
+    }
+  }
+
   // Sign Out
   Future<void> handleSignOut() async {
     await _repository.signOut();
@@ -424,10 +546,10 @@ class AuthService {
     final user = _ref.read(databaseProvider).currentUser;
     // 1. Delete Firestore User Document
     await _repository.deleteUserDoc(user.uid);
-    
+
     // 2. Delete Storage Profile photo
     await _repository.deleteProfilePhoto(user.uid);
-    
+
     // 3. Delete Firebase Auth account
     await _repository.deleteAuthAccount();
     _clearLocalProviders();
@@ -498,18 +620,27 @@ class AuthService {
                   color: context.colors.border,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(LucideIcons.lock, size: 32, color: context.colors.primary),
+                child: Icon(
+                  LucideIcons.lock,
+                  size: 32,
+                  color: context.colors.primary,
+                ),
               ),
               const SizedBox(height: 20),
               Text(
                 'Sign in required',
-                style: AppTypography.heading.copyWith(fontWeight: FontWeight.bold),
+                style: AppTypography.heading.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 10),
               Text(
                 'To like, save products, write reviews, and follow shops, you need to sign in with your Google account.',
                 textAlign: TextAlign.center,
-                style: AppTypography.body.copyWith(color: context.colors.textSecondary, height: 1.4),
+                style: AppTypography.body.copyWith(
+                  color: context.colors.textSecondary,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 28),
               PrimaryButton(
@@ -525,7 +656,9 @@ class AuthService {
                 onPressed: () => Navigator.pop(context),
                 child: Text(
                   'Maybe Later',
-                  style: AppTypography.body.copyWith(color: context.colors.textSecondary),
+                  style: AppTypography.body.copyWith(
+                    color: context.colors.textSecondary,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),

@@ -243,16 +243,16 @@ class WelcomeScreen extends ConsumerWidget {
               const Spacer(),
               // Login Actions
               PrimaryButton(
-                text: 'Continue with Google',
+                text: 'Continue with Phone Number',
                 isLoading: isLoading,
-                onPressed: () {
-                  ref.read(authControllerProvider.notifier).signInWithGoogle('user');
-                },
+                onPressed: isLoading ? () {} : () => _showPhoneLoginSheet(context, ref),
               ),
               const SizedBox(height: AppSpacing.s12),
               SecondaryButton(
-                text: 'Continue with Phone Number',
-                onPressed: isLoading ? () {} : () => _showPhoneLoginSheet(context, ref),
+                text: 'Continue with Google',
+                onPressed: () {
+                  ref.read(authControllerProvider.notifier).signInWithGoogle('user');
+                },
               ),
               const SizedBox(height: AppSpacing.s16),
               Center(

@@ -23,6 +23,10 @@ import '../../../core/widgets/common/skeleton_loaders.dart';
 import '../../queries/presentation/sent_queries_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../core/services/permission_service.dart';
+import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart' as fb;
+
+import '../../../core/utils/firebase_error_handler.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -175,6 +179,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         SizedBox(height: 16),
         
+
+        _buildVerificationBanners(context, ref, user),
+
         // Edit Profile Button
         SizedBox(
           width: double.infinity,
@@ -283,6 +290,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           children: [
             _buildMenuRow(
               context,
+              icon: LucideIcons.phone,
+              label: 'Change Mobile Number',
+              trailingText: user.phone.isNotEmpty ? user.phone : 'Not Set',
+              onTap: () => _showChangeMobileSheet(context, ref, user.phone, false),
+            ),
+            const Divider(height: 1, indent: 48),
+            _buildMenuRow(
+              context,
               icon: LucideIcons.messageSquare,
               label: 'My Queries',
               onTap: () {
@@ -305,6 +320,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onTap: () => _navigateToSettings(context),
             ),
             const Divider(height: 1, indent: 48),
+
             _buildMenuRow(
               context,
               icon: LucideIcons.helpCircle,
@@ -367,6 +383,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   // ==========================================
   Widget _buildOwnerProfile(BuildContext context, WidgetRef ref, LocaroDataState dbState) {
     final shop = dbState.currentShop;
+    final user = dbState.currentUser;
 
     if (_isLoading) {
       return Column(
@@ -467,6 +484,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         SizedBox(height: 16),
 
+
+        _buildVerificationBanners(context, ref, user),
+
         // Edit Shop Details Button
         SizedBox(
           width: double.infinity,
@@ -550,7 +570,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const Divider(height: 1, indent: 48),
             _buildInfoRow(context, LucideIcons.clock, 'Working Hours', '${_formatTime(shop.openTime)} - ${_formatTime(shop.closeTime)}'),
             const Divider(height: 1, indent: 48),
-            _buildInfoRow(context, LucideIcons.messageCircle, 'WhatsApp Channel', '+91 ${shop.whatsapp}'),
+            _buildMenuRow(
+              context,
+              icon: LucideIcons.phone,
+              label: 'Change Mobile Number',
+              trailingText: shop.whatsapp.isNotEmpty ? '+91 ${shop.whatsapp}' : 'Not Set',
+              onTap: () => _showChangeMobileSheet(context, ref, shop.whatsapp, true),
+            ),
             const Divider(height: 1, indent: 48),
             _buildInfoRow(context, LucideIcons.info, 'Status', shop.isVerified ? 'Verified Partner' : 'Standard Partner'),
           ],
@@ -584,6 +610,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               },
             ),
             const Divider(height: 1, indent: 48),
+
             _buildMenuRow(
               context,
               icon: LucideIcons.helpCircle,
@@ -823,7 +850,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void _showEditProfileSheet(BuildContext context, WidgetRef ref, UserModel user) {
     final nameCont = TextEditingController(text: user.name);
     final emailCont = TextEditingController(text: user.email);
-    final phoneCont = TextEditingController(text: user.phone);
 
     showModalBottomSheet(
       context: context,
@@ -858,8 +884,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               AppTextField(controller: nameCont, hintText: 'Full Name'),
               SizedBox(height: 12),
               AppTextField(controller: emailCont, hintText: 'Email Address', keyboardType: TextInputType.emailAddress),
-              SizedBox(height: 12),
-              AppTextField(controller: phoneCont, hintText: 'Phone Number', keyboardType: TextInputType.phone),
               SizedBox(height: 24),
               PrimaryButton(
                 text: 'Save Changes',
@@ -870,7 +894,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     final updatedUser = user.copyWith(
                       name: nameCont.text,
                       email: emailCont.text,
-                      phone: phoneCont.text,
                     );
                     ref.read(databaseProvider.notifier).updateCurrentUser(updatedUser);
                     Navigator.pop(context);
@@ -890,7 +913,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final nameCont = TextEditingController(text: shop.shopName);
     final ownerCont = TextEditingController(text: shop.ownerName);
     final addressCont = TextEditingController(text: shop.address);
-    final phoneCont = TextEditingController(text: shop.whatsapp);
     final descCont = TextEditingController(text: shop.description);
     final openTimeCont = TextEditingController(text: shop.openTime);
     final closeTimeCont = TextEditingController(text: shop.closeTime);
@@ -931,8 +953,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 AppTextField(controller: ownerCont, hintText: 'Owner Name'),
                 SizedBox(height: 12),
                 AppTextField(controller: addressCont, hintText: 'Shop Address'),
-                SizedBox(height: 12),
-                AppTextField(controller: phoneCont, hintText: 'WhatsApp Number'),
                 SizedBox(height: 12),
                 Row(
                   children: [
@@ -994,7 +1014,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         shopName: nameCont.text,
                         ownerName: ownerCont.text,
                         address: addressCont.text,
-                        whatsapp: phoneCont.text,
                         description: descCont.text,
                         openTime: openTimeCont.text,
                         closeTime: closeTimeCont.text,
@@ -1206,6 +1225,268 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  // Change Mobile Number Sheet
+  void _showChangeMobileSheet(BuildContext context, WidgetRef ref, String currentPhone, bool isShop) {
+    final phoneController = TextEditingController();
+    final otpController = TextEditingController();
+    bool isOtpSent = false;
+    bool isSheetLoading = false;
+    String? verificationId;
+    int cooldownSeconds = 0;
+    Timer? cooldownTimer;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            void startCooldown() {
+              cooldownSeconds = 30;
+              cooldownTimer?.cancel();
+              cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+                setSheetState(() {
+                  if (cooldownSeconds > 0) {
+                    cooldownSeconds--;
+                  } else {
+                    timer.cancel();
+                  }
+                });
+              });
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
+                ),
+                padding: const EdgeInsets.all(AppSpacing.mobilePadding),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).dividerColor,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      isOtpSent ? 'Enter OTP' : 'Change Mobile Number',
+                      style: AppTypography.heading,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isOtpSent
+                          ? 'We sent a verification code to your new number.'
+                          : 'Current: ${currentPhone.isNotEmpty ? currentPhone : "None"}\n\nEnter new number below:',
+                      style: AppTypography.caption.copyWith(
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    if (!isOtpSent) ...[
+                      TextField(
+                        controller: phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          hintText: 'New Phone Number',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      PrimaryButton(
+                        text: cooldownSeconds > 0 ? 'Resend in ${cooldownSeconds}s' : 'Send OTP',
+                        isLoading: isSheetLoading,
+                        onPressed: cooldownSeconds > 0 ? () {} : () async {
+                          final phone = phoneController.text.trim();
+                          if (phone.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter phone number'),
+                              ),
+                            );
+                            return;
+                          }
+                          String formattedPhone = phone.startsWith('+')
+                              ? phone
+                              : '+91$phone';
+
+                          setSheetState(() => isSheetLoading = true);
+
+                          try {
+                            final isUsed = await ref.read(authRepositoryProvider).isPhoneNumberUsed(formattedPhone);
+                            if (isUsed) {
+                              if (context.mounted) {
+                                setSheetState(() => isSheetLoading = false);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('This phone number is already registered.')),
+                                );
+                              }
+                              return;
+                            }
+                          } catch (e) {
+                            debugPrint('Phone uniqueness check failed: $e');
+                          }
+
+                          try {
+                            await fb.FirebaseAuth.instance.verifyPhoneNumber(
+                              phoneNumber: formattedPhone,
+                              timeout: const Duration(seconds: 60),
+                              verificationCompleted: (fb.PhoneAuthCredential credential) async {
+                                try {
+                                  await ref.read(authServiceProvider).linkPhoneAccount(credential);
+                                  if (isShop) {
+                                    final updatedPhone = ref.read(databaseProvider).currentUser.phone;
+                                    final shop = ref.read(databaseProvider).currentShop;
+                                    final updatedShop = shop.copyWith(whatsapp: updatedPhone, phone: updatedPhone);
+                                    await ref.read(databaseProvider.notifier).updateCurrentShop(updatedShop);
+                                  }
+                                  if (context.mounted) {
+                                    setSheetState(() => isSheetLoading = false);
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Mobile number linked successfully!')),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    setSheetState(() => isSheetLoading = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(FirebaseErrorHandler.handleGenericException(e))),
+                                    );
+                                  }
+                                }
+                              },
+                              verificationFailed: (fb.FirebaseAuthException e) {
+                                setSheetState(() {
+                                  isSheetLoading = false;
+                                  if (e.code == 'too-many-requests') {
+                                    startCooldown();
+                                  }
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(FirebaseErrorHandler.handleAuthException(e)),
+                                    duration: const Duration(seconds: 4),
+                                  ),
+                                );
+                              },
+                              codeSent: (String verId, int? resendToken) {
+                                setSheetState(() {
+                                  verificationId = verId;
+                                  isOtpSent = true;
+                                  isSheetLoading = false;
+                                  startCooldown();
+                                });
+                              },
+                              codeAutoRetrievalTimeout: (String verId) {
+                                verificationId = verId;
+                              },
+                            );
+                          } catch (e) {
+                            setSheetState(() => isSheetLoading = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(FirebaseErrorHandler.handleGenericException(e))),
+                            );
+                          }
+                        },
+                      ),
+                    ] else ...[
+                      TextField(
+                        controller: otpController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          hintText: '6-digit OTP',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      PrimaryButton(
+                        text: 'Verify & Update',
+                        isLoading: isSheetLoading,
+                        onPressed: () async {
+                          final code = otpController.text.trim();
+                          if (code.isEmpty || verificationId == null) return;
+
+                          setSheetState(() => isSheetLoading = true);
+
+                          try {
+                            final credential = fb.PhoneAuthProvider.credential(
+                              verificationId: verificationId!,
+                              smsCode: code,
+                            );
+                            // Link with Firebase Auth and Update Database
+                            await ref.read(authServiceProvider).linkPhoneAccount(credential);
+
+                            if (isShop) {
+                              final updatedPhone = ref.read(databaseProvider).currentUser.phone;
+                              final shop = ref.read(databaseProvider).currentShop;
+                              final updatedShop = shop.copyWith(whatsapp: updatedPhone, phone: updatedPhone);
+                              await ref.read(databaseProvider.notifier).updateCurrentShop(updatedShop);
+                            }
+
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Mobile number updated and linked successfully!')),
+                              );
+                            }
+                          } on fb.FirebaseAuthException catch (e) {
+                            setSheetState(() => isSheetLoading = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(FirebaseErrorHandler.handleAuthException(e)),
+                                duration: const Duration(seconds: 3),
+                              ),
+                            );
+                          } catch (e) {
+                            setSheetState(() => isSheetLoading = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(FirebaseErrorHandler.handleGenericException(e)),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   // Deletion Dialogue
   void _showDeleteAccountDialog(BuildContext context, WidgetRef ref) {
     showDialog(
@@ -1372,6 +1653,272 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   static const String _dummyTerms = 'Welcome to Locaro. By accessing or using our hyperlocal discovery application, you agree to comply with and be bound by these terms. We match users with nearby merchant product catalogs without charging commission. We do not process direct transactions or store card detail info. Purchases are conducted offline or directly via the merchant\'s chosen channels (e.g. WhatsApp).';
   
   static const String _dummyPrivacyPolicy = 'At Locaro, we take privacy and local security seriously. We collect approximate location coordinates to retrieve catalog details from shops in your immediate vicinity. This coordinate info is processed locally and never sold or shared. Profile pictures, names, and contact detail info are only visible to merchants you explicitly contact.';
+
+  // ==========================================
+  // --- CREDENTIAL LINKING ---
+  // ==========================================
+  Widget _buildVerificationBanners(BuildContext context, WidgetRef ref, UserModel user) {
+    final currentUser = fb.FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return const SizedBox.shrink();
+
+    final hasGoogle = currentUser.providerData.any((p) => p.providerId == 'google.com');
+    final hasPhone = currentUser.providerData.any((p) => p.providerId == 'phone');
+
+    List<Widget> banners = [];
+
+    // If they signed up with Phone, they don't have Google linked
+    if (!hasGoogle) {
+      banners.add(
+        _buildVerificationBanner(
+          context: context,
+          icon: LucideIcons.mail,
+          color: Colors.blue,
+          title: 'Link Google Account',
+          subtitle: 'Link your Google account to log in seamlessly with Google.',
+          buttonText: 'Link Google',
+          onTap: () async {
+            try {
+              await ref.read(authServiceProvider).linkGoogleAccount();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Google Account Linked Successfully!')),
+                );
+                setState(() {});
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to link Google: $e')),
+                );
+              }
+            }
+          },
+        ),
+      );
+    }
+
+    // If they signed up with Google, they don't have Phone linked
+    if (!hasPhone && user.phone.isNotEmpty && !user.phoneVerified) {
+      banners.add(
+        _buildVerificationBanner(
+          context: context,
+          icon: LucideIcons.smartphone,
+          color: Colors.amber,
+          title: 'Verify Phone Number',
+          subtitle: 'Verify your phone number to enable mobile login.',
+          buttonText: 'Verify Phone',
+          onTap: () => _showPhoneVerificationSheet(context, ref, user.phone),
+        ),
+      );
+    }
+
+    if (banners.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      children: [
+        ...banners,
+      ],
+    );
+  }
+
+  Widget _buildVerificationBanner({
+    required BuildContext context,
+    required IconData icon,
+    required MaterialColor color,
+    required String title,
+    required String subtitle,
+    required String buttonText,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: color.shade700, size: 20),
+              const SizedBox(width: 8),
+              Text(title, style: AppTypography.body.copyWith(fontWeight: FontWeight.bold, color: color.shade900)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(subtitle, style: AppTypography.caption.copyWith(color: color.shade900, height: 1.4)),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: onTap,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: color.shade900,
+                side: BorderSide(color: color.shade400),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text(buttonText),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPhoneVerificationSheet(BuildContext context, WidgetRef ref, String phone) {
+    String verificationId = '';
+    bool isOtpSent = false;
+    bool isLoading = false;
+    final otpController = TextEditingController();
+
+    String formattedPhone = phone;
+    if (!formattedPhone.startsWith('+')) {
+      formattedPhone = '+91$phone';
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            Future<void> sendOtp() async {
+              setSheetState(() => isLoading = true);
+              try {
+                await fb.FirebaseAuth.instance.verifyPhoneNumber(
+                  phoneNumber: formattedPhone,
+                  timeout: const Duration(seconds: 60),
+                  verificationCompleted: (fb.PhoneAuthCredential credential) async {
+                    try {
+                      await ref.read(authServiceProvider).linkPhoneAccount(credential);
+                      if (ctx.mounted) {
+                        Navigator.pop(ctx);
+                        setState(() {});
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Phone Verified Successfully!')),
+                        );
+                      }
+                    } catch (e) {
+                      debugPrint('Auto-verify link failed: $e');
+                    }
+                  },
+                  verificationFailed: (fb.FirebaseAuthException e) {
+                    setSheetState(() => isLoading = false);
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                      SnackBar(content: Text(e.message ?? 'Verification failed')),
+                    );
+                  },
+                  codeSent: (String vId, int? resendToken) {
+                    setSheetState(() {
+                      verificationId = vId;
+                      isOtpSent = true;
+                      isLoading = false;
+                    });
+                  },
+                  codeAutoRetrievalTimeout: (String vId) {
+                    verificationId = vId;
+                  },
+                );
+              } catch (e) {
+                setSheetState(() => isLoading = false);
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(content: Text('Failed to send OTP: $e')),
+                );
+              }
+            }
+
+            Future<void> verifyOtp() async {
+              if (otpController.text.length < 6) return;
+              setSheetState(() => isLoading = true);
+              try {
+                final credential = fb.PhoneAuthProvider.credential(
+                  verificationId: verificationId,
+                  smsCode: otpController.text,
+                );
+                await ref.read(authServiceProvider).linkPhoneAccount(credential);
+                if (ctx.mounted) {
+                  Navigator.pop(ctx);
+                  setState(() {});
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Phone Linked Successfully!')),
+                  );
+                }
+              } catch (e) {
+                setSheetState(() => isLoading = false);
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(content: Text('Invalid OTP: $e')),
+                );
+              }
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(ctx).viewInsets.bottom,
+                left: 24,
+                right: 24,
+                top: 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Verify Phone', style: AppTypography.heading),
+                      IconButton(
+                        icon: const Icon(LucideIcons.x),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Phone Number: $formattedPhone', style: AppTypography.body),
+                  const SizedBox(height: 24),
+
+                  if (!isOtpSent) ...[
+                    PrimaryButton(
+                      text: 'Send OTP',
+                      isLoading: isLoading,
+                      onPressed: sendOtp,
+                    ),
+                  ] else ...[
+                    AppTextField(
+                      controller: otpController,
+                      hintText: 'Enter 6-digit OTP',
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 24),
+                    PrimaryButton(
+                      text: 'Verify & Link',
+                      isLoading: isLoading,
+                      onPressed: verifyOtp,
+                    ),
+                    const SizedBox(height: 8),
+                    Center(
+                      child: TextButton(
+                        onPressed: sendOtp,
+                        child: const Text('Resend OTP'),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 }
 
 class _ThemeOptionPill extends StatelessWidget {
