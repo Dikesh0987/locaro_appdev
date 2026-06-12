@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../theme/typography.dart';
-import '../../theme/colors.dart';
 
 class NetworkOverlayWrapper extends StatefulWidget {
   final Widget child;

@@ -12,6 +12,7 @@ import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/services/fcm_service.dart';
+import '../../../core/utils/email_templates.dart';
 
 class AuthService {
   final AuthRepository _repository;
@@ -134,6 +135,22 @@ class AuthService {
 
       // Sync FCM Token
       await fcmService.syncToken();
+
+      // Trigger Welcome Email for new Google Sign-ups
+      if (fbUser.email != null && fbUser.email!.isNotEmpty) {
+        try {
+          await FirebaseFirestore.instance.collection('mail').add({
+            'to': fbUser.email,
+            'message': {
+              'subject': 'Welcome to Locaro! Email Verified ✅',
+              'html': EmailTemplates.getWelcomeEmail(),
+            },
+          });
+          debugPrint('Welcome email trigger added for new Google sign-up.');
+        } catch (e) {
+          debugPrint('Error triggering welcome email for new sign-up: \$e');
+        }
+      }
 
       return newUser;
     }
@@ -267,6 +284,21 @@ class AuthService {
           email: fbUser.email,
         );
         await _repository.updateUserDoc(fbUser.uid, {'email': fbUser.email});
+        
+        // Trigger Welcome Email
+        try {
+          await FirebaseFirestore.instance.collection('mail').add({
+            'to': fbUser.email,
+            'message': {
+              'subject': 'Welcome to Locaro! Email Verified ✅',
+              'html': EmailTemplates.getWelcomeEmail(),
+            },
+          });
+          debugPrint('Welcome email trigger added to Firestore successfully.');
+        } catch (e) {
+          debugPrint('Error triggering welcome email: \$e');
+        }
+
         _ref.read(databaseProvider.notifier).setCurrentUser(updatedUser);
       }
     }
