@@ -8,6 +8,7 @@ class PostModel {
   final PostType type;
   final String caption;
   final String image;
+  final String? linkedProductId;
   final int likes;
   final int comments;
   final DateTime createdAt;
@@ -18,6 +19,7 @@ class PostModel {
     required this.type,
     required this.caption,
     required this.image,
+    this.linkedProductId,
     required this.likes,
     required this.comments,
     required this.createdAt,
@@ -29,6 +31,7 @@ class PostModel {
     PostType? type,
     String? caption,
     String? image,
+    String? linkedProductId,
     int? likes,
     int? comments,
     DateTime? createdAt,
@@ -39,6 +42,7 @@ class PostModel {
       type: type ?? this.type,
       caption: caption ?? this.caption,
       image: image ?? this.image,
+      linkedProductId: linkedProductId ?? this.linkedProductId,
       likes: likes ?? this.likes,
       comments: comments ?? this.comments,
       createdAt: createdAt ?? this.createdAt,
@@ -74,6 +78,7 @@ class PostModel {
       type: parsePostType(map['type'] ?? 'update'),
       caption: map['caption'] ?? '',
       image: map['image'] ?? '',
+      linkedProductId: map['linkedProductId'],
       likes: map['likes'] ?? 0,
       comments: map['comments'] ?? 0,
       createdAt: parseDateTime(map['createdAt']),
@@ -87,6 +92,7 @@ class PostModel {
       'type': type.name,
       'caption': caption,
       'image': image,
+      'linkedProductId': linkedProductId,
       'likes': likes,
       'comments': comments,
       'createdAt': Timestamp.fromDate(createdAt),

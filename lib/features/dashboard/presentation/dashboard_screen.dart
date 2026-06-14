@@ -7,8 +7,8 @@ import '../../../core/theme/typography.dart';
 import '../../../core/widgets/cards/base_card.dart';
 import '../../../core/widgets/navigation/top_app_bar.dart';
 import '../../../core/widgets/common/fallback_image.dart';
+import '../../../core/utils/page_transitions.dart';
 import '../../../providers/app_state_providers.dart';
-import '../../../models/lead_model.dart';
 import '../../queries/presentation/query_center_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -18,26 +18,28 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(databaseProvider);
     final shop = state.currentShop;
-    
-    // Dynamically calculate the active leads for this shop
-    final shopLeads = state.leads.where((l) => l.shopId == shop.id).toList();
-    final newLeadsCount = shopLeads.where((l) => l.status == 'New').length;
+
+    // Calculate realtime metrics
+    final shopProducts = state.products.where((p) => p.shopId == shop.id).toList();
+    final totalViews = shopProducts.fold<int>(0, (sum, p) => sum + p.views);
+    final totalLikes = shopProducts.fold<int>(0, (sum, p) => sum + p.likes);
+    final engagedUsers = totalLikes + shop.followers;
+    final activeProducts = shopProducts.length;
 
     return Scaffold(
-      appBar: const TopAppBar(title: 'Merchant Center'),
+      appBar: const TopAppBar(),
       body: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding, vertical: AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-
-            // MERCHANT HEADER (matches User Profile style)
+            // MERCHANT HEADER
             Row(
               children: [
                 FallbackAvatar(
                   imageUrl: shop.logo,
+                  name: shop.shopName,
                   radius: 44,
                   fallbackIcon: LucideIcons.store,
                 ),
@@ -78,8 +80,8 @@ class DashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 28),
 
-            // PERFORMANCE OVERVIEW SECTION
-            _buildSectionTitle(context, 'PERFORMANCE OVERVIEW'),
+            // STORE ANALYTICS SECTION
+            _buildSectionTitle(context, 'STORE ANALYTICS'),
             const SizedBox(height: 10),
             GridView.count(
               shrinkWrap: true,
@@ -101,74 +103,34 @@ class DashboardScreen extends ConsumerWidget {
                 _buildMetricActionCard(
                   context: context,
                   icon: LucideIcons.eye,
-                  title: 'Profile Views',
-                  value: '0',
-                  subtitle: 'Total views',
+                  title: 'Total Views',
+                  value: totalViews.toString(),
+                  subtitle: 'Product views',
                   color: Colors.blue.shade50,
                   iconColor: Colors.blue.shade700,
                 ),
                 _buildMetricActionCard(
                   context: context,
-                  icon: LucideIcons.sparkles,
-                  title: 'Total Leads',
-                  value: shopLeads.length.toString(),
-                  subtitle: '$newLeadsCount uncontacted',
-                  color: Colors.amber.shade50,
-                  iconColor: Colors.amber.shade700,
+                  icon: LucideIcons.activity,
+                  title: 'Engaged',
+                  value: engagedUsers.toString(),
+                  subtitle: 'Interactions',
+                  color: Colors.green.shade50,
+                  iconColor: Colors.green.shade700,
                 ),
                 _buildMetricActionCard(
                   context: context,
-                  icon: LucideIcons.percent,
-                  title: 'Offer Clicks',
-                  value: '0',
-                  subtitle: 'Total clicks',
-                  color: Colors.purple.shade50,
-                  iconColor: Colors.purple.shade700,
+                  icon: LucideIcons.box,
+                  title: 'Products',
+                  value: activeProducts.toString(),
+                  subtitle: 'Active listings',
+                  color: Colors.orange.shade50,
+                  iconColor: Colors.orange.shade700,
                 ),
               ],
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
 
-            // RECENT LEADS SECTION
-            _buildSectionTitle(context, 'RECENT ACTIVE LEADS'),
-            const SizedBox(height: 10),
-            shopLeads.isEmpty
-                ? _buildEmptyState(context, 'No customer leads generated yet.')
-                : _buildSectionCard(
-                    context,
-                    children: [
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: shopLeads.length > 3 ? 3 : shopLeads.length,
-                        separatorBuilder: (context, index) => const Divider(height: 1, indent: 56),
-                        itemBuilder: (context, index) {
-                          final lead = shopLeads[index];
-                          return _buildLeadListTile(context, lead, ref);
-                        },
-                      ),
-                    ],
-                  ),
-            const SizedBox(height: 16),
-
-            // View All Leads Button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                icon: Icon(LucideIcons.arrowRight, size: 14, color: context.colors.textPrimary),
-                label: Text('View All Leads', style: TextStyle(color: context.colors.textPrimary)),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(color: context.colors.border),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                ),
-                onPressed: () {
-                  // Navigate to Leads Screen tab (index 3 in shell screen)
-                  ref.read(bottomNavIndexProvider.notifier).state = 3;
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
             // View Query Center Button
             SizedBox(
               width: double.infinity,
@@ -181,7 +143,7 @@ class DashboardScreen extends ConsumerWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
                 ),
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const QueryCenterScreen()));
+                  Navigator.push(context, SlidePageRoute(page: const QueryCenterScreen()));
                 },
               ),
             ),
@@ -202,25 +164,6 @@ class DashboardScreen extends ConsumerWidget {
           fontWeight: FontWeight.bold,
           letterSpacing: 1.0,
           fontSize: 11,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionCard(BuildContext context, {required List<Widget> children}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.colors.border, width: 1),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(15),
-        child: Material(
-          color: context.colors.surface,
-          child: Column(
-            children: children,
-          ),
         ),
       ),
     );
@@ -286,89 +229,6 @@ class DashboardScreen extends ConsumerWidget {
                 ),
               ],
             )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLeadListTile(BuildContext context, LeadModel lead, WidgetRef ref) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: context.colors.border,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          lead.type == LeadType.whatsappClick
-              ? LucideIcons.messageSquare
-              : (lead.type == LeadType.discountRequest ? LucideIcons.percent : LucideIcons.heart),
-          size: 16,
-          color: context.colors.primary,
-        ),
-      ),
-      title: Text(
-        lead.userName,
-        style: AppTypography.body.copyWith(
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
-        ),
-      ),
-      subtitle: Text(
-        'Interested in ${lead.productName}',
-        style: AppTypography.label.copyWith(
-          color: context.colors.textSecondary,
-          fontSize: 11,
-        ),
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: lead.status == 'New'
-                  ? context.colors.offerOrange.withValues(alpha: 0.1)
-                  : context.colors.success.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              lead.status,
-              style: AppTypography.label.copyWith(
-                color: lead.status == 'New' ? context.colors.offerOrange : context.colors.success,
-                fontSize: 9,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Icon(LucideIcons.chevronRight, size: 14, color: context.colors.textSecondary.withValues(alpha: 0.7)),
-        ],
-      ),
-      onTap: () {
-        // Navigate to Leads Screen tab (index 3 in shell screen)
-        ref.read(bottomNavIndexProvider.notifier).state = 3;
-      },
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context, String msg) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.colors.border),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(LucideIcons.inbox, size: 40, color: context.colors.border),
-            const SizedBox(height: 12),
-            Text(msg, style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
           ],
         ),
       ),

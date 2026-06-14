@@ -7,49 +7,48 @@ import '../models/shop_model.dart';
 import '../models/product_model.dart';
 import '../models/post_model.dart';
 import '../models/offer_model.dart';
-import '../models/lead_model.dart';
 import '../models/query_model.dart';
 import '../repositories/Locaro_repository.dart';
 
 
 // State wrapper for the in-memory database
 class LocaroDataState {
+  final bool isLoading;
   final List<ShopModel> shops;
   final List<ProductModel> products;
   final List<OfferModel> offers;
   final List<PostModel> posts;
-  final List<LeadModel> leads;
   final List<QueryModel> queries;
   final UserModel currentUser;
   final ShopModel currentShop;
 
   LocaroDataState({
+    this.isLoading = true,
     required this.shops,
     required this.products,
     required this.offers,
     required this.posts,
-    required this.leads,
     required this.queries,
     required this.currentUser,
     required this.currentShop,
   });
 
   LocaroDataState copyWith({
+    bool? isLoading,
     List<ShopModel>? shops,
     List<ProductModel>? products,
     List<OfferModel>? offers,
     List<PostModel>? posts,
-    List<LeadModel>? leads,
     List<QueryModel>? queries,
     UserModel? currentUser,
     ShopModel? currentShop,
   }) {
     return LocaroDataState(
+      isLoading: isLoading ?? this.isLoading,
       shops: shops ?? this.shops,
       products: products ?? this.products,
       offers: offers ?? this.offers,
       posts: posts ?? this.posts,
-      leads: leads ?? this.leads,
       queries: queries ?? this.queries,
       currentUser: currentUser ?? this.currentUser,
       currentShop: currentShop ?? this.currentShop,
@@ -63,7 +62,6 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
   StreamSubscription? _productsSub;
   StreamSubscription? _postsSub;
   StreamSubscription? _offersSub;
-  StreamSubscription? _leadsSub;
   StreamSubscription? _queriesSub;
 
   @override
@@ -77,7 +75,6 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
       _productsSub?.cancel();
       _postsSub?.cancel();
       _offersSub?.cancel();
-      _leadsSub?.cancel();
       _queriesSub?.cancel();
     });
 
@@ -86,7 +83,6 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
       products: [],
       offers: [],
       posts: [],
-      leads: [],
       queries: [],
       currentUser: LocaroDatabase.defaultUser,
       currentShop: LocaroDatabase.defaultShop,
@@ -98,7 +94,7 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
 
     _shopsSub = firestore.collection('shops').limit(100).snapshots().listen((snapshot) {
       final shops = snapshot.docs.map((doc) => ShopModel.fromMap(doc.data())).toList();
-      state = state.copyWith(shops: shops);
+      state = state.copyWith(shops: shops, isLoading: false);
       
       // Update currentShop if currentUser is owner of a shop
       final user = state.currentUser;
@@ -125,10 +121,7 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
       state = state.copyWith(offers: offers);
     });
 
-    _leadsSub = firestore.collection('leads').orderBy('createdAt', descending: true).limit(100).snapshots().listen((snapshot) {
-      final leads = snapshot.docs.map((doc) => LeadModel.fromMap(doc.data())).toList();
-      state = state.copyWith(leads: leads);
-    });
+
 
     _queriesSub = firestore.collection('queries').orderBy('createdAt', descending: true).limit(100).snapshots().listen((snapshot) {
       final queries = snapshot.docs.map((doc) => QueryModel.fromMap(doc.data())).toList();
@@ -139,7 +132,14 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
 
   // Update current user locally
   void setCurrentUser(UserModel user) {
-    state = state.copyWith(currentUser: user);
+    ShopModel currentShop = state.currentShop;
+    if (user.role == 'shop_owner') {
+      final currentShopIndex = state.shops.indexWhere((s) => s.ownerUid == user.uid);
+      if (currentShopIndex != -1) {
+        currentShop = state.shops[currentShopIndex];
+      }
+    }
+    state = state.copyWith(currentUser: user, currentShop: currentShop);
   }
 
   // Update current shop locally
@@ -175,7 +175,12 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
   }
 
   // Post creation writes to Firestore
-  Future<void> addPost(PostModel post) async {
+  Future<void> addPost(
+    PostModel post, {
+    String? offerTitle,
+    String? offerDiscount,
+    int? offerValidityDays,
+  }) async {
     await FirebaseFirestore.instance
         .collection('posts')
         .doc(post.id)
@@ -187,10 +192,10 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
       final newOffer = OfferModel(
         id: offerId,
         shopId: post.shopId,
-        title: 'Special Offer',
+        title: offerTitle ?? 'Special Offer',
         description: post.caption,
-        discount: 'Deal',
-        expiryDate: DateTime.now().add(const Duration(days: 7)),
+        discount: offerDiscount ?? 'Deal',
+        expiryDate: DateTime.now().add(Duration(days: offerValidityDays ?? 7)),
         banner: post.image,
         createdAt: DateTime.now(),
       );
@@ -256,36 +261,7 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
     }
   }
 
-  // Lead Generation writes to Firestore
-  Future<void> addLead(LeadModel lead) async {
-    // Deduplicate leads: if this user already generated the same type of lead for this product, skip.
-    final exists = state.leads.any((l) => l.userId == lead.userId && l.productId == lead.productId && l.type == lead.type);
-    if (exists) return;
 
-    await FirebaseFirestore.instance
-        .collection('leads')
-        .doc(lead.id)
-        .set(lead.toMap());
-
-    // Notify the shop owner in real time
-    try {
-      final shop = state.shops.firstWhere((s) => s.id == lead.shopId);
-      final notificationId = 'notif_lead_${lead.type.name}_${lead.productId}_${lead.userId}';
-      await FirebaseFirestore.instance
-          .collection('notifications')
-          .doc(notificationId)
-          .set({
-            'id': notificationId,
-            'userId': shop.ownerUid,
-            'title': 'New Lead: ${lead.userName}',
-            'body': 'Interested in ${lead.productName} (${lead.type.name})',
-            'type': 'Followers',
-            'referenceId': lead.productId,
-            'isRead': false,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-    } catch (_) {}
-  }
 
   // Submit a Query
   Future<void> submitQuery(QueryModel query) async {
@@ -295,7 +271,8 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
         .set(query.toMap());
 
     try {
-      final shop = state.shops.firstWhere((s) => s.id == query.shopId);
+      final shop = state.shops.where((s) => s.id == query.shopId).firstOrNull;
+      if (shop == null) return;
       final notificationId = 'notif_query_${query.id}_${query.userId}';
       await FirebaseFirestore.instance
           .collection('notifications')
@@ -322,8 +299,10 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
     });
 
     try {
-      final query = state.queries.firstWhere((q) => q.id == queryId);
-      final shop = state.shops.firstWhere((s) => s.id == query.shopId);
+      final query = state.queries.where((q) => q.id == queryId).firstOrNull;
+      if (query == null) return;
+      final shop = state.shops.where((s) => s.id == query.shopId).firstOrNull;
+      if (shop == null) return;
       final notificationId = 'notif_query_reply_${query.id}';
       await FirebaseFirestore.instance
           .collection('notifications')
@@ -422,8 +401,10 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
     // Notify owner if saved
     if (saved.contains(productId)) {
       try {
-        final product = state.products.firstWhere((p) => p.id == productId);
-        final shop = state.shops.firstWhere((s) => s.id == product.shopId);
+        final product = state.products.where((p) => p.id == productId).firstOrNull;
+        if (product == null) return;
+        final shop = state.shops.where((s) => s.id == product.shopId).firstOrNull;
+        if (shop == null) return;
         final notificationId = 'notif_save_${productId}_${user.uid}';
         await FirebaseFirestore.instance
             .collection('notifications')
@@ -440,6 +421,15 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
             });
       } catch (_) {}
     }
+  }
+
+  // Increment view count silently
+  Future<void> incrementProductView(String productId) async {
+    try {
+      await FirebaseFirestore.instance.collection('products').doc(productId).update({
+        'views': FieldValue.increment(1),
+      });
+    } catch (_) {}
   }
 
   // Like a product
@@ -475,7 +465,8 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
       // Notify owner of the product like
       if (isLiking) {
         try {
-          final shop = state.shops.firstWhere((s) => s.id == product.shopId);
+          final shop = state.shops.where((s) => s.id == product.shopId).firstOrNull;
+          if (shop == null) return;
           final notificationId = 'notif_like_${productId}_${user.uid}';
           await FirebaseFirestore.instance
               .collection('notifications')
@@ -539,12 +530,7 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
     await FirebaseFirestore.instance.collection('shops').doc(shop.id).set(shop.toMap());
   }
 
-  // Mark a lead as contacted
-  Future<void> markLeadContacted(String leadId) async {
-    await FirebaseFirestore.instance.collection('leads').doc(leadId).update({
-      'status': 'Contacted',
-    });
-  }
+
 }
 
 // Global Providers
@@ -590,4 +576,17 @@ class AppThemeModeNotifier extends Notifier<ThemeMode> {
 
 final appThemeModeProvider = NotifierProvider<AppThemeModeNotifier, ThemeMode>(() {
   return AppThemeModeNotifier();
+});
+
+// Pending Deep Link Provider
+class PendingDeepLinkNotifier extends Notifier<Map<String, dynamic>?> {
+  @override
+  Map<String, dynamic>? build() => null;
+
+  @override
+  set state(Map<String, dynamic>? value) => super.state = value;
+}
+
+final pendingDeepLinkProvider = NotifierProvider<PendingDeepLinkNotifier, Map<String, dynamic>?>(() {
+  return PendingDeepLinkNotifier();
 });

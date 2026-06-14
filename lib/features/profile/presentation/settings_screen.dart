@@ -435,8 +435,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             }
 
                             String formattedPhone = phoneController.text.trim();
-                            if (!formattedPhone.startsWith('+'))
+                            if (!formattedPhone.startsWith('+')) {
                               formattedPhone = '+91$formattedPhone';
+                            }
 
                             await ref
                                 .read(authServiceProvider)

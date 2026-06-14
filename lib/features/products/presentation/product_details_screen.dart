@@ -7,12 +7,10 @@ import '../../../core/theme/typography.dart';
 import '../../../core/widgets/cards/base_card.dart';
 import '../../../core/widgets/common/fallback_image.dart';
 import '../../../providers/app_state_providers.dart';
-import '../../../models/lead_model.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
 import '../../auth/application/auth_service.dart';
 import '../../../core/widgets/common/skeleton_loaders.dart';
 import '../../../core/widgets/common/animated_action_icon.dart';
-import '../../queries/presentation/query_bottom_sheet.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class ProductDetailsScreen extends ConsumerStatefulWidget {
@@ -32,50 +30,32 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
   void initState() {
     super.initState();
     _isLoading = false;
-  }
-
-  void _generateLead(LeadType type, String typeLabel, String shopId, String productName) {
-    ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
-      final dbState = ref.read(databaseProvider);
-      final newLead = LeadModel(
-        id: 'lead_${dbState.currentUser.id}_${widget.productId}_${type.name}',
-        userId: dbState.currentUser.id,
-        userName: dbState.currentUser.name,
-        userPhone: dbState.currentUser.phone,
-        productId: widget.productId,
-        productName: productName,
-        shopId: shopId,
-        type: type,
-        status: 'New',
-        createdAt: DateTime.now(),
-      );
-
-      ref.read(databaseProvider.notifier).addLead(newLead);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Simulated Lead: $typeLabel generated for this product!'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+    Future.microtask(() {
+      ref.read(databaseProvider.notifier).incrementProductView(widget.productId);
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(databaseProvider);
     
-    // Find the product
-    final product = state.products.firstWhere(
-      (p) => p.id == widget.productId,
-      orElse: () => state.products.first,
-    );
+    final product = state.products.where((p) => p.id == widget.productId).firstOrNull;
 
-    // Find the shop owner of this product
-    final shop = state.shops.firstWhere(
-      (s) => s.id == product.shopId,
-      orElse: () => state.currentShop,
-    );
+    if (product == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Not Found')),
+        body: Center(child: Text('This product is no longer available.')),
+      );
+    }
+
+    final shop = state.shops.where((s) => s.id == product.shopId).firstOrNull;
+    if (shop == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Not Found')),
+        body: Center(child: Text('The shop for this product is no longer available.')),
+      );
+    }
 
     final isSaved = state.currentUser.savedProducts.contains(product.id);
     final isLiked = state.currentUser.likedProducts.contains(product.id);
@@ -161,9 +141,6 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                             onTap: () {
                               ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
                                 ref.read(databaseProvider.notifier).toggleSaveProduct(product.id);
-                                if (!isSaved) {
-                                  _generateLead(LeadType.saved, 'Product Saved', product.shopId, product.name);
-                                }
                               });
                             },
                             child: Container(
@@ -269,6 +246,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                             children: [
                               FallbackAvatar(
                                 imageUrl: shop.logo,
+                                name: shop.shopName,
                                 radius: 20,
                                 fallbackIcon: LucideIcons.store,
                               ),
@@ -282,7 +260,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                                       style: AppTypography.body.copyWith(fontWeight: FontWeight.bold),
                                     ),
                                     Text(
-                                      'Verified Studio • 0.8 mi away',
+                                      'Verified Partner • 1.3 km away',
                                       style: AppTypography.label.copyWith(color: context.colors.textSecondary),
                                     ),
                                   ],
@@ -370,9 +348,6 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                           ),
                           onPressed: () {
                             ref.read(databaseProvider.notifier).toggleLikeProduct(product.id);
-                            if (!isLiked) {
-                              _generateLead(LeadType.interested, 'Interested action', product.shopId, product.name);
-                            }
                           },
                         ),
                       ),
@@ -403,28 +378,6 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                   SizedBox(height: AppSpacing.s12),
                   Row(
                     children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          icon: const Icon(LucideIcons.messageSquare, color: Colors.white, size: 18),
-                          label: const Text('Message', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-                            ),
-                          ),
-                          onPressed: () {
-                            showQueryBottomSheet(
-                              context,
-                              shopId: product.shopId,
-                              productId: product.id,
-                              category: product.category,
-                            );
-                          },
-                        ),
-                      ),
-                      SizedBox(width: AppSpacing.s12),
                       Expanded(
                         child: ElevatedButton.icon(
                           icon: const Icon(LucideIcons.messageCircle, color: Colors.white, size: 18),

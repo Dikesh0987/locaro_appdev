@@ -58,7 +58,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   bool _isOtpSent = false;
   String? _verificationId;
   int? _resendToken;
-  String _selectedCategory = 'Cafe';
+  List<String> _selectedCategories = [];
   String? _logoUrl;
   String? _bannerUrl;
 
@@ -286,7 +286,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           longitude: longitude,
           rating: 5.0,
           followers: 0,
-          category: _selectedCategory,
+          category: _selectedCategories.join(', '),
           isVerified: true,
           phone: finalPhone,
           whatsapp: finalPhone,
@@ -1324,9 +1324,17 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
               spacing: AppSpacing.s8,
               runSpacing: AppSpacing.s8,
               children: _availableCategories.map((cat) {
-                final isSelected = _selectedCategory == cat;
+                final isSelected = _selectedCategories.contains(cat);
                 return ScaleButtonPressed(
-                  onTap: () => setState(() => _selectedCategory = cat),
+                  onTap: () {
+                    setState(() {
+                      if (isSelected) {
+                        _selectedCategories.remove(cat);
+                      } else {
+                        _selectedCategories.add(cat);
+                      }
+                    });
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.s16,
@@ -1364,6 +1372,10 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 if (_shopAddressController.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Please enter shop address')),
+                  );
+                } else if (_selectedCategories.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please select at least one category')),
                   );
                 } else {
                   _nextPage();
@@ -1438,7 +1450,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                 child: Text(
                   _logoUrl != null
                       ? 'Logo uploaded'
-                      : 'Tap to upload shop logo',
+                      : 'Tap to upload shop logo (Required)',
                   style: AppTypography.caption.copyWith(
                     color: context.colors.textSecondary,
                   ),
@@ -1492,9 +1504,13 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
             text: 'Continue',
             isLoading: _isLoading,
             onPressed: () {
-              if (_logoUrl == null || _bannerUrl == null) {
+              if (_logoUrl == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please upload both a logo and a banner')),
+                  const SnackBar(content: Text('Please upload a shop logo')),
+                );
+              } else if (_bannerUrl == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please upload a store banner image')),
                 );
               } else {
                 _nextPage();

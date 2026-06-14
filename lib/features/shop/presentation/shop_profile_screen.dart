@@ -9,7 +9,7 @@ import '../../../core/widgets/cards/base_card.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../core/widgets/common/fallback_image.dart';
 import '../../products/presentation/product_details_screen.dart';
-import '../../queries/presentation/query_bottom_sheet.dart';
+import '../../map/presentation/map_screen.dart';
 import '../../../models/product_model.dart';
 import '../../../models/offer_model.dart';
 import '../../../models/post_model.dart';
@@ -48,12 +48,24 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
   Widget build(BuildContext context) {
     final state = ref.watch(databaseProvider);
     // Find the active shop
-    final shop = state.shops.firstWhere(
-      (s) => s.id == widget.shopId,
-      orElse: () => state.currentShop,
-    );
-
-    // Filter products, offers, and posts belonging to this shop
+    final shop = state.shops.where((s) => s.id == widget.shopId).firstOrNull;
+    
+    if (shop == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Shop Not Found')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.store_outlined, size: 64, color: Colors.grey),
+              SizedBox(height: 16),
+              Text('This shop no longer exists.'),
+              TextButton(onPressed: () => Navigator.pop(context), child: Text('Go Back')),
+            ],
+          ),
+        ),
+      );
+    }
     final shopProducts = state.products.where((p) => p.shopId == shop.id).toList();
     final shopOffers = state.offers.where((o) => o.shopId == shop.id).toList();
     final shopPosts = state.posts.where((post) => post.shopId == shop.id).toList();
@@ -102,10 +114,33 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                     ),
                   ),
                 ),
+                // Map Button
+                Positioned(
+                  top: 50,
+                  right: AppSpacing.mobilePadding + 44, // offset to the left of the WhatsApp button
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MapScreen(initialShopId: shop.id),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(LucideIcons.mapPin, size: 20, color: context.colors.primary),
+                    ),
+                  ),
+                ),
                 // WhatsApp Button
                 Positioned(
                   top: 50,
-                  right: AppSpacing.mobilePadding + 44, // offset to the left of the message button
+                  right: AppSpacing.mobilePadding,
                   child: GestureDetector(
                     onTap: () async {
                       final whatsappUrl = 'https://wa.me/${shop.whatsapp.replaceAll(RegExp(r'[^0-9]'), '')}';
@@ -129,24 +164,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                     ),
                   ),
                 ),
-                // Message Button
-                Positioned(
-                  top: 50,
-                  right: AppSpacing.mobilePadding,
-                  child: GestureDetector(
-                    onTap: () {
-                      showQueryBottomSheet(context, shopId: shop.id, category: 'SHOP PROFILE');
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(LucideIcons.messageSquare, size: 20, color: context.colors.primary),
-                    ),
-                  ),
-                ),
+
                 // Logo Positioned overlapping the banner bottom
                 Positioned(
                   bottom: -35,
@@ -159,6 +177,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                     ),
                     child: FallbackAvatar(
                       imageUrl: shop.logo,
+                      name: shop.shopName,
                       radius: 35,
                       fallbackIcon: LucideIcons.store,
                     ),
@@ -250,7 +269,14 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                   // Category & Stats Row
                   Row(
                     children: [
-                      Text(shop.category, style: AppTypography.label.copyWith(color: context.colors.textSecondary)),
+                      Expanded(
+                        child: Text(
+                          shop.category, 
+                          style: AppTypography.label.copyWith(color: context.colors.textSecondary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                       SizedBox(width: 8),
                       const Icon(LucideIcons.star, size: 12, color: Colors.amber),
                       SizedBox(width: 2),

@@ -1,0 +1,30 @@
+Analyzing locaro...                                             
+
+   info - Use the null-aware marker '?' rather than a null check via an 'if'. Try using '?' - lib\core\widgets\navigation\top_app_bar.dart:93:9 - use_null_aware_elements
+warning - The value of the field '_isOtpSent' isn't used. Try removing the field, or using it - lib\features\auth\presentation\auth_flow_container.dart:58:8 - unused_field
+warning - The value of the field '_resendToken' isn't used. Try removing the field, or using it - lib\features\auth\presentation\auth_flow_container.dart:60:8 - unused_field
+   info - The private field _selectedCategories could be 'final'. Try making the field 'final' - lib\features\auth\presentation\auth_flow_container.dart:61:16 - prefer_final_fields
+warning - The declaration '_sendRealOtp' isn't referenced. Try removing the declaration of '_sendRealOtp' - lib\features\auth\presentation\auth_flow_container.dart:378:16 - unused_element
+warning - The declaration '_verifyRealOtp' isn't referenced. Try removing the declaration of '_verifyRealOtp' - lib\features\auth\presentation\auth_flow_container.dart:486:16 - unused_element
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\features\auth\presentation\auth_flow_container.dart:727:50 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\features\auth\presentation\auth_flow_container.dart:766:50 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\features\auth\presentation\auth_flow_container.dart:774:50 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\features\auth\presentation\welcome_screen.dart:113:50 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\features\auth\presentation\welcome_screen.dart:146:50 - use_build_context_synchronously
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre. Try replacing the use of the deprecated member with the replacement - lib\features\posts\presentation\post_management_screen.dart:198:27 - deprecated_member_use
+warning - The declaration '_buildAnalyticCard' isn't referenced. Try removing the declaration of '_buildAnalyticCard' - lib\features\profile\presentation\profile_screen.dart:724:10 - unused_element
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\features\profile\presentation\profile_screen.dart:1435:50 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\features\profile\presentation\profile_screen.dart:1489:50 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\features\profile\presentation\profile_screen.dart:1497:50 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\features\profile\presentation\profile_screen.dart:1859:38 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\features\profile\presentation\profile_screen.dart:1883:38 - use_build_context_synchronously
+   info - 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre. Try replacing the use of the deprecated member with the replacement - lib\features\profile\presentation\settings_screen.dart:147:17 - deprecated_member_use
+   info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre. Try replacing the use of the deprecated member with the replacement - lib\features\profile\presentation\settings_screen.dart:149:17 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\features\profile\presentation\settings_screen.dart:383:50 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\features\profile\presentation\settings_screen.dart:458:50 - use_build_context_synchronously
+   info - Use interpolation to compose strings and values. Try using string interpolation to build the composite string - lib\features\search\presentation\search_screen.dart:76:38 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values. Try using string interpolation to build the composite string - lib\features\search\presentation\search_screen.dart:81:42 - prefer_interpolation_to_compose_strings
+warning - Unused import: 'package:firebase_auth/firebase_auth.dart'. Try removing the import directive - lib\main.dart:7:8 - unused_import
+warning - Unused import: 'package:flutter/foundation.dart'. Try removing the import directive - lib\main.dart:8:8 - unused_import
+
+26 issues found. (ran in 13.8s)

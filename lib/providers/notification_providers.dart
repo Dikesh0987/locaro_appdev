@@ -63,8 +63,8 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
   Future<void> toggleRead(String id) async {
     // Update in database
     try {
-      final notif = state.firstWhere((n) => n.id == id);
-      await FirebaseFirestore.instance
+      final notif = state.where((n) => n.id == id).firstOrNull;
+      if (notif == null) return;      await FirebaseFirestore.instance
           .collection('notifications')
           .doc(id)
           .update({'isRead': !notif.isRead});

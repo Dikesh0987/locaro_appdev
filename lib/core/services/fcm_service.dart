@@ -8,6 +8,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../../features/products/presentation/product_details_screen.dart';
+import '../../providers/app_state_providers.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -31,18 +33,18 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     );
 
     await flutterLocalNotificationsPlugin.show(
-      id: message.hashCode,
+      id: DateTime.now().millisecond,
       title: title,
       body: body,
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
-          'high_importance_channel',
+          'locaro_high_importance_v1',
           'High Importance Notifications',
           channelDescription: 'This channel is used for important notifications.',
           importance: Importance.high,
           priority: Priority.high,
           playSound: true,
-          icon: '@mipmap/ic_launcher',
+          icon: '@drawable/ic_notification',
         ),
       ),
       payload: jsonEncode(message.data),
@@ -58,10 +60,14 @@ class FCMService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   final AndroidNotificationChannel _channel = const AndroidNotificationChannel(
-    'high_importance_channel', // id
+    'locaro_high_importance_v1', // id
     'High Importance Notifications', // title
     description: 'This channel is used for important notifications.',
     importance: Importance.high,
+    enableLights: true,
+    enableVibration: true,
+    showBadge: true,
+    playSound: true,
   );
 
   final AndroidNotificationChannel _defaultChannel = const AndroidNotificationChannel(
@@ -73,9 +79,11 @@ class FCMService {
 
   bool _isFlutterLocalNotificationsInitialized = false;
   GlobalKey<NavigatorState>? _navigatorKey;
+  ProviderContainer? _container;
 
-  Future<void> init(GlobalKey<NavigatorState> navigatorKey) async {
+  Future<void> init(GlobalKey<NavigatorState> navigatorKey, ProviderContainer container) async {
     _navigatorKey = navigatorKey;
+    _container = container;
 
     // 1. Request Permission
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
@@ -132,6 +140,14 @@ class FCMService {
 
       // 4. Setup message handlers
       _setupMessageHandlers();
+      
+      // 5. Sync token on auth state changes
+      FirebaseAuth.instance.authStateChanges().listen((user) {
+        if (user != null) {
+          syncToken();
+          _attemptPendingDeepLinkNavigation();
+        }
+      });
     }
   }
 
@@ -161,6 +177,7 @@ class FCMService {
 
     final androidPlugin = _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    await androidPlugin?.requestNotificationsPermission();
     await androidPlugin?.createNotificationChannel(_channel);
     await androidPlugin?.createNotificationChannel(_defaultChannel);
 
@@ -171,7 +188,7 @@ class FCMService {
     );
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@drawable/ic_notification');
         
     const InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
@@ -219,7 +236,7 @@ class FCMService {
 
       if (notification != null && android != null && !kIsWeb) {
         _flutterLocalNotificationsPlugin.show(
-          id: notification.hashCode,
+          id: DateTime.now().millisecond,
           title: notification.title,
           body: notification.body,
           notificationDetails: NotificationDetails(
@@ -227,7 +244,7 @@ class FCMService {
               _channel.id,
               _channel.name,
               channelDescription: _channel.description,
-              icon: '@mipmap/ic_launcher',
+              icon: '@drawable/ic_notification',
               importance: Importance.high,
               priority: Priority.high,
             ),
@@ -245,12 +262,34 @@ class FCMService {
   }
 
   void _handleDeepLink(Map<String, dynamic> data) {
-    if (_navigatorKey?.currentState == null) return;
+    if (_container == null) return;
     
     final type = data['type'] as String?;
     final referenceId = data['referenceId'] as String?;
 
     if (type == null || referenceId == null) return;
+
+    // Save deep link state
+    _container!.read(pendingDeepLinkProvider.notifier).state = data;
+    
+    // Attempt navigation if context is ready and user is logged in
+    _attemptPendingDeepLinkNavigation();
+  }
+
+  void _attemptPendingDeepLinkNavigation() {
+    if (_navigatorKey?.currentState?.context == null || _container == null) return;
+    
+    final pendingLink = _container!.read(pendingDeepLinkProvider);
+    if (pendingLink == null) return;
+    
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return; // Wait for login
+
+    final type = pendingLink['type'] as String;
+    final referenceId = pendingLink['referenceId'] as String;
+
+    // Clear pending link
+    _container!.read(pendingDeepLinkProvider.notifier).state = null;
 
     if (type == 'product') {
       _navigatorKey!.currentState!.push(MaterialPageRoute(

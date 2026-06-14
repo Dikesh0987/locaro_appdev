@@ -257,6 +257,7 @@ class _ShopAvatarCard extends ConsumerWidget {
               children: [
                 FallbackAvatar(
                   imageUrl: shop.logo,
+                  name: shop.shopName,
                   radius: 30,
                   fallbackIcon: LucideIcons.store,
                 ),
@@ -435,6 +436,7 @@ class _PostCardState extends ConsumerState<_PostCard> {
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             leading: FallbackAvatar(
               imageUrl: widget.shop.logo,
+              name: widget.shop.shopName,
               radius: 16,
               fallbackIcon: LucideIcons.store,
             ),

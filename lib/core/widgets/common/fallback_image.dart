@@ -9,21 +9,43 @@ class FallbackAvatar extends StatelessWidget {
   final double radius;
   final IconData fallbackIcon;
 
+  final String? name;
+
   const FallbackAvatar({
     super.key,
     required this.imageUrl,
+    this.name,
     this.radius = 18,
     this.fallbackIcon = LucideIcons.store,
   });
 
+  Widget _buildPlaceholder(BuildContext context) {
+    if (name != null && name!.trim().isNotEmpty) {
+      final initial = name!.trim()[0].toUpperCase();
+      return CircleAvatar(
+        radius: radius,
+        backgroundColor: context.colors.primary.withAlpha(40),
+        child: Text(
+          initial,
+          style: TextStyle(
+            fontSize: radius,
+            fontWeight: FontWeight.bold,
+            color: context.colors.primary,
+          ),
+        ),
+      );
+    }
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: context.colors.border,
+      child: Icon(fallbackIcon, size: radius, color: context.colors.textSecondary),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (imageUrl.isEmpty) {
-      return CircleAvatar(
-        radius: radius,
-        backgroundColor: context.colors.border,
-        child: Icon(fallbackIcon, size: radius, color: context.colors.textSecondary),
-      );
+      return _buildPlaceholder(context);
     }
 
     return CachedNetworkImage(
@@ -37,11 +59,7 @@ class FallbackAvatar extends StatelessWidget {
         height: radius * 2,
         borderRadius: radius,
       ),
-      errorWidget: (context, url, error) => CircleAvatar(
-        radius: radius,
-        backgroundColor: context.colors.border,
-        child: Icon(fallbackIcon, size: radius, color: context.colors.textSecondary),
-      ),
+      errorWidget: (context, url, error) => _buildPlaceholder(context),
       fadeInDuration: const Duration(milliseconds: 250),
     );
   }

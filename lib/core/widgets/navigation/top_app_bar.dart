@@ -7,6 +7,9 @@ import '../../theme/spacing.dart';
 import '../../../providers/notification_providers.dart';
 import '../../../features/notifications/presentation/notifications_screen.dart';
 import '../../../features/search/presentation/search_screen.dart';
+import '../../utils/page_transitions.dart';
+import '../../../providers/app_state_providers.dart';
+import '../common/fallback_image.dart';
 
 class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final String? title;
@@ -33,20 +36,61 @@ class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
           )
         : null);
 
-    return AppBar(
-      title: title != null
-          ? Text(title!, style: AppTypography.heading)
-          : Text(
-              'Locaro',
-              style: AppTypography.heading.copyWith(
-                fontWeight: FontWeight.w900,
-                letterSpacing: -1.0,
-                color: context.colors.primary,
-              ),
+    final role = ref.watch(appRoleProvider);
+    final state = ref.watch(databaseProvider);
+
+    Widget titleWidget;
+    if (title != null) {
+      titleWidget = Text(title!, style: AppTypography.heading);
+    } else if (role == 'owner') {
+      final shop = state.currentShop;
+      titleWidget = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FallbackAvatar(
+            imageUrl: shop.logo,
+            name: shop.shopName,
+            radius: 16,
+            fallbackIcon: LucideIcons.store,
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          Expanded(
+            child: Text(
+              shop.shopName,
+              style: AppTypography.heading.copyWith(fontWeight: FontWeight.bold),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-      centerTitle: title == null, // Center only the Locaro logo
+          ),
+        ],
+      );
+    } else {
+      titleWidget = ShaderMask(
+        shaderCallback: (bounds) => LinearGradient(
+          colors: [
+            context.colors.primary, // existing primary
+            const Color(0xFF000080), // Navy Blue
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ).createShader(bounds),
+        child: Text(
+          'locaro',
+          style: AppTypography.heading.copyWith(
+            fontWeight: FontWeight.w900,
+            letterSpacing: -1.0,
+            color: Colors.white, 
+          ),
+        ),
+      );
+    }
+
+    return AppBar(
+      title: titleWidget,
+      centerTitle: false,
       leading: leadingWidget,
-      actions: actions ?? [
+      actions: [
+        if (actions != null) ...actions!,
         IconButton(
           icon: Badge(
             label: Text('$unreadCount'),
@@ -58,7 +102,7 @@ class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+              SlidePageRoute(page: const NotificationsScreen()),
             );
           },
         ),
@@ -67,7 +111,7 @@ class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const SearchScreen()),
+              SlidePageRoute(page: const SearchScreen()),
             );
           },
         ),

@@ -122,6 +122,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   children: [
                     FallbackAvatar(
                       imageUrl: user.profileImage,
+                      name: user.name,
                       radius: 44,
                       fallbackIcon: LucideIcons.user,
                     ),
@@ -304,6 +305,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const SentQueriesScreen()));
               },
             ),
+
             const Divider(height: 1, indent: 48),
             _buildMenuRow(
               context,
@@ -415,6 +417,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   children: [
                     FallbackAvatar(
                       imageUrl: shop.logo,
+                      name: shop.shopName,
                       radius: 44,
                       fallbackIcon: LucideIcons.store,
                     ),
@@ -483,7 +486,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ],
         ),
         SizedBox(height: 16),
-
 
         _buildVerificationBanners(context, ref, user),
 
@@ -591,14 +593,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           children: [
             _buildThemeSelectionRow(context, ref),
             const Divider(height: 1, indent: 48),
-            _buildSwitchRow(
-              context,
-              icon: LucideIcons.bell,
-              label: 'Real-time Lead Notifications',
-              val: true,
-              onChanged: (v) {},
-            ),
-            const Divider(height: 1, indent: 48),
+
             _buildSwitchRow(
               context,
               icon: LucideIcons.eye,
@@ -720,6 +715,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ],
             )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnalyticCard(
+    BuildContext context, 
+    String title, 
+    String value, 
+    IconData icon, 
+    Color color
+  ) {
+    return BaseCard(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 24),
+            SizedBox(height: 8),
+            Text(
+              value,
+              style: AppTypography.heading.copyWith(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            SizedBox(height: 2),
+            Text(
+              title,
+              style: AppTypography.label.copyWith(color: context.colors.textSecondary, fontSize: 10),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ],
         ),
       ),

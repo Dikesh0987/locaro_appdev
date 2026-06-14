@@ -13,6 +13,7 @@ import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../models/product_model.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../../core/widgets/navigation/top_app_bar.dart';
 
 class ProductManagementScreen extends ConsumerWidget {
   const ProductManagementScreen({super.key});
@@ -38,9 +39,7 @@ class ProductManagementScreen extends ConsumerWidget {
     final shopProducts = state.products.where((p) => p.shopId == shop.id).toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Products'),
-        centerTitle: false,
+      appBar: TopAppBar(
         actions: [
           IconButton(
             icon: Icon(LucideIcons.plus, color: context.colors.primary),
@@ -164,7 +163,7 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
   File? _selectedImageFile;
   bool _isUploading = false;
 
-  final List<String> _categories = ['Cafe', 'Groceries', 'Electronics', 'Fashion', 'Bakery'];
+  final List<String> _categories = ['Cafe', 'Groceries', 'Electronics', 'Fashion', 'Bakery', 'Mobiles', 'Accessories', 'Home & Kitchen', 'Beauty', 'Sports', 'Toys', 'Hardware', 'Services'];
 
   @override
   void initState() {
@@ -211,61 +210,78 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
 
     setState(() => _isUploading = true);
 
-    try {
-      final shop = ref.read(databaseProvider).currentShop;
-      String finalImageUrl = _imageUrl ?? '';
-      final productId = widget.product?.id ?? 'p_${DateTime.now().millisecondsSinceEpoch}';
+    // Extract variables immediately before pop
+    final shop = ref.read(databaseProvider).currentShop;
+    final productId = widget.product?.id ?? 'p_${DateTime.now().millisecondsSinceEpoch}';
+    final name = _nameController.text;
+    final desc = _descController.text;
+    final price = double.parse(_priceController.text);
+    final discountStr = _discountController.text;
+    final discount = discountStr.isNotEmpty ? double.parse(discountStr) : null;
+    final stock = int.parse(_stockController.text);
+    final category = _selectedCategory;
+    final isNew = widget.product == null;
+    final oldProduct = widget.product;
+    final imageFile = _selectedImageFile;
+    final initImageUrl = _imageUrl ?? '';
+    final databaseNotifier = ref.read(databaseProvider.notifier);
+    final authRepo = ref.read(authRepositoryProvider);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-      if (_selectedImageFile != null) {
-        finalImageUrl = await ref.read(authRepositoryProvider).uploadShopAsset(shop.id, 'product_$productId', _selectedImageFile!);
-      }
+    // Close modal immediately and show toast
+    Navigator.pop(context);
+    scaffoldMessenger.showSnackBar(
+      SnackBar(content: Text(isNew ? 'Uploading product in background...' : 'Saving changes in background...')),
+    );
 
-      if (widget.product == null) {
-        final newProduct = ProductModel(
-          id: productId,
-          shopId: shop.id,
-          name: _nameController.text,
-          images: [finalImageUrl],
-          description: _descController.text,
-          price: double.parse(_priceController.text),
-          discountPrice: _discountController.text.isNotEmpty ? double.parse(_discountController.text) : null,
-          stock: int.parse(_stockController.text),
-          category: _selectedCategory,
-          likes: 0,
-          views: 0,
-          createdAt: DateTime.now(),
-        );
-        ref.read(databaseProvider.notifier).addProduct(newProduct);
-      } else {
-        final updatedProduct = widget.product!.copyWith(
-          name: _nameController.text,
-          images: [finalImageUrl],
-          description: _descController.text,
-          price: double.parse(_priceController.text),
-          discountPrice: _discountController.text.isNotEmpty ? double.parse(_discountController.text) : null,
-          stock: int.parse(_stockController.text),
-          category: _selectedCategory,
-        );
-        ref.read(databaseProvider.notifier).editProduct(updatedProduct);
-      }
+    // Run in background (fire and forget)
+    Future(() async {
+      try {
+        String finalImageUrl = initImageUrl;
 
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(widget.product == null ? 'Product added successfully' : 'Product updated successfully')),
+        if (imageFile != null) {
+          finalImageUrl = await authRepo.uploadShopAsset(shop.id, 'product_$productId', imageFile);
+        }
+
+        if (isNew) {
+          final newProduct = ProductModel(
+            id: productId,
+            shopId: shop.id,
+            name: name,
+            images: [finalImageUrl],
+            description: desc,
+            price: price,
+            discountPrice: discount,
+            stock: stock,
+            category: category,
+            likes: 0,
+            views: 0,
+            createdAt: DateTime.now(),
+          );
+          await databaseNotifier.addProduct(newProduct);
+        } else {
+          final updatedProduct = oldProduct!.copyWith(
+            name: name,
+            images: [finalImageUrl],
+            description: desc,
+            price: price,
+            discountPrice: discount,
+            stock: stock,
+            category: category,
+          );
+          await databaseNotifier.editProduct(updatedProduct);
+        }
+        
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text(isNew ? 'Product added successfully!' : 'Product updated successfully!')),
         );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      } catch (e) {
+        debugPrint('Error uploading product: $e');
+        scaffoldMessenger.showSnackBar(
           SnackBar(content: Text('Error saving product: $e')),
         );
       }
-    } finally {
-      if (mounted) {
-        setState(() => _isUploading = false);
-      }
-    }
+    });
   }
 
   @override

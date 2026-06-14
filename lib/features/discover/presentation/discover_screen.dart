@@ -13,6 +13,7 @@ import '../../../providers/app_state_providers.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
 import '../../products/presentation/product_details_screen.dart';
 import '../../search/presentation/search_screen.dart';
+import '../../../core/utils/page_transitions.dart';
 
 class DiscoverScreen extends ConsumerStatefulWidget {
   const DiscoverScreen({super.key});
@@ -23,7 +24,7 @@ class DiscoverScreen extends ConsumerStatefulWidget {
 
 class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   bool _isLoading = true;
-  String _searchQuery = '';
+  final String _searchQuery = '';
 
   @override
   void initState() {
@@ -46,38 +47,75 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header Text
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
+              child: Text(
+                'Explore',
+                style: AppTypography.display.copyWith(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s16),
+
             // Search Bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
-              child: SizedBox(
-                height: 52,
-                child: TextFormField(
-                  readOnly: true,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SearchScreen(),
-                      ),
-                    );
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Discover shops, products, offers...',
-                    prefixIcon: const Icon(LucideIcons.search, size: 20),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
-                      borderSide: BorderSide(color: context.colors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
-                      borderSide: BorderSide(color: context.colors.border),
-                    ),
+              child: TextFormField(
+                readOnly: true,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    SlidePageRoute(page: const SearchScreen()),
+                  );
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search shops, products...',
+                  hintStyle: AppTypography.body.copyWith(color: context.colors.textSecondary),
+                  prefixIcon: Icon(LucideIcons.search, size: 20, color: context.colors.textSecondary),
+                  filled: true,
+                  fillColor: context.colors.surface,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(100),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(100),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(100),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.sectionGap),
+            const SizedBox(height: AppSpacing.s24),
+
+            // Category Chips (Mock)
+            SizedBox(
+              height: 36,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
+                children: [
+                  _buildCategoryChip(context, 'All', true),
+                  const SizedBox(width: 8),
+                  _buildCategoryChip(context, 'Fashion', false),
+                  const SizedBox(width: 8),
+                  _buildCategoryChip(context, 'Electronics', false),
+                  const SizedBox(width: 8),
+                  _buildCategoryChip(context, 'Food & Drinks', false),
+                  const SizedBox(width: 8),
+                  _buildCategoryChip(context, 'Services', false),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s32),
 
             // Trending Products
             _buildSectionHeader(context, 'Trending Products', () {}),
@@ -99,9 +137,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => ProductDetailsScreen(productId: p.id),
-                          ),
+                          SlidePageRoute(page: ProductDetailsScreen(productId: p.id)),
                         );
                       },
                       child: SizedBox(
@@ -163,9 +199,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => ShopProfileScreen(shopId: s.id),
-                          ),
+                          SlidePageRoute(page: ShopProfileScreen(shopId: s.id)),
                         );
                       },
                       child: SizedBox(
@@ -261,9 +295,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => ShopProfileScreen(shopId: shop.id),
-                        ),
+                        SlidePageRoute(page: ShopProfileScreen(shopId: shop.id)),
                       );
                     },
                     child: Padding(
@@ -316,91 +348,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                   );
                 },
               ),
-            const SizedBox(height: AppSpacing.sectionGap),
 
-            // New in Town
-            _buildSectionHeader(context, 'New in Town', () {}),
-            if (_isLoading && shops.isEmpty)
-              _buildShopSkeletons()
-            else if (shops.isEmpty)
-              _buildEmptyState(context, 'No New Shops', LucideIcons.store)
-            else
-              SizedBox(
-                height: 180,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: shops.reversed.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: AppSpacing.s16),
-                  itemBuilder: (context, index) {
-                    final s = shops.reversed.toList()[index];
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ShopProfileScreen(shopId: s.id),
-                          ),
-                        );
-                      },
-                      child: SizedBox(
-                        width: 140,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                                child: FallbackImage(
-                                  imageUrl: s.banner,
-                                  width: 140,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.s8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    s.shopName,
-                                    style: AppTypography.caption.copyWith(fontWeight: FontWeight.w700),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (s.showOnlineStatus) ...[
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: s.isOnline ? Colors.green : Colors.grey,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    s.isOnline ? 'Online' : 'Offline',
-                                    style: AppTypography.label.copyWith(
-                                      color: s.isOnline ? Colors.green : Colors.grey,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ]
-                              ],
-                            ),
-                            Text(
-                              s.category,
-                              style: AppTypography.label.copyWith(color: context.colors.textSecondary),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
           ],
         ),
       ),
@@ -464,15 +412,20 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
         children: [
           Text(
             title,
-            style: AppTypography.subheading.copyWith(fontWeight: FontWeight.w700),
+            style: AppTypography.heading.copyWith(fontWeight: FontWeight.w800, fontSize: 18),
           ),
           TextButton(
             onPressed: onTap,
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             child: Text(
               'See all',
               style: AppTypography.caption.copyWith(
                 color: context.colors.primary,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -497,6 +450,27 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryChip(BuildContext context, String label, bool isSelected) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: isSelected ? context.colors.primary : context.colors.surface,
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(
+          color: isSelected ? context.colors.primary : context.colors.border,
+        ),
+      ),
+      child: Text(
+        label,
+        style: AppTypography.label.copyWith(
+          color: isSelected ? Colors.white : context.colors.textPrimary,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+        ),
       ),
     );
   }

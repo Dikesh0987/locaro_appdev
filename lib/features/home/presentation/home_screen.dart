@@ -9,7 +9,6 @@ import '../../../core/widgets/navigation/top_app_bar.dart';
 import '../../../core/widgets/common/fallback_image.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../models/post_model.dart';
-import '../../../models/lead_model.dart';
 import '../../../models/product_model.dart';
 import '../../../models/offer_model.dart';
 import '../../queries/presentation/query_bottom_sheet.dart';
@@ -17,6 +16,7 @@ import '../../shop/presentation/shop_profile_screen.dart';
 import '../../auth/application/auth_service.dart';
 import '../../../core/widgets/common/skeleton_loaders.dart';
 import '../../../core/widgets/common/animated_action_icon.dart';
+import '../../../core/utils/page_transitions.dart';
 import '../application/home_feed_provider.dart';
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -65,7 +65,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final shops = state.shops;
     final products = state.products;
 
-    if (shops.isEmpty) {
+    if (state.isLoading) {
       return Scaffold(
         appBar: const TopAppBar(),
         body: ListView.separated(
@@ -153,8 +153,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       onShopTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) =>
+                          SlidePageRoute(
+                            page:
                                 ShopProfileScreen(shopId: shop.id),
                           ),
                         );
@@ -170,8 +170,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       onShopTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) =>
+                          SlidePageRoute(
+                            page:
                                 ShopProfileScreen(shopId: shop.id),
                           ),
                         );
@@ -187,8 +187,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       onShopTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) =>
+                          SlidePageRoute(
+                            page:
                                 ShopProfileScreen(shopId: shop.id),
                           ),
                         );
@@ -263,46 +263,11 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
               _localIsSaved = !wasSaved;
             });
             ref.read(databaseProvider.notifier).toggleSaveProduct(widget.linkedProduct!.id);
-            if (!wasSaved) {
-              _generateLead(LeadType.saved, 'Product Saved');
-            }
+
           },
         );
   }
 
-  void _generateLead(LeadType type, String typeLabel) {
-    if (widget.linkedProduct == null) return;
-
-    ref.read(authServiceProvider).checkGuest(
-          context,
-          onAllowed: () {
-            final dbState = ref.read(databaseProvider);
-            final newLead = LeadModel(
-              id: 'lead_${dbState.currentUser.id}_${widget.linkedProduct!.id}_${type.name}',
-              userId: dbState.currentUser.id,
-              userName: dbState.currentUser.name,
-              userPhone: dbState.currentUser.phone,
-              productId: widget.linkedProduct!.id,
-              productName: widget.linkedProduct!.name,
-              shopId: widget.post.shopId,
-              type: type,
-              status: 'New',
-              createdAt: DateTime.now(),
-            );
-
-            ref.read(databaseProvider.notifier).addLead(newLead);
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Simulated Lead: $typeLabel generated for ${widget.shopName}',
-                ),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          },
-        );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -325,6 +290,7 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
                 onTap: widget.onShopTap,
                 child: FallbackAvatar(
                   imageUrl: widget.shopLogo,
+                  name: widget.shopName,
                   radius: 18,
                   fallbackIcon: LucideIcons.store,
                 ),
@@ -341,6 +307,8 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
                         style: AppTypography.caption.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 2),
                       Row(
@@ -424,9 +392,7 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
               ),
               IconButton(
                 icon: const Icon(LucideIcons.send),
-                onPressed: () {
-                  _generateLead(LeadType.callClick, 'Share Link click');
-                },
+                onPressed: () {},
               ),
               const Spacer(),
               if (widget.linkedProduct != null)
@@ -463,6 +429,8 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
                         style: AppTypography.body.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
@@ -619,44 +587,11 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
               _localIsSaved = !wasSaved;
             });
             ref.read(databaseProvider.notifier).toggleSaveProduct(widget.product.id);
-            if (!wasSaved) {
-              _generateLead(LeadType.saved, 'Product Bookmarked');
-            }
+
           },
         );
   }
 
-  void _generateLead(LeadType type, String typeLabel) {
-    ref.read(authServiceProvider).checkGuest(
-          context,
-          onAllowed: () {
-            final dbState = ref.read(databaseProvider);
-            final newLead = LeadModel(
-              id: 'lead_${dbState.currentUser.id}_${widget.product.id}_${type.name}',
-              userId: dbState.currentUser.id,
-              userName: dbState.currentUser.name,
-              userPhone: dbState.currentUser.phone,
-              productId: widget.product.id,
-              productName: widget.product.name,
-              shopId: widget.product.shopId,
-              type: type,
-              status: 'New',
-              createdAt: DateTime.now(),
-            );
-
-            ref.read(databaseProvider.notifier).addLead(newLead);
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Simulated Lead: $typeLabel generated for ${widget.shopName}',
-                ),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          },
-        );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -679,6 +614,7 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
                 onTap: widget.onShopTap,
                 child: FallbackAvatar(
                   imageUrl: widget.shopLogo,
+                  name: widget.shopName,
                   radius: 18,
                   fallbackIcon: LucideIcons.store,
                 ),
@@ -695,6 +631,8 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
                         style: AppTypography.caption.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 2),
                       Row(
@@ -791,9 +729,7 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
               ),
               IconButton(
                 icon: const Icon(LucideIcons.send),
-                onPressed: () {
-                  _generateLead(LeadType.callClick, 'Share Product click');
-                },
+                onPressed: () {},
               ),
               const Spacer(),
               IconButton(
@@ -828,6 +764,8 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
                       style: AppTypography.body.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Row(
@@ -997,37 +935,6 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
         );
   }
 
-  void _generateLead(LeadType type, String typeLabel) {
-    ref.read(authServiceProvider).checkGuest(
-          context,
-          onAllowed: () {
-            final dbState = ref.read(databaseProvider);
-            final newLead = LeadModel(
-              id: 'lead_${dbState.currentUser.id}_${widget.offer.id}_${type.name}',
-              userId: dbState.currentUser.id,
-              userName: dbState.currentUser.name,
-              userPhone: dbState.currentUser.phone,
-              productId: widget.offer.id,
-              productName: widget.offer.title,
-              shopId: widget.offer.shopId,
-              type: type,
-              status: 'New',
-              createdAt: DateTime.now(),
-            );
-
-            ref.read(databaseProvider.notifier).addLead(newLead);
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Simulated Lead: $typeLabel generated for ${widget.shopName}',
-                ),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          },
-        );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1046,6 +953,7 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
                 onTap: widget.onShopTap,
                 child: FallbackAvatar(
                   imageUrl: widget.shopLogo,
+                  name: widget.shopName,
                   radius: 18,
                   fallbackIcon: LucideIcons.store,
                 ),
@@ -1062,6 +970,8 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
                         style: AppTypography.caption.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 2),
                       Row(
@@ -1142,9 +1052,7 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
               ),
               IconButton(
                 icon: const Icon(LucideIcons.send),
-                onPressed: () {
-                  _generateLead(LeadType.callClick, 'Share Offer click');
-                },
+                onPressed: () {},
               ),
             ],
           ),
@@ -1194,10 +1102,7 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
                           ),
                         ),
                       ),
-                      onPressed: () => _generateLead(
-                        LeadType.interested,
-                        'Claimed Coupon',
-                      ),
+                      onPressed: () {},
                     ),
                   ),
                   SizedBox(width: AppSpacing.s12),

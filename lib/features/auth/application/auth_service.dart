@@ -276,19 +276,22 @@ class AuthService {
   Future<void> linkGoogleAccount() async {
     final userCredential = await _repository.linkWithGoogle();
     final fbUser = userCredential.user;
-    if (fbUser != null && fbUser.email != null) {
-      final doc = await _repository.getUserDoc(fbUser.uid);
+    
+    final linkedEmail = fbUser?.email ?? userCredential.additionalUserInfo?.profile?['email']?.toString();
+
+    if (linkedEmail != null && linkedEmail.isNotEmpty) {
+      final doc = await _repository.getUserDoc(fbUser!.uid);
       if (doc.exists) {
         final existingUser = UserModel.fromMap(doc.data()!);
         final updatedUser = existingUser.copyWith(
-          email: fbUser.email,
+          email: linkedEmail,
         );
-        await _repository.updateUserDoc(fbUser.uid, {'email': fbUser.email});
+        await _repository.updateUserDoc(fbUser.uid, {'email': linkedEmail});
         
         // Trigger Welcome Email
         try {
           await FirebaseFirestore.instance.collection('mail').add({
-            'to': fbUser.email,
+            'to': linkedEmail,
             'message': {
               'subject': 'Welcome to Locaro! Email Verified ✅',
               'html': EmailTemplates.getWelcomeEmail(),

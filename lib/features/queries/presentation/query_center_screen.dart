@@ -6,7 +6,6 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../models/query_model.dart';
 import '../../../providers/app_state_providers.dart';
-import '../../../core/widgets/common/fallback_image.dart';
 
 class QueryCenterScreen extends ConsumerStatefulWidget {
   const QueryCenterScreen({super.key});

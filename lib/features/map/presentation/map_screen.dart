@@ -14,7 +14,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 
 class MapScreen extends ConsumerStatefulWidget {
-  const MapScreen({super.key});
+  final String? initialShopId;
+  const MapScreen({super.key, this.initialShopId});
 
   @override
   ConsumerState<MapScreen> createState() => _MapScreenState();
@@ -22,7 +23,8 @@ class MapScreen extends ConsumerStatefulWidget {
 
 class _MapScreenState extends ConsumerState<MapScreen> {
   ShopModel? _selectedShop;
-  String _searchQuery = '';
+  final String _searchQuery = '';
+  bool _initialized = false;
 
   @override
   Widget build(BuildContext context) {
@@ -30,16 +32,25 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final shops = state.shops.where((s) => s.shopName.toLowerCase().contains(_searchQuery) || s.category.toLowerCase().contains(_searchQuery)).toList();
     final offers = state.offers;
 
+    if (!_initialized) {
+      if (widget.initialShopId != null) {
+        _selectedShop = state.shops.where((s) => s.id == widget.initialShopId).firstOrNull;
+      }
+      _initialized = true;
+    }
+
     return Scaffold(
       body: Stack(
         children: [
           // Flutter Map Integration
           FlutterMap(
             options: MapOptions(
-              initialCenter: state.currentUser.latitude != 0.0 
-                  ? LatLng(state.currentUser.latitude, state.currentUser.longitude) 
-                  : const LatLng(28.6273, 77.3725), // Fallback if no user location
-              initialZoom: 14.0,
+              initialCenter: _selectedShop != null && _selectedShop!.latitude != 0.0
+                  ? LatLng(_selectedShop!.latitude, _selectedShop!.longitude)
+                  : (state.currentUser.latitude != 0.0 
+                      ? LatLng(state.currentUser.latitude, state.currentUser.longitude) 
+                      : const LatLng(28.6273, 77.3725)), // Fallback if no user location
+              initialZoom: _selectedShop != null ? 16.0 : 14.0,
             ),
             children: [
               TileLayer(

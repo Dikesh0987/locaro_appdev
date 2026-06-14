@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
@@ -8,13 +8,11 @@ import '../../../core/widgets/common/fallback_image.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../home/presentation/home_screen.dart';
 import '../../discover/presentation/discover_screen.dart';
-import '../../map/presentation/map_screen.dart';
 import '../../following/presentation/following_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../../dashboard/presentation/dashboard_screen.dart';
 import '../../products/presentation/product_management_screen.dart';
 import '../../posts/presentation/post_management_screen.dart';
-import '../../leads/presentation/leads_screen.dart';
 import '../../auth/presentation/splash_screen.dart';
 import '../../auth/application/auth_service.dart';
 
@@ -37,7 +35,6 @@ class ShellScreen extends ConsumerWidget {
         ? const [
             HomeScreen(),
             DiscoverScreen(),
-            MapScreen(),
             FollowingScreen(),
             ProfileScreen(),
           ]
@@ -45,7 +42,6 @@ class ShellScreen extends ConsumerWidget {
             DashboardScreen(),
             ProductManagementScreen(),
             PostManagementScreen(),
-            LeadsScreen(),
             ProfileScreen(),
           ];
 
@@ -76,6 +72,7 @@ class ShellScreen extends ConsumerWidget {
                 ),
                 currentAccountPicture: FallbackAvatar(
                   imageUrl: role == 'user' ? user.photoUrl : shop.logo,
+                  name: role == 'user' ? user.name : shop.shopName,
                   radius: 32,
                   fallbackIcon: role == 'user' ? LucideIcons.user : LucideIcons.store,
                 ),
@@ -113,21 +110,14 @@ class ShellScreen extends ConsumerWidget {
                         ref.read(bottomNavIndexProvider.notifier).state = 1;
                       },
                     ),
-                    ListTile(
-                      leading: Icon(LucideIcons.mapPin, color: context.colors.primary),
-                      title: Text('Map View', style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
-                      onTap: () {
-                        Navigator.pop(context);
-                        ref.read(bottomNavIndexProvider.notifier).state = 2;
-                      },
-                    ),
+
                     if (role == 'user')
                       ListTile(
                         leading: Icon(LucideIcons.heart, color: context.colors.primary),
                         title: Text('Following Updates', style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
                         onTap: () {
                           Navigator.pop(context);
-                          ref.read(bottomNavIndexProvider.notifier).state = 3;
+                          ref.read(bottomNavIndexProvider.notifier).state = 2;
                         },
                       ),
                     ListTile(
@@ -135,7 +125,7 @@ class ShellScreen extends ConsumerWidget {
                       title: Text('My Profile', style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
                       onTap: () {
                         Navigator.pop(context);
-                        ref.read(bottomNavIndexProvider.notifier).state = role == 'user' ? 4 : 4;
+                        ref.read(bottomNavIndexProvider.notifier).state = 3;
                       },
                     ),
                     const Divider(),
