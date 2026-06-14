@@ -57,7 +57,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.store_outlined, size: 64, color: Colors.grey),
+              Icon(Icons.store_outlined, size: 64, color: context.colors.textSecondary),
               SizedBox(height: 16),
               Text('This shop no longer exists.'),
               TextButton(onPressed: () => Navigator.pop(context), child: Text('Go Back')),
@@ -107,7 +107,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.colors.surface,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(LucideIcons.arrowLeft, size: 20, color: context.colors.primary),
@@ -130,7 +130,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.colors.surface,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(LucideIcons.mapPin, size: 20, color: context.colors.primary),
@@ -212,7 +212,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                                     width: 8,
                                     height: 8,
                                     decoration: BoxDecoration(
-                                      color: shop.isOnline ? Colors.green : Colors.grey,
+                                      color: shop.isOnline ? context.colors.success : context.colors.textSecondary,
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -220,7 +220,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                                   Text(
                                     shop.isOnline ? 'Online Now' : 'Currently Offline',
                                     style: AppTypography.label.copyWith(
-                                      color: shop.isOnline ? Colors.green : Colors.grey,
+                                      color: shop.isOnline ? context.colors.success : context.colors.textSecondary,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -256,9 +256,9 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                                     ref.read(databaseProvider.notifier).toggleFollowShop(shop.id);
                                   });
                                 },
-                                child: const Text(
+                                child: Text(
                                   'Follow',
-                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                  style: TextStyle(color: context.colors.surface, fontWeight: FontWeight.bold, fontSize: 13),
                                 ),
                               ),
                       ),
@@ -266,23 +266,25 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                   ),
                   SizedBox(height: 6),
                   
-                  // Category & Stats Row
-                  Row(
+                  // Category & Stats Wrap to prevent overflow
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Expanded(
-                        child: Text(
-                          shop.category, 
-                          style: AppTypography.label.copyWith(color: context.colors.textSecondary),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      Text(
+                        shop.category, 
+                        style: AppTypography.label.copyWith(color: context.colors.textSecondary),
                       ),
-                      SizedBox(width: 8),
-                      const Icon(LucideIcons.star, size: 12, color: Colors.amber),
-                      SizedBox(width: 2),
-                      Text('${shop.rating} rating', style: AppTypography.label.copyWith(fontWeight: FontWeight.bold)),
-                      SizedBox(width: 8),
-                      Text('${shop.followers} followers', style: AppTypography.label.copyWith(color: context.colors.textSecondary)),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(LucideIcons.star, size: 12, color: Colors.amber),
+                          const SizedBox(width: 2),
+                          Text('${shop.rating} rating', style: AppTypography.label.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 8),
+                          Text('${shop.followers} followers', style: AppTypography.label.copyWith(color: context.colors.textSecondary)),
+                        ],
+                      ),
                     ],
                   ),
                   SizedBox(height: AppSpacing.s12),

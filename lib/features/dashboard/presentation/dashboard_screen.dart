@@ -135,15 +135,15 @@ class DashboardScreen extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                icon: const Icon(LucideIcons.messageCircle, size: 14, color: Colors.white),
-                label: const Text('Manage Customer Queries', style: TextStyle(color: Colors.white)),
+                icon: Icon(LucideIcons.messageCircle, size: 14, color: context.colors.surface),
+                label: Text('Manage Customer Queries', style: TextStyle(color: context.colors.surface)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: context.colors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
                 ),
                 onPressed: () {
-                  Navigator.push(context, SlidePageRoute(page: const QueryCenterScreen()));
+                  ref.read(bottomNavIndexProvider.notifier).state = 3;
                 },
               ),
             ),

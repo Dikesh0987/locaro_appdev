@@ -269,8 +269,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           const SizedBox(width: AppSpacing.s12),
                           Expanded(
                             child: ElevatedButton.icon(
-                              icon: const Icon(LucideIcons.navigation, size: 14, color: Colors.white),
-                              label: const Text('Directions', style: TextStyle(color: Colors.white)),
+                              icon: Icon(LucideIcons.navigation, size: 14, color: context.colors.surface),
+                              label: Text('Directions', style: TextStyle(color: context.colors.surface)),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: context.colors.primary,
                                 padding: const EdgeInsets.symmetric(vertical: 12),

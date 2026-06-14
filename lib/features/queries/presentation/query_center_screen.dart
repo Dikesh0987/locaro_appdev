@@ -59,7 +59,7 @@ class _QueryCenterScreenState extends ConsumerState<QueryCenterScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: context.colors.primary),
-              child: const Text('Send Reply', style: TextStyle(color: Colors.white)),
+              child: Text('Send Reply', style: TextStyle(color: context.colors.surface)),
             ),
           ],
         );
@@ -81,7 +81,7 @@ class _QueryCenterScreenState extends ConsumerState<QueryCenterScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Query Center', style: AppTypography.heading.copyWith(fontSize: 20)),
-        backgroundColor: Colors.white,
+        backgroundColor: context.colors.surface,
         elevation: 0,
         iconTheme: IconThemeData(color: context.colors.primary),
       ),
@@ -91,7 +91,7 @@ class _QueryCenterScreenState extends ConsumerState<QueryCenterScreen> {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.colors.surface,
               border: Border(bottom: BorderSide(color: context.colors.border)),
             ),
             child: Row(
@@ -134,7 +134,7 @@ class _QueryCenterScreenState extends ConsumerState<QueryCenterScreen> {
                       return Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.colors.surface,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: context.colors.border),
                         ),
@@ -211,7 +211,7 @@ class _QueryCenterScreenState extends ConsumerState<QueryCenterScreen> {
                                       backgroundColor: context.colors.primary,
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                     ),
-                                    child: const Text('Reply', style: TextStyle(color: Colors.white)),
+                                    child: Text('Reply', style: TextStyle(color: context.colors.surface)),
                                   ),
                               ],
                             )

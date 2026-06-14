@@ -117,7 +117,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     child: Text(
                       filter,
                       style: AppTypography.label.copyWith(
-                        color: isSelected ? Colors.white : context.colors.textPrimary,
+                        color: isSelected ? context.colors.surface : context.colors.textPrimary,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
@@ -156,7 +156,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                             alignment: Alignment.centerRight,
                             padding: const EdgeInsets.only(right: 20.0),
                             decoration: BoxDecoration(
-                              color: Colors.red,
+                              color: context.colors.error,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: const Icon(LucideIcons.trash2, color: Colors.white),

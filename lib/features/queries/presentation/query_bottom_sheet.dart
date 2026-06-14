@@ -164,8 +164,8 @@ class _QueryBottomSheetState extends ConsumerState<QueryBottomSheet> {
     final questions = _getQuickQuestions();
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: context.colors.surface,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(24),
           topRight: Radius.circular(24),
@@ -189,7 +189,7 @@ class _QueryBottomSheetState extends ConsumerState<QueryBottomSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: context.colors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

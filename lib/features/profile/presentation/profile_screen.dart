@@ -135,7 +135,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           color: context.colors.primary,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(LucideIcons.camera, size: 12, color: Colors.white),
+                        child: Icon(LucideIcons.camera, size: 12, color: context.colors.surface),
                       ),
                     ),
                   ],
@@ -228,7 +228,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               iconColor: Colors.pink.shade700,
               onTap: () {
                 // Navigate to Following tab index
-                ref.read(bottomNavIndexProvider.notifier).state = 3;
+                ref.read(bottomNavIndexProvider.notifier).state = 2;
               },
             ),
             _buildQuickActionCard(
@@ -352,7 +352,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         SizedBox(height: 10),
         _buildSectionCard(
           context,
-          borderColor: Colors.red.shade100,
+          borderColor: context.colors.error.withValues(alpha: 0.2),
           children: [
             _buildMenuRow(
               context,
@@ -430,7 +430,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           color: context.colors.primary,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(LucideIcons.camera, size: 12, color: Colors.white),
+                        child: Icon(LucideIcons.camera, size: 12, color: context.colors.surface),
                       ),
                     ),
                   ],
@@ -621,7 +621,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         SizedBox(height: 10),
         _buildSectionCard(
           context,
-          borderColor: Colors.red.shade100,
+          borderColor: context.colors.error.withValues(alpha: 0.2),
           children: [
             _buildMenuRow(
               context,
@@ -1520,25 +1520,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Delete Account?', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          title: Text('Delete Account?', style: TextStyle(color: context.colors.error, fontWeight: FontWeight.bold)),
           content: const Text(
             'This action is permanent and cannot be undone. All your profile details, settings, and local history will be wiped out.',
             style: TextStyle(height: 1.4),
           ),
           actions: [
             TextButton(
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+              child: Text('Cancel', style: TextStyle(color: context.colors.textSecondary)),
               onPressed: () => Navigator.pop(dialogContext),
             ),
             TextButton(
-              child: const Text('Delete', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              child: Text('Delete', style: TextStyle(color: context.colors.error, fontWeight: FontWeight.bold)),
               onPressed: () async {
                 Navigator.pop(dialogContext); // Close dialog
                 try {
                   await ref.read(authServiceProvider).handleDeleteAccount();
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Account successfully deleted.'), backgroundColor: Colors.red),
+                    SnackBar(content: const Text('Account successfully deleted.'), backgroundColor: context.colors.error),
                   );
                 } catch (e) {
                   if (!context.mounted) return;

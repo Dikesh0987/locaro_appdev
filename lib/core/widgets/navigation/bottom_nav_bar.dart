@@ -28,6 +28,7 @@ class BottomNavBar extends StatelessWidget {
             _NavItem(icon: LucideIcons.layoutDashboard, label: 'Dashboard'),
             _NavItem(icon: LucideIcons.shoppingBag, label: 'Products'),
             _NavItem(icon: LucideIcons.plusCircle, label: 'Post'),
+            _NavItem(icon: LucideIcons.messageCircle, label: 'Queries'),
             _NavItem(icon: LucideIcons.user, label: 'Profile'),
           ];
 

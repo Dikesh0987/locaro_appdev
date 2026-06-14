@@ -62,9 +62,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await ref.read(authServiceProvider).sendEmailVerification(user.email);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Verification link sent. Please check your inbox.'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Verification link sent. Please check your inbox.'),
+            backgroundColor: context.colors.success,
           ),
         );
       }
@@ -181,9 +181,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text(
+          title: Text(
             'Delete Account?',
-            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            style: TextStyle(color: context.colors.error, fontWeight: FontWeight.bold),
           ),
           content: const Text(
             'This action is permanent and cannot be undone. All your profile details, settings, and local history will be wiped out.',
@@ -191,14 +191,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           actions: [
             TextButton(
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+              child: Text('Cancel', style: TextStyle(color: context.colors.textSecondary)),
               onPressed: () => Navigator.pop(dialogContext),
             ),
             TextButton(
-              child: const Text(
+              child: Text(
                 'Delete',
                 style: TextStyle(
-                  color: Colors.red,
+                  color: context.colors.error,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -209,9 +209,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   if (mounted) {
                     Navigator.pop(context); // Close settings screen
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Account successfully deleted.'),
-                        backgroundColor: Colors.red,
+                      SnackBar(
+                        content: const Text('Account successfully deleted.'),
+                        backgroundColor: context.colors.error,
                       ),
                     );
                   }
@@ -738,15 +738,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade50.withValues(alpha: 0.1),
+                  color: context.colors.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                  border: Border.all(color: Colors.red.shade300),
+                  border: Border.all(color: context.colors.error.withValues(alpha: 0.5)),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
                     'Delete Account',
                     style: TextStyle(
-                      color: Colors.red,
+                      color: context.colors.error,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -767,7 +767,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required IconData icon,
   }) {
     final activeTextColor = isSelected
-        ? Colors.white
+        ? context.colors.surface
         : Theme.of(context).textTheme.bodyLarge?.color;
 
     return ScaleButtonPressed(

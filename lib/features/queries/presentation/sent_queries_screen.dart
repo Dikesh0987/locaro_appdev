@@ -23,7 +23,7 @@ class SentQueriesScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('My Queries', style: AppTypography.heading.copyWith(fontSize: 20)),
-        backgroundColor: Colors.white,
+        backgroundColor: context.colors.surface,
         elevation: 0,
         iconTheme: IconThemeData(color: context.colors.primary),
       ),
@@ -73,7 +73,7 @@ class SentQueriesScreen extends ConsumerWidget {
                 return Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: context.colors.surface,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: context.colors.border),
                   ),

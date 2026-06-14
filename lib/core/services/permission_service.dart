@@ -91,7 +91,7 @@ class PermissionService {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Continue', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Text('Continue', style: TextStyle(color: ctx.colors.surface, fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 12),
@@ -99,7 +99,7 @@ class PermissionService {
               width: double.infinity,
               child: TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Not Now', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                child: Text('Not Now', style: TextStyle(color: ctx.colors.textSecondary, fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 16),
@@ -121,7 +121,7 @@ class PermissionService {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: Text('Cancel', style: TextStyle(color: ctx.colors.textSecondary)),
           ),
           TextButton(
             onPressed: () {

@@ -1017,10 +1017,10 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                         color: context.colors.primary,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         LucideIcons.camera,
                         size: 16,
-                        color: Colors.white,
+                        color: context.colors.surface,
                       ),
                     ),
                   ),
@@ -1123,7 +1123,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                     interest,
                     style: AppTypography.caption.copyWith(
                       color: isSelected
-                          ? Colors.white
+                          ? context.colors.surface
                           : Theme.of(context).textTheme.bodyLarge?.color,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1355,7 +1355,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                       cat,
                       style: AppTypography.caption.copyWith(
                         color: isSelected
-                            ? Colors.white
+                            ? context.colors.surface
                             : Theme.of(context).textTheme.bodyLarge?.color,
                         fontWeight: FontWeight.w600,
                       ),

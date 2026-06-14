@@ -214,8 +214,8 @@ class FollowingScreen extends ConsumerWidget {
             ),
             SizedBox(height: 24),
             ElevatedButton.icon(
-              icon: const Icon(LucideIcons.compass, size: 16, color: Colors.white),
-              label: const Text('Discover Local Shops', style: TextStyle(color: Colors.white)),
+              icon: Icon(LucideIcons.compass, size: 16, color: context.colors.surface),
+              label: Text('Discover Local Shops', style: TextStyle(color: context.colors.surface)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: context.colors.primary,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -312,7 +312,7 @@ class _ShopAvatarCard extends ConsumerWidget {
         content: Text('You will no longer receive their latest posts and offers in your Following feed.'),
         actions: [
           TextButton(
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: Text('Cancel', style: TextStyle(color: context.colors.textSecondary)),
             onPressed: () => Navigator.pop(context),
           ),
           TextButton(
@@ -518,7 +518,7 @@ class _PostCardState extends ConsumerState<_PostCard> {
         content: Text('You will no longer receive updates from this shop in your Following tab.'),
         actions: [
           TextButton(
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: Text('Cancel', style: TextStyle(color: context.colors.textSecondary)),
             onPressed: () => Navigator.pop(context),
           ),
           TextButton(

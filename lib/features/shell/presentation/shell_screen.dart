@@ -15,6 +15,7 @@ import '../../products/presentation/product_management_screen.dart';
 import '../../posts/presentation/post_management_screen.dart';
 import '../../auth/presentation/splash_screen.dart';
 import '../../auth/application/auth_service.dart';
+import '../../queries/presentation/query_center_screen.dart';
 
 class ShellScreen extends ConsumerWidget {
   const ShellScreen({super.key});
@@ -42,6 +43,7 @@ class ShellScreen extends ConsumerWidget {
             DashboardScreen(),
             ProductManagementScreen(),
             PostManagementScreen(),
+            QueryCenterScreen(),
             ProfileScreen(),
           ];
 
@@ -79,13 +81,13 @@ class ShellScreen extends ConsumerWidget {
                 accountName: Text(
                   role == 'user' ? user.name : shop.shopName,
                   style: AppTypography.body.copyWith(
-                    color: Colors.white,
+                    color: context.colors.surface,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 accountEmail: Text(
                   role == 'user' ? user.email : 'Owner: ${shop.ownerName}',
-                  style: AppTypography.caption.copyWith(color: Colors.white70),
+                  style: AppTypography.caption.copyWith(color: context.colors.surface.withValues(alpha: 0.7)),
                 ),
               ),
               
@@ -241,14 +243,14 @@ class _ThemeOptionPill extends StatelessWidget {
               Icon(
                 icon,
                 size: 12,
-                color: isSelected ? Colors.white : context.colors.textPrimary,
+                color: isSelected ? context.colors.surface : context.colors.textPrimary,
               ),
               SizedBox(width: 4),
               Text(
                 label,
                 style: AppTypography.label.copyWith(
                   fontSize: 10,
-                  color: isSelected ? Colors.white : context.colors.textPrimary,
+                  color: isSelected ? context.colors.surface : context.colors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),

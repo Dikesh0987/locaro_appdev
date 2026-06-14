@@ -468,7 +468,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
       child: Text(
         label,
         style: AppTypography.label.copyWith(
-          color: isSelected ? Colors.white : context.colors.textPrimary,
+          color: isSelected ? context.colors.surface : context.colors.textPrimary,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
         ),
       ),

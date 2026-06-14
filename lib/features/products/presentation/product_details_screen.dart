@@ -131,7 +131,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: context.colors.surface,
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(LucideIcons.arrowLeft, size: 20, color: context.colors.primary),
@@ -146,7 +146,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: context.colors.surface,
                                 shape: BoxShape.circle,
                               ),
                               child: AnimatedActionIcon(
@@ -317,7 +317,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                 bottom: 24,
               ),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.colors.surface,
                 border: Border(top: BorderSide(color: context.colors.border, width: 1)),
               ),
               child: Column(
@@ -332,7 +332,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                             activeIcon: LucideIcons.heart, // Consider using a filled heart if available
                             isActive: isLiked,
                             inactiveColor: context.colors.primary,
-                            activeColor: Colors.red,
+                            activeColor: context.colors.error,
                             size: 16,
                           ),
                           label: Text(
