@@ -15,13 +15,17 @@ class ShopModel {
   final double longitude;
   final int followers;
   final double rating;
-  final bool isVerified;
   final String description;
   final String openTime;
   final String closeTime;
   final bool showOnlineStatus;
+  final bool isWhatsappVerified;
+  final bool isWhatsappEnabled;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool isVerified;
+  final bool isActive;
+
 
   ShopModel({
     required this.id,
@@ -38,13 +42,16 @@ class ShopModel {
     required this.longitude,
     required this.followers,
     required this.rating,
-    required this.isVerified,
     required this.description,
     required this.openTime,
     required this.closeTime,
     required this.showOnlineStatus,
+    required this.isWhatsappVerified,
+    required this.isWhatsappEnabled,
     required this.createdAt,
     required this.updatedAt,
+    this.isVerified = false,
+    this.isActive = true,
   });
 
   factory ShopModel.empty() {
@@ -63,13 +70,16 @@ class ShopModel {
       longitude: 0.0,
       followers: 0,
       rating: 0.0,
-      isVerified: false,
       description: '',
       openTime: '09:00',
       closeTime: '21:00',
       showOnlineStatus: true,
+      isWhatsappVerified: false,
+      isWhatsappEnabled: true,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
+      isVerified: false,
+      isActive: true,
     );
   }
 
@@ -78,7 +88,7 @@ class ShopModel {
   String get banner => bannerUrl;
 
   bool get isOnline {
-    if (!showOnlineStatus) return false;
+    if (!showOnlineStatus || !isActive) return false;
     try {
       final now = DateTime.now();
       final currentMinutes = now.hour * 60 + now.minute;
@@ -114,13 +124,16 @@ class ShopModel {
     double? longitude,
     int? followers,
     double? rating,
-    bool? isVerified,
     String? description,
     String? openTime,
     String? closeTime,
     bool? showOnlineStatus,
+    bool? isWhatsappVerified,
+    bool? isWhatsappEnabled,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isVerified,
+    bool? isActive,
   }) {
     return ShopModel(
       id: id ?? this.id,
@@ -137,13 +150,16 @@ class ShopModel {
       longitude: longitude ?? this.longitude,
       followers: followers ?? this.followers,
       rating: rating ?? this.rating,
-      isVerified: isVerified ?? this.isVerified,
       description: description ?? this.description,
       openTime: openTime ?? this.openTime,
       closeTime: closeTime ?? this.closeTime,
       showOnlineStatus: showOnlineStatus ?? this.showOnlineStatus,
+      isWhatsappVerified: isWhatsappVerified ?? this.isWhatsappVerified,
+      isWhatsappEnabled: isWhatsappEnabled ?? this.isWhatsappEnabled,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isVerified: isVerified ?? this.isVerified,
+      isActive: isActive ?? this.isActive,
     );
   }
 
@@ -173,11 +189,14 @@ class ShopModel {
       longitude: (map['longitude'] as num?)?.toDouble() ?? 0.0,
       followers: map['followers'] ?? 0,
       rating: (map['rating'] as num?)?.toDouble() ?? 5.0,
-      isVerified: map['isVerified'] ?? false,
       description: map['description'] ?? '',
       openTime: map['openTime'] ?? '09:00',
       closeTime: map['closeTime'] ?? '21:00',
       showOnlineStatus: map['showOnlineStatus'] ?? true,
+      isWhatsappVerified: map['isWhatsappVerified'] ?? false,
+      isWhatsappEnabled: map['isWhatsappEnabled'] ?? true,
+      isVerified: map['isVerified'] ?? false,
+      isActive: map['isActive'] ?? true,
       createdAt: parseDateTime(map['createdAt']),
       updatedAt: parseDateTime(map['updatedAt']),
     );
@@ -204,6 +223,8 @@ class ShopModel {
       'openTime': openTime,
       'closeTime': closeTime,
       'showOnlineStatus': showOnlineStatus,
+      'isWhatsappVerified': isWhatsappVerified,
+      'isWhatsappEnabled': isWhatsappEnabled,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };

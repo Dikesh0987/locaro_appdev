@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/cards/base_card.dart';
 import '../../../providers/notification_providers.dart';
+import '../../products/presentation/product_details_screen.dart';
+import '../../shop/presentation/shop_profile_screen.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -163,7 +166,26 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                           ),
                           child: BaseCard(
                             onTap: () {
-                              ref.read(notificationsProvider.notifier).toggleRead(notification.id);
+                              if (!notification.isRead) {
+                                ref.read(notificationsProvider.notifier).toggleRead(notification.id);
+                              }
+                              
+                              final type = notification.type.toLowerCase();
+                              if (type == 'product' || type == 'offers') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ProductDetailsScreen(productId: notification.referenceId),
+                                  ),
+                                );
+                              } else if (type == 'shop' || type == 'followers') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ShopProfileScreen(shopId: notification.referenceId),
+                                  ),
+                                );
+                              }
                             },
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
@@ -251,6 +273,34 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                           ),
                                         ),
                                       ),
+                                      if (notification.imageUrl != null && notification.imageUrl!.isNotEmpty) ...[
+                                        SizedBox(height: 12),
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: CachedNetworkImage(
+                                            imageUrl: notification.imageUrl!,
+                                            height: 140,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                            placeholder: (context, url) => Container(
+                                              height: 140,
+                                              width: double.infinity,
+                                              color: context.colors.border,
+                                              child: Center(
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                ),
+                                              ),
+                                            ),
+                                            errorWidget: (context, url, error) => Container(
+                                              height: 140,
+                                              width: double.infinity,
+                                              color: context.colors.border,
+                                              child: Icon(LucideIcons.imageOff, color: context.colors.textSecondary),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),

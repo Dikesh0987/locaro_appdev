@@ -375,36 +375,39 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: AppSpacing.s12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          icon: const Icon(LucideIcons.messageCircle, color: Colors.white, size: 18),
-                          label: const Text('WhatsApp', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF25D366), // WhatsApp Green
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+                  if (shop.isWhatsappVerified && shop.isWhatsappEnabled) ...[
+                    SizedBox(height: AppSpacing.s12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const Icon(LucideIcons.messageCircle, color: Colors.white, size: 18),
+                            label: const Text('WhatsApp', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF25D366), // WhatsApp Green
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+                              ),
                             ),
-                          ),
-                          onPressed: () async {
-                            final whatsappUrl = 'https://wa.me/${shop.whatsapp.replaceAll(RegExp(r'[^0-9]'), '')}';
-                            if (await canLaunchUrlString(whatsappUrl)) {
-                              await launchUrlString(whatsappUrl);
-                            } else {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Could not launch WhatsApp')),
-                                );
+                            onPressed: () async {
+                              final text = Uri.encodeComponent('Hello ${shop.shopName}, I am interested in your product "${product.name}" that I saw on Locaro.');
+                              final whatsappUrl = 'https://wa.me/${shop.whatsapp.replaceAll(RegExp(r'[^0-9]'), '')}?text=$text';
+                              if (await canLaunchUrlString(whatsappUrl)) {
+                                await launchUrlString(whatsappUrl);
+                              } else {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Could not launch WhatsApp')),
+                                  );
+                                }
                               }
-                            }
-                          },
+                            },
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

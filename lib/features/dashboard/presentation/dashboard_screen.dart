@@ -7,9 +7,7 @@ import '../../../core/theme/typography.dart';
 import '../../../core/widgets/cards/base_card.dart';
 import '../../../core/widgets/navigation/top_app_bar.dart';
 import '../../../core/widgets/common/fallback_image.dart';
-import '../../../core/utils/page_transitions.dart';
 import '../../../providers/app_state_providers.dart';
-import '../../queries/presentation/query_center_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -131,20 +129,29 @@ class DashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-            // View Query Center Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: Icon(LucideIcons.messageCircle, size: 14, color: context.colors.surface),
-                label: Text('Manage Customer Queries', style: TextStyle(color: context.colors.surface)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: context.colors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+            // Shop Enable/Disable Toggle
+            BaseCard(
+              child: SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                title: Text(
+                  'Shop Active Status',
+                  style: AppTypography.heading.copyWith(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                onPressed: () {
-                  ref.read(bottomNavIndexProvider.notifier).state = 3;
+                subtitle: Text(
+                  shop.isActive ? 'Your shop is open and visible to customers.' : 'Your shop is currently closed/disabled.',
+                  style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
+                ),
+                value: shop.isActive,
+                activeColor: context.colors.success,
+                onChanged: (value) async {
+                  final updatedShop = shop.copyWith(isActive: value);
+                  await ref.read(databaseProvider.notifier).updateCurrentShop(updatedShop);
                 },
+                secondary: Icon(
+                  shop.isActive ? Icons.store : Icons.store_outlined,
+                  color: shop.isActive ? context.colors.success : context.colors.textSecondary,
+                  size: 28,
+                ),
               ),
             ),
             const SizedBox(height: 48),

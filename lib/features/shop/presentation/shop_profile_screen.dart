@@ -117,7 +117,8 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                 // Map Button
                 Positioned(
                   top: 50,
-                  right: AppSpacing.mobilePadding + 44, // offset to the left of the WhatsApp button
+                  right: (shop.isWhatsappVerified && shop.isWhatsappEnabled) ? AppSpacing.mobilePadding + 44 : AppSpacing.mobilePadding,
+
                   child: GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -138,32 +139,34 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                   ),
                 ),
                 // WhatsApp Button
-                Positioned(
-                  top: 50,
-                  right: AppSpacing.mobilePadding,
-                  child: GestureDetector(
-                    onTap: () async {
-                      final whatsappUrl = 'https://wa.me/${shop.whatsapp.replaceAll(RegExp(r'[^0-9]'), '')}';
-                      if (await canLaunchUrlString(whatsappUrl)) {
-                        await launchUrlString(whatsappUrl);
-                      } else {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Could not launch WhatsApp')),
-                          );
+                if (shop.isWhatsappVerified && shop.isWhatsappEnabled)
+                  Positioned(
+                    top: 50,
+                    right: AppSpacing.mobilePadding,
+                    child: GestureDetector(
+                      onTap: () async {
+                        final text = Uri.encodeComponent('Hello ${shop.shopName}, I found your shop on Locaro and would like to know more!');
+                        final whatsappUrl = 'https://wa.me/${shop.whatsapp.replaceAll(RegExp(r'[^0-9]'), '')}?text=$text';
+                        if (await canLaunchUrlString(whatsappUrl)) {
+                          await launchUrlString(whatsappUrl);
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Could not launch WhatsApp')),
+                            );
+                          }
                         }
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF25D366),
-                        shape: BoxShape.circle,
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF25D366),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(LucideIcons.messageCircle, size: 20, color: Colors.white),
                       ),
-                      child: const Icon(LucideIcons.messageCircle, size: 20, color: Colors.white),
                     ),
                   ),
-                ),
 
                 // Logo Positioned overlapping the banner bottom
                 Positioned(
@@ -200,9 +203,20 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              shop.shopName,
-                              style: AppTypography.heading.copyWith(fontSize: 26, fontWeight: FontWeight.w800),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    shop.shopName,
+                                    style: AppTypography.heading.copyWith(fontSize: 26, fontWeight: FontWeight.w800),
+                                  ),
+                                ),
+                                if (shop.isVerified) ...[
+                                  const SizedBox(width: 8),
+                                  Icon(LucideIcons.checkCircle, size: 24, color: context.colors.success),
+                                ],
+                              ],
                             ),
                             if (shop.showOnlineStatus) ...[
                               SizedBox(height: 4),
@@ -217,11 +231,15 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                                     ),
                                   ),
                                   const SizedBox(width: 6),
-                                  Text(
-                                    shop.isOnline ? 'Online Now' : 'Currently Offline',
-                                    style: AppTypography.label.copyWith(
-                                      color: shop.isOnline ? context.colors.success : context.colors.textSecondary,
-                                      fontWeight: FontWeight.bold,
+                                  Expanded(
+                                    child: Text(
+                                      shop.isOnline ? 'Online Now' : 'Currently Offline',
+                                      style: AppTypography.label.copyWith(
+                                        color: shop.isOnline ? context.colors.success : context.colors.textSecondary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],

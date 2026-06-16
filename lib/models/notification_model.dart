@@ -7,6 +7,7 @@ class NotificationModel {
   final String body;
   final String type;
   final String referenceId;
+  final String? imageUrl;
   final bool isRead;
   final DateTime createdAt;
 
@@ -17,6 +18,7 @@ class NotificationModel {
     required this.body,
     required this.type,
     required this.referenceId,
+    this.imageUrl,
     required this.isRead,
     required this.createdAt,
   });
@@ -28,6 +30,7 @@ class NotificationModel {
     String? body,
     String? type,
     String? referenceId,
+    String? imageUrl,
     bool? isRead,
     DateTime? createdAt,
   }) {
@@ -38,6 +41,7 @@ class NotificationModel {
       body: body ?? this.body,
       type: type ?? this.type,
       referenceId: referenceId ?? this.referenceId,
+      imageUrl: imageUrl ?? this.imageUrl,
       isRead: isRead ?? this.isRead,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -61,6 +65,7 @@ class NotificationModel {
       body: map['body'] ?? '',
       type: map['type'] ?? 'System',
       referenceId: map['referenceId'] ?? '',
+      imageUrl: map['imageUrl'],
       isRead: map['isRead'] ?? false,
       createdAt: parseDateTime(map['createdAt']),
     );
@@ -74,6 +79,7 @@ class NotificationModel {
       'body': body,
       'type': type,
       'referenceId': referenceId,
+      'imageUrl': imageUrl,
       'isRead': isRead,
       'createdAt': Timestamp.fromDate(createdAt),
     };

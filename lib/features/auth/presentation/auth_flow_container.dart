@@ -287,15 +287,17 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
           rating: 5.0,
           followers: 0,
           category: _selectedCategories.join(', '),
-          isVerified: true,
           phone: finalPhone,
           whatsapp: finalPhone,
           description: _shopDescController.text.trim(),
           openTime: '09:00',
           closeTime: '21:00',
           showOnlineStatus: true,
+          isWhatsappVerified: _isWhatsappVerified,
+          isWhatsappEnabled: true,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
+          isVerified: _isWhatsappVerified || (fb.FirebaseAuth.instance.currentUser?.emailVerified ?? false) || user.phoneVerified,
         );
 
         await ref.read(databaseProvider.notifier).updateCurrentShop(newShop);

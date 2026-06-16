@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -8,8 +9,36 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../../features/products/presentation/product_details_screen.dart';
+import '../../features/shop/presentation/shop_profile_screen.dart';
 import '../../providers/app_state_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+Future<String> _downloadAndSaveFile(String url, String fileName) async {
+  final Directory directory = Directory.systemTemp;
+  final String filePath = '${directory.path}/$fileName';
+  final File file = File(filePath);
+  
+  if (await file.exists()) return filePath;
+
+  final HttpClient client = HttpClient();
+  try {
+    final HttpClientRequest request = await client.getUrl(Uri.parse(url));
+    final HttpClientResponse response = await request.close();
+    if (response.statusCode == 200) {
+      final List<int> bytes = [];
+      await for (var chunk in response) {
+        bytes.addAll(chunk);
+      }
+      await file.writeAsBytes(bytes);
+      return filePath;
+    }
+  } catch (e) {
+    debugPrint('Error downloading image: $e');
+  } finally {
+    client.close();
+  }
+  return '';
+}
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -20,6 +49,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Extract title and body from notification or data
   final String? title = message.notification?.title ?? message.data['title'];
   final String? body = message.notification?.body ?? message.data['body'];
+  final String? imageUrl = message.notification?.android?.imageUrl ?? message.data['image'] ?? message.data['imageUrl'];
 
   // If the message is data-only (notification block is null), the OS will NOT show it.
   // We must show it manually using flutter_local_notifications.
@@ -32,11 +62,24 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       ),
     );
 
+    BigPictureStyleInformation? bigPictureStyleInformation;
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      final String largeIconPath = await _downloadAndSaveFile(imageUrl, 'largeIcon_${message.messageId ?? DateTime.now().millisecondsSinceEpoch}');
+      if (largeIconPath.isNotEmpty) {
+        bigPictureStyleInformation = BigPictureStyleInformation(
+          FilePathAndroidBitmap(largeIconPath),
+          hideExpandedLargeIcon: true,
+          contentTitle: title,
+          summaryText: body,
+        );
+      }
+    }
+
     await flutterLocalNotificationsPlugin.show(
       id: DateTime.now().millisecond,
       title: title,
       body: body,
-      notificationDetails: const NotificationDetails(
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'locaro_high_importance_v1',
           'High Importance Notifications',
@@ -45,6 +88,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           priority: Priority.high,
           playSound: true,
           icon: '@drawable/ic_notification',
+          styleInformation: bigPictureStyleInformation,
         ),
       ),
       payload: jsonEncode(message.data),
@@ -220,7 +264,7 @@ class FCMService {
     });
 
     // Foreground messages
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
       debugPrint('================ FOREGROUND NOTIFICATION ================');
       debugPrint('Notification State: Foreground');
       debugPrint('Message ID: ${message.messageId}');
@@ -235,6 +279,21 @@ class FCMService {
       AndroidNotification? android = message.notification?.android;
 
       if (notification != null && android != null && !kIsWeb) {
+        BigPictureStyleInformation? bigPictureStyleInformation;
+        final String? imageUrl = android.imageUrl ?? message.data['image'] ?? message.data['imageUrl'];
+        
+        if (imageUrl != null && imageUrl.isNotEmpty) {
+          final String largeIconPath = await _downloadAndSaveFile(imageUrl, 'largeIcon_${message.messageId ?? DateTime.now().millisecondsSinceEpoch}');
+          if (largeIconPath.isNotEmpty) {
+            bigPictureStyleInformation = BigPictureStyleInformation(
+              FilePathAndroidBitmap(largeIconPath),
+              hideExpandedLargeIcon: true,
+              contentTitle: notification.title,
+              summaryText: notification.body,
+            );
+          }
+        }
+
         _flutterLocalNotificationsPlugin.show(
           id: DateTime.now().millisecond,
           title: notification.title,
@@ -247,6 +306,7 @@ class FCMService {
               icon: '@drawable/ic_notification',
               importance: Importance.high,
               priority: Priority.high,
+              styleInformation: bigPictureStyleInformation,
             ),
           ),
           payload: jsonEncode(message.data),
@@ -291,9 +351,13 @@ class FCMService {
     // Clear pending link
     _container!.read(pendingDeepLinkProvider.notifier).state = null;
 
-    if (type == 'product') {
+    if (type.toLowerCase() == 'product' || type.toLowerCase() == 'offers') {
       _navigatorKey!.currentState!.push(MaterialPageRoute(
         builder: (context) => ProductDetailsScreen(productId: referenceId),
+      ));
+    } else if (type.toLowerCase() == 'shop' || type.toLowerCase() == 'followers') {
+      _navigatorKey!.currentState!.push(MaterialPageRoute(
+        builder: (context) => ShopProfileScreen(shopId: referenceId),
       ));
     } else {
       _navigatorKey!.currentState!.push(MaterialPageRoute(

@@ -606,6 +606,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             const Divider(height: 1, indent: 48),
 
+            if (shop.isWhatsappVerified) ...[
+              _buildSwitchRow(
+                context,
+                icon: LucideIcons.messageCircle,
+                label: 'Enable WhatsApp Chat',
+                val: shop.isWhatsappEnabled,
+                onChanged: (v) async {
+                  final updatedShop = shop.copyWith(isWhatsappEnabled: v);
+                  await ref.read(databaseProvider.notifier).updateCurrentShop(updatedShop);
+                },
+              ),
+              const Divider(height: 1, indent: 48),
+            ],
+
             _buildMenuRow(
               context,
               icon: LucideIcons.helpCircle,
@@ -1385,7 +1399,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   if (isShop) {
                                     final updatedPhone = ref.read(databaseProvider).currentUser.phone;
                                     final shop = ref.read(databaseProvider).currentShop;
-                                    final updatedShop = shop.copyWith(whatsapp: updatedPhone, phone: updatedPhone);
+                                    final updatedShop = shop.copyWith(whatsapp: updatedPhone, phone: updatedPhone, isWhatsappVerified: true, isVerified: true);
                                     await ref.read(databaseProvider.notifier).updateCurrentShop(updatedShop);
                                   }
                                   if (context.mounted) {
@@ -1474,7 +1488,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             if (isShop) {
                               final updatedPhone = ref.read(databaseProvider).currentUser.phone;
                               final shop = ref.read(databaseProvider).currentShop;
-                              final updatedShop = shop.copyWith(whatsapp: updatedPhone, phone: updatedPhone);
+                              final updatedShop = shop.copyWith(whatsapp: updatedPhone, phone: updatedPhone, isWhatsappVerified: true, isVerified: true);
                               await ref.read(databaseProvider.notifier).updateCurrentShop(updatedShop);
                             }
 
@@ -1706,6 +1720,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           onTap: () async {
             try {
               await ref.read(authServiceProvider).linkGoogleAccount();
+              final shop = ref.read(databaseProvider).currentShop;
+              if (shop.id.isNotEmpty) {
+                 final updatedShop = shop.copyWith(isVerified: true);
+                 await ref.read(databaseProvider.notifier).updateCurrentShop(updatedShop);
+              }
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Google Account Linked Successfully!')),
