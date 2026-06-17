@@ -14,6 +14,8 @@ import '../../../models/offer_model.dart';
 import '../../../models/post_model.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
 import '../../../core/widgets/common/animated_action_icon.dart';
+import '../../search/presentation/search_screen.dart';
+import '../../../core/utils/page_transitions.dart';
 
 class FollowingScreen extends ConsumerWidget {
   const FollowingScreen({super.key});
@@ -37,7 +39,49 @@ class FollowingScreen extends ConsumerWidget {
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     return Scaffold(
-      appBar: const TopAppBar(),
+      appBar: TopAppBar(
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(AppSpacing.mobilePadding, 0, AppSpacing.mobilePadding, AppSpacing.s12),
+            child: TextFormField(
+              readOnly: true,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  SlidePageRoute(page: const SearchScreen()),
+                );
+              },
+              decoration: InputDecoration(
+                hintText: 'Search shops, products...',
+                hintStyle: AppTypography.body.copyWith(
+                  color: context.colors.textSecondary,
+                ),
+                prefixIcon: Icon(
+                  LucideIcons.search,
+                  size: 20,
+                  color: context.colors.textSecondary,
+                ),
+                filled: true,
+                fillColor: context.colors.surface,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(100),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(100),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(100),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
       body: followedShops.isEmpty
           ? _buildEmptyState(context, ref)
           : RefreshIndicator(
@@ -51,29 +95,6 @@ class FollowingScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Screen Title
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Following',
-                            style: AppTypography.display.copyWith(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 28,
-                              letterSpacing: -0.8,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Updates and exclusive offers from your favorite shops.',
-                            style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: AppSpacing.sectionGap),
 
                     // SECTION 1: Followed Shops (Recently Followed)
                     _buildSectionHeader(context, 'Shops You Follow', '${followedShops.length} shops'),

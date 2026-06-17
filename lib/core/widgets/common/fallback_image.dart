@@ -50,6 +50,7 @@ class FallbackAvatar extends StatelessWidget {
 
     return CachedNetworkImage(
       imageUrl: imageUrl,
+      memCacheWidth: (radius * 2 * MediaQuery.devicePixelRatioOf(context)).toInt(),
       imageBuilder: (context, imageProvider) => CircleAvatar(
         radius: radius,
         backgroundImage: imageProvider,
@@ -60,7 +61,7 @@ class FallbackAvatar extends StatelessWidget {
         borderRadius: radius,
       ),
       errorWidget: (context, url, error) => _buildPlaceholder(context),
-      fadeInDuration: const Duration(milliseconds: 250),
+      fadeInDuration: const Duration(milliseconds: 150),
     );
   }
 }
@@ -112,7 +113,7 @@ class FallbackImage extends StatelessWidget {
           child: Icon(fallbackIcon, size: 48, color: context.colors.textSecondary),
         ),
       ),
-      fadeInDuration: const Duration(milliseconds: 250),
+      fadeInDuration: const Duration(milliseconds: 150),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../features/auth/data/auth_repository.dart';
 import '../models/user_model.dart';
 import 'app_state_providers.dart';
@@ -19,7 +20,22 @@ class AuthUserNotifier extends AsyncNotifier<UserModel?> {
 
     try {
       final repository = ref.read(authRepositoryProvider);
-      final doc = await repository.getUserDoc(fbUser.uid);
+
+      // Try cache first for instant auth resolution on app reopen
+      DocumentSnapshot<Map<String, dynamic>> doc;
+      try {
+        doc = await repository.getUserDoc(
+          fbUser.uid,
+          options: const GetOptions(source: Source.cache),
+        );
+        // If cache doc doesn't exist, fall back to server
+        if (!doc.exists) {
+          doc = await repository.getUserDoc(fbUser.uid);
+        }
+      } catch (_) {
+        // Cache miss (first install / cleared cache) — fetch from server
+        doc = await repository.getUserDoc(fbUser.uid);
+      }
 
       if (!doc.exists) {
         // Document does not exist yet (new user in middle of Google sign-in)

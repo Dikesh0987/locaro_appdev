@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:locaro/models/shop_model.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
@@ -7,17 +8,23 @@ import '../../../core/theme/typography.dart';
 import '../../../core/widgets/common/offer_badge.dart';
 import '../../../core/widgets/navigation/top_app_bar.dart';
 import '../../../core/widgets/common/fallback_image.dart';
+import '../../../core/utils/time_ago.dart';
 import '../../../providers/app_state_providers.dart';
 import '../../../models/post_model.dart';
 import '../../../models/product_model.dart';
 import '../../../models/offer_model.dart';
 import '../../queries/presentation/query_bottom_sheet.dart';
+import '../../queries/presentation/whatsapp_inquiry_bottom_sheet.dart';
 import '../../shop/presentation/shop_profile_screen.dart';
+import 'comments_bottom_sheet.dart';
 import '../../auth/application/auth_service.dart';
 import '../../../core/widgets/common/skeleton_loaders.dart';
 import '../../../core/widgets/common/animated_action_icon.dart';
 import '../../../core/utils/page_transitions.dart';
 import '../application/home_feed_provider.dart';
+import '../../../core/widgets/animations/fade_in_slide.dart';
+import '../../products/presentation/product_details_screen.dart';
+
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -71,7 +78,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         body: ListView.separated(
           itemCount: 3,
           separatorBuilder: (context, index) =>
-              Container(height: 8, color: context.colors.border),
+              const SizedBox(height: 8),
           itemBuilder: (context, index) => const FeedSkeletonCard(),
         ),
       );
@@ -82,57 +89,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       appBar: const TopAppBar(),
       body: feedItems.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(LucideIcons.newspaper, size: 64, color: context.colors.border),
-                  SizedBox(height: AppSpacing.s16),
-                  Text(
-                    'No Updates Yet',
-                    style: AppTypography.heading.copyWith(color: context.colors.textPrimary),
-                  ),
-                  SizedBox(height: AppSpacing.s8),
-                  Text(
-                    'Follow shops to see their updates here.',
-                    style: AppTypography.body.copyWith(color: context.colors.textSecondary),
-                  ),
-                ],
-              ),
+          ? _EmptyFeedState(
+              onExploreTap: () {
+                ref.read(bottomNavIndexProvider.notifier).state = 1;
+              },
             )
-                  : RefreshIndicator(
-                      onRefresh: () async {
-                        // data refreshes instantly
-                      },
-                      child: ListView.separated(
-                        key: const PageStorageKey('home_feed'),
-                        controller: _scrollController,
-                        padding: const EdgeInsets.only(bottom: AppSpacing.s24),
-                        itemCount: feedItems.length > _visibleCount 
-                            ? _visibleCount + (_isLoadingMore ? 1 : 0) 
-                            : feedItems.length,
-                        separatorBuilder: (context, index) =>
-                            Container(height: 8, color: context.colors.border),
-                        itemBuilder: (context, index) {
-                          if (index == _visibleCount && _isLoadingMore) {
-                            return const Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: Center(
-                                child: SizedBox(
-                                  height: 24,
-                                  width: 24,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                ),
-                              ),
-                            );
-                          }
+          : RefreshIndicator(
+              onRefresh: () async {
+                // data refreshes instantly
+              },
+              child: ListView.separated(
+                key: const PageStorageKey('home_feed'),
+                controller: _scrollController,
+                padding: const EdgeInsets.only(bottom: AppSpacing.s24),
+                itemCount: feedItems.length > _visibleCount
+                    ? _visibleCount + (_isLoadingMore ? 1 : 0)
+                    : feedItems.length,
+                separatorBuilder: (context, index) =>
+                    Container(
+                      height: 8,
+                      color: context.colors.border.withValues(alpha: 0.2),
+                    ),
+                itemBuilder: (context, index) {
+                  if (index == _visibleCount && _isLoadingMore) {
+                    return const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Center(
+                        child: SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    );
+                  }
 
-                          final feedItem = feedItems[index];
+                  final feedItem = feedItems[index];
                   final shop = shops.firstWhere(
                     (s) => s.id == feedItem.shopId,
                     orElse: () => state.currentShop,
                   );
-                  final distanceText = '${feedItem.distance.toStringAsFixed(1)} km away';
+                  final distanceText = '${feedItem.distance.toStringAsFixed(1)} km';
 
                   if (feedItem.type == FeedItemType.post) {
                     final post = feedItem.item as PostModel;
@@ -144,60 +141,322 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       );
                     } catch (_) {}
 
-                    return _FeedCard(
-                      post: post,
-                      shopName: shop.shopName,
-                      shopLogo: shop.logo,
-                      distance: distanceText,
-                      linkedProduct: linkedProduct,
-                      onShopTap: () {
-                        Navigator.push(
-                          context,
-                          SlidePageRoute(
-                            page:
-                                ShopProfileScreen(shopId: shop.id),
-                          ),
-                        );
-                      },
+                    return FadeInSlide(
+                      index: index,
+                      child: _FeedCard(
+                        post: post,
+                        shopName: shop.shopName,
+                        shopLogo: shop.logo,
+                        distance: distanceText,
+                        linkedProduct: linkedProduct,
+                        onShopTap: () {
+                          Navigator.push(
+                            context,
+                            SlidePageRoute(
+                              page:
+                                  ShopProfileScreen(shopId: shop.id),
+                            ),
+                          );
+                        },
+                      ),
                     );
                   } else if (feedItem.type == FeedItemType.product) {
                     final product = feedItem.item as ProductModel;
-                    return _ProductFeedCard(
-                      product: product,
-                      shopName: shop.shopName,
-                      shopLogo: shop.logo,
-                      distance: distanceText,
-                      onShopTap: () {
-                        Navigator.push(
-                          context,
-                          SlidePageRoute(
-                            page:
-                                ShopProfileScreen(shopId: shop.id),
-                          ),
-                        );
-                      },
+                    return FadeInSlide(
+                      index: index,
+                      child: _ProductFeedCard(
+                        product: product,
+                        shop: shop,
+                        distance: distanceText,
+                        onShopTap: () {
+                          Navigator.push(
+                            context,
+                            SlidePageRoute(
+                              page:
+                                  ShopProfileScreen(shopId: shop.id),
+                            ),
+                          );
+                        },
+                      ),
                     );
                   } else {
                     final offer = feedItem.item as OfferModel;
-                    return _OfferFeedCard(
-                      offer: offer,
-                      shopName: shop.shopName,
-                      shopLogo: shop.logo,
-                      distance: distanceText,
-                      onShopTap: () {
-                        Navigator.push(
-                          context,
-                          SlidePageRoute(
-                            page:
-                                ShopProfileScreen(shopId: shop.id),
-                          ),
-                        );
-                      },
+                    return FadeInSlide(
+                      index: index,
+                      child: _OfferFeedCard(
+                        offer: offer,
+                        shopName: shop.shopName,
+                        shopLogo: shop.logo,
+                        distance: distanceText,
+                        onShopTap: () {
+                          Navigator.push(
+                            context,
+                            SlidePageRoute(
+                              page:
+                                  ShopProfileScreen(shopId: shop.id),
+                            ),
+                          );
+                        },
+                      ),
                     );
                   }
                 },
               ),
             ),
+    );
+  }
+}
+
+// ==========================================
+// --- EMPTY FEED STATE ---
+// ==========================================
+class _EmptyFeedState extends StatelessWidget {
+  final VoidCallback onExploreTap;
+
+  const _EmptyFeedState({required this.onExploreTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: context.colors.border,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                LucideIcons.compass,
+                size: 40,
+                color: context.colors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s24),
+            Text(
+              'Your Feed is Empty',
+              style: AppTypography.heading.copyWith(
+                color: context.colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            Text(
+              'Follow nearby shops to see their latest\nproducts, offers, and updates here.',
+              textAlign: TextAlign.center,
+              style: AppTypography.body.copyWith(
+                color: context.colors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: Icon(LucideIcons.compass, size: 16, color: context.colors.surface),
+                label: Text(
+                  'Explore Nearby Shops',
+                  style: TextStyle(
+                    color: context.colors.surface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.colors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+                  ),
+                ),
+                onPressed: onExploreTap,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ==========================================
+// --- SHARED SHOP HEADER WIDGET ---
+// ==========================================
+class _ShopHeader extends StatelessWidget {
+  final String shopName;
+  final String shopLogo;
+  final String distance;
+  final String timeAgoText;
+  final VoidCallback onShopTap;
+
+  const _ShopHeader({
+    required this.shopName,
+    required this.shopLogo,
+    required this.distance,
+    required this.timeAgoText,
+    required this.onShopTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.mobilePadding,
+        vertical: AppSpacing.s12,
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: onShopTap,
+            child: FallbackAvatar(
+              imageUrl: shopLogo,
+              name: shopName,
+              radius: 20,
+              fallbackIcon: LucideIcons.store,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s12),
+          Expanded(
+            child: GestureDetector(
+              onTap: onShopTap,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    shopName,
+                    style: AppTypography.body.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(
+                        LucideIcons.mapPin,
+                        size: 10,
+                        color: context.colors.textSecondary,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        distance,
+                        style: AppTypography.label.copyWith(
+                          color: context.colors.textSecondary,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Text(
+            timeAgoText,
+            style: AppTypography.label.copyWith(
+              color: context.colors.textSecondary,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ==========================================
+// --- EXPANDABLE CAPTION ---
+// ==========================================
+class _ExpandableCaption extends StatefulWidget {
+  final String text;
+  final int maxLines;
+
+  const _ExpandableCaption({
+    required this.text,
+    this.maxLines = 2,
+  });
+
+  @override
+  State<_ExpandableCaption> createState() => _ExpandableCaptionState();
+}
+
+class _ExpandableCaptionState extends State<_ExpandableCaption> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textSpan = TextSpan(
+          text: widget.text,
+          style: AppTypography.caption.copyWith(
+            height: 1.4,
+            color: context.colors.textPrimary,
+          ),
+        );
+        final textPainter = TextPainter(
+          text: textSpan,
+          maxLines: widget.maxLines,
+          textDirection: TextDirection.ltr,
+        )..layout(maxWidth: constraints.maxWidth);
+
+        final isOverflowing = textPainter.didExceedMaxLines;
+
+        if (!isOverflowing) {
+          return Text(
+            widget.text,
+            style: AppTypography.caption.copyWith(
+              height: 1.4,
+              color: context.colors.textPrimary,
+            ),
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.text,
+              maxLines: _expanded ? null : widget.maxLines,
+              overflow: _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
+              style: AppTypography.caption.copyWith(
+                height: 1.4,
+                color: context.colors.textPrimary,
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                setState(() => _expanded = !_expanded);
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _expanded ? 'Read less' : 'Read more',
+                      style: AppTypography.caption.copyWith(
+                        color: context.colors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Icon(
+                      _expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      size: 14,
+                      color: context.colors.textSecondary,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -274,70 +533,21 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
     ref.watch(databaseProvider);
     final isSaved = _isSaved;
     final isLiked = _isLiked;
+    final shop = ref.read(databaseProvider).shops.firstWhere(
+      (s) => s.id == widget.post.shopId,
+      orElse: () => ref.read(databaseProvider).currentShop,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Shop Info Header
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.mobilePadding,
-            vertical: AppSpacing.s12,
-          ),
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: widget.onShopTap,
-                child: FallbackAvatar(
-                  imageUrl: widget.shopLogo,
-                  name: widget.shopName,
-                  radius: 18,
-                  fallbackIcon: LucideIcons.store,
-                ),
-              ),
-              SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: GestureDetector(
-                  onTap: widget.onShopTap,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.shopName,
-                        style: AppTypography.caption.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Icon(
-                            LucideIcons.navigation,
-                            size: 10,
-                            color: context.colors.textSecondary,
-                          ),
-                          SizedBox(width: 2),
-                          Text(
-                            widget.distance,
-                            style: AppTypography.label.copyWith(
-                              color: context.colors.textSecondary,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(LucideIcons.moreHorizontal, size: 20),
-                onPressed: () {},
-              ),
-            ],
-          ),
+        _ShopHeader(
+          shopName: widget.shopName,
+          shopLogo: widget.shopLogo,
+          distance: widget.distance,
+          timeAgoText: timeAgo(widget.post.createdAt),
+          onShopTap: widget.onShopTap,
         ),
 
         // Large Image Container with Double Tap to Like
@@ -347,10 +557,32 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
             children: [
               AspectRatio(
                 aspectRatio: 1.1,
-                child: FallbackImage(
-                  imageUrl: widget.post.image,
-                  fit: BoxFit.cover,
-                  fallbackIcon: LucideIcons.image,
+                child: Hero(
+                  tag: 'post_${widget.post.id}_image',
+                  child: FallbackImage(
+                    imageUrl: widget.post.image,
+                    fit: BoxFit.cover,
+                    fallbackIcon: LucideIcons.image,
+                  ),
+                ),
+              ),
+              // Bottom gradient overlay for readability
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 60,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.3),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
                 ),
               ),
               if (widget.post.type == PostType.offer)
@@ -363,49 +595,60 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
           ),
         ),
 
-        // Actions Row
+        // Compact Actions Row
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding, vertical: 6.0),
           child: Row(
             children: [
-              IconButton(
-                icon: AnimatedActionIcon(
+              GestureDetector(
+                onTap: _triggerLike,
+                child: AnimatedActionIcon(
                   icon: Icons.favorite_border,
                   activeIcon: Icons.favorite,
                   isActive: isLiked,
                   inactiveColor: context.colors.primary,
                   activeColor: context.colors.error,
-                  size: 24,
+                  size: 22,
                 ),
-                onPressed: _triggerLike,
               ),
-              IconButton(
-                icon: const Icon(LucideIcons.messageCircle),
-                onPressed: () {
-                  showQueryBottomSheet(
+              if (widget.post.likes > 0) ...[
+                const SizedBox(width: 4),
+                Text(
+                  '${widget.post.likes}',
+                  style: AppTypography.label.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: context.colors.textPrimary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+              const SizedBox(width: 16),
+              GestureDetector(
+                onTap: () {
+                  showCommentsBottomSheet(
                     context,
-                    shopId: widget.post.shopId,
-                    productId: widget.linkedProduct?.id,
-                    category: widget.linkedProduct?.category ?? 'OFFERS',
+                    itemId: widget.post.id,
                   );
                 },
+                child: Icon(LucideIcons.messageCircle, size: 20, color: context.colors.textSecondary),
               ),
-              IconButton(
-                icon: const Icon(LucideIcons.send),
-                onPressed: () {},
+              const SizedBox(width: 16),
+              GestureDetector(
+                onTap: () {},
+                child: Icon(LucideIcons.send, size: 20, color: context.colors.textSecondary),
               ),
               const Spacer(),
               if (widget.linkedProduct != null)
-                IconButton(
-                  icon: AnimatedActionIcon(
+                GestureDetector(
+                  onTap: _triggerSave,
+                  child: AnimatedActionIcon(
                     icon: Icons.bookmark_border,
                     activeIcon: Icons.bookmark,
                     isActive: isSaved,
                     inactiveColor: context.colors.textSecondary,
                     activeColor: context.colors.primary,
-                    size: 24,
+                    size: 22,
                   ),
-                  onPressed: _triggerSave,
                 ),
             ],
           ),
@@ -428,6 +671,7 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
                         widget.linkedProduct!.name,
                         style: AppTypography.body.copyWith(
                           fontWeight: FontWeight.w700,
+                          letterSpacing: -0.2,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -442,63 +686,46 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
                     ),
                   ],
                 ),
-                SizedBox(height: AppSpacing.s8),
+                const SizedBox(height: AppSpacing.s4),
               ],
-              Text(
-                widget.post.caption,
-                style: AppTypography.caption.copyWith(height: 1.4),
-              ),
-              SizedBox(height: AppSpacing.s12),
+              _ExpandableCaption(text: widget.post.caption),
+              const SizedBox(height: AppSpacing.s12),
 
-              // Sticky actions for Leads generation
+              // Compact CTA buttons
               if (widget.linkedProduct != null) ...[
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton.icon(
-                        icon: Icon(
-                          LucideIcons.store,
-                          size: 14,
-                          color: context.colors.textPrimary,
-                        ),
-                        label: Text(
-                          'Visit Shop',
-                          style: TextStyle(color: context.colors.textPrimary),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          side: BorderSide(color: context.colors.border),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppSpacing.buttonRadius,
-                            ),
-                          ),
-                        ),
-                        onPressed: widget.onShopTap,
+                      child: _CompactOutlineButton(
+                        icon: LucideIcons.store,
+                        label: 'Visit Shop',
+                        onTap: widget.onShopTap,
                       ),
                     ),
-                    SizedBox(width: AppSpacing.s12),
+                    const SizedBox(width: AppSpacing.s8),
+                    if (shop.whatsapp.isNotEmpty && shop.isWhatsappEnabled) ...[
+                      Expanded(
+                        child: _CompactFilledButton(
+                          icon: LucideIcons.messageCircle,
+                          label: 'WhatsApp',
+                          color: const Color(0xFF25D366),
+                          onTap: () {
+                            showWhatsAppInquirySheet(
+                              context,
+                              shop: shop,
+                              product: widget.linkedProduct,
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.s8),
+                    ],
                     Expanded(
-                      child: ElevatedButton.icon(
-                        icon: const Icon(
-                          LucideIcons.messageSquare,
-                          size: 14,
-                          color: Colors.white,
-                        ),
-                        label: const Text(
-                          'Message Shop',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green.shade600,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppSpacing.buttonRadius,
-                            ),
-                          ),
-                        ),
-                        onPressed: () {
+                      child: _CompactFilledButton(
+                        icon: LucideIcons.messageSquare,
+                        label: 'Enquire',
+                        color: context.colors.primary,
+                        onTap: () {
                           showQueryBottomSheet(
                             context,
                             shopId: widget.post.shopId,
@@ -510,18 +737,8 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
                     ),
                   ],
                 ),
-                SizedBox(height: AppSpacing.s12),
               ],
-
-              Text(
-                'SHOP UPDATE',
-                style: AppTypography.label.copyWith(
-                  color: context.colors.textSecondary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              SizedBox(height: AppSpacing.s16),
+              const SizedBox(height: AppSpacing.s16),
             ],
           ),
         ),
@@ -535,15 +752,13 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
 // ==========================================
 class _ProductFeedCard extends ConsumerStatefulWidget {
   final ProductModel product;
-  final String shopName;
-  final String shopLogo;
+  final ShopModel shop;
   final String distance;
   final VoidCallback onShopTap;
 
   const _ProductFeedCard({
     required this.product,
-    required this.shopName,
-    required this.shopLogo,
+    required this.shop,
     required this.distance,
     required this.onShopTap,
   });
@@ -598,150 +813,161 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
     ref.watch(databaseProvider);
     final isSaved = _isSaved;
     final isLiked = _isLiked;
+    final hasDiscount = widget.product.discountPrice != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Shop Info Header
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.mobilePadding,
-            vertical: AppSpacing.s12,
-          ),
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: widget.onShopTap,
-                child: FallbackAvatar(
-                  imageUrl: widget.shopLogo,
-                  name: widget.shopName,
-                  radius: 18,
-                  fallbackIcon: LucideIcons.store,
-                ),
-              ),
-              SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: GestureDetector(
-                  onTap: widget.onShopTap,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.shopName,
-                        style: AppTypography.caption.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Icon(
-                            LucideIcons.navigation,
-                            size: 10,
-                            color: context.colors.textSecondary,
-                          ),
-                          SizedBox(width: 2),
-                          Text(
-                            widget.distance,
-                            style: AppTypography.label.copyWith(
-                              color: context.colors.textSecondary,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(LucideIcons.moreHorizontal, size: 20),
-                onPressed: () {},
-              ),
-            ],
-          ),
+        _ShopHeader(
+          shopName: widget.shop.shopName,
+          shopLogo: widget.shop.logo,
+          distance: widget.distance,
+          timeAgoText: timeAgo(widget.product.createdAt),
+          onShopTap: widget.onShopTap,
         ),
 
         // Product Image Container with Double Tap to Like
         GestureDetector(
           onDoubleTap: _triggerLike,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProductDetailsScreen(productId: widget.product.id),
+              ),
+            );
+          },
           child: Stack(
             children: [
               AspectRatio(
                 aspectRatio: 1.1,
-                child: FallbackImage(
-                  imageUrl: widget.product.images.isNotEmpty ? widget.product.images.first : '',
-                  fit: BoxFit.cover,
-                  fallbackIcon: LucideIcons.image,
+                child: Hero(
+                  tag: 'product_${widget.product.id}_image',
+                  child: FallbackImage(
+                    imageUrl: widget.product.images.isNotEmpty ? widget.product.images.first : '',
+                    fit: BoxFit.cover,
+                    fallbackIcon: LucideIcons.image,
+                  ),
                 ),
               ),
+              // Bottom gradient overlay
               Positioned(
-                top: AppSpacing.s16,
-                right: AppSpacing.s16,
+                bottom: 0,
+                left: 0,
+                right: 0,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.green.shade600,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Text(
-                    'NEW PRODUCT',
-                    style: AppTypography.label.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 8,
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.3),
+                        Colors.transparent,
+                      ],
                     ),
                   ),
                 ),
               ),
+              // Badge
+              if (hasDiscount)
+                Positioned(
+                  top: AppSpacing.s12,
+                  right: AppSpacing.s12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: context.colors.error,
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    child: Text(
+                      '${((1 - widget.product.discountPrice! / widget.product.price) * 100).round()}% OFF',
+                      style: AppTypography.label.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Positioned(
+                  top: AppSpacing.s12,
+                  right: AppSpacing.s12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: context.colors.success,
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    child: Text(
+                      'NEW',
+                      style: AppTypography.label.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
 
-        // Actions Row
+        // Compact Actions Row
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding, vertical: 6.0),
           child: Row(
             children: [
-              IconButton(
-                icon: AnimatedActionIcon(
+              GestureDetector(
+                onTap: _triggerLike,
+                child: AnimatedActionIcon(
                   icon: Icons.favorite_border,
                   activeIcon: Icons.favorite,
                   isActive: isLiked,
                   inactiveColor: context.colors.primary,
                   activeColor: context.colors.error,
-                  size: 24,
+                  size: 22,
                 ),
-                onPressed: _triggerLike,
               ),
-              IconButton(
-                icon: const Icon(LucideIcons.messageCircle),
-                onPressed: () {
-                  showQueryBottomSheet(
+              if (widget.product.likes > 0) ...[
+                const SizedBox(width: 4),
+                Text(
+                  '${widget.product.likes}',
+                  style: AppTypography.label.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: context.colors.textPrimary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+              const SizedBox(width: 16),
+              GestureDetector(
+                onTap: () {
+                  showCommentsBottomSheet(
                     context,
-                    shopId: widget.product.shopId,
-                    productId: widget.product.id,
-                    category: widget.product.category,
+                    itemId: widget.product.id,
                   );
                 },
+                child: Icon(LucideIcons.messageCircle, size: 20, color: context.colors.textSecondary),
               ),
-              IconButton(
-                icon: const Icon(LucideIcons.send),
-                onPressed: () {},
+              const SizedBox(width: 16),
+              GestureDetector(
+                onTap: () {},
+                child: Icon(LucideIcons.send, size: 20, color: context.colors.textSecondary),
               ),
               const Spacer(),
-              IconButton(
-                icon: AnimatedActionIcon(
+              GestureDetector(
+                onTap: _triggerSave,
+                child: AnimatedActionIcon(
                   icon: Icons.bookmark_border,
                   activeIcon: Icons.bookmark,
                   isActive: isSaved,
                   inactiveColor: context.colors.textSecondary,
                   activeColor: context.colors.primary,
-                  size: 24,
+                  size: 22,
                 ),
-                onPressed: _triggerSave,
               ),
             ],
           ),
@@ -763,6 +989,7 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
                       widget.product.name,
                       style: AppTypography.body.copyWith(
                         fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -778,7 +1005,7 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
                             color: context.colors.textSecondary,
                           ),
                         ),
-                        SizedBox(width: 6),
+                        const SizedBox(width: 6),
                       ],
                       Text(
                         '₹${widget.product.discountPrice?.toStringAsFixed(0) ?? widget.product.price.toStringAsFixed(0)}',
@@ -791,61 +1018,35 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
                   ),
                 ],
               ),
-              SizedBox(height: AppSpacing.s8),
-              Text(
-                widget.product.description,
-                style: AppTypography.caption.copyWith(height: 1.4),
-              ),
-              SizedBox(height: AppSpacing.s12),
+              const SizedBox(height: AppSpacing.s4),
+              _ExpandableCaption(text: widget.product.description),
+              const SizedBox(height: AppSpacing.s12),
 
-              // Sticky actions
+              // Compact CTA actions
               Row(
                 children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: Icon(
-                        LucideIcons.store,
-                        size: 14,
-                        color: context.colors.textPrimary,
+                  if (widget.shop.whatsapp.isNotEmpty && widget.shop.isWhatsappEnabled) ...[
+                    Expanded(
+                      child: _CompactFilledButton(
+                        icon: LucideIcons.messageCircle,
+                        label: 'WhatsApp',
+                        color: const Color(0xFF25D366),
+                        onTap: () {
+                          showWhatsAppInquirySheet(
+                            context,
+                            shop: widget.shop,
+                            product: widget.product,
+                          );
+                        },
                       ),
-                      label: Text(
-                        'Visit Shop',
-                        style: TextStyle(color: context.colors.textPrimary),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        side: BorderSide(color: context.colors.border),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSpacing.buttonRadius,
-                          ),
-                        ),
-                      ),
-                      onPressed: widget.onShopTap,
                     ),
-                  ),
-                  SizedBox(width: AppSpacing.s12),
+                    const SizedBox(width: AppSpacing.s8),
+                  ],
                   Expanded(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(
-                        LucideIcons.messageSquare,
-                        size: 14,
-                        color: Colors.white,
-                      ),
-                      label: const Text(
-                        'Message Shop',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green.shade600,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSpacing.buttonRadius,
-                          ),
-                        ),
-                      ),
-                      onPressed: () {
+                    child: _CompactOutlineButton(
+                      icon: LucideIcons.messageSquare,
+                      label: 'Ask Shop',
+                      onTap: () {
                         showQueryBottomSheet(
                           context,
                           shopId: widget.product.shopId,
@@ -857,17 +1058,7 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
                   ),
                 ],
               ),
-              SizedBox(height: AppSpacing.s12),
-
-              Text(
-                'PRODUCT RECOMMENDATION',
-                style: AppTypography.label.copyWith(
-                  color: context.colors.textSecondary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              SizedBox(height: AppSpacing.s16),
+              const SizedBox(height: AppSpacing.s16),
             ],
           ),
         ),
@@ -938,69 +1129,22 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
 
   @override
   Widget build(BuildContext context) {
+    final dbState = ref.watch(databaseProvider);
+    final shop = dbState.shops.firstWhere(
+      (s) => s.id == widget.offer.shopId,
+      orElse: () => dbState.currentShop,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Shop Info Header
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.mobilePadding,
-            vertical: AppSpacing.s12,
-          ),
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: widget.onShopTap,
-                child: FallbackAvatar(
-                  imageUrl: widget.shopLogo,
-                  name: widget.shopName,
-                  radius: 18,
-                  fallbackIcon: LucideIcons.store,
-                ),
-              ),
-              SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: GestureDetector(
-                  onTap: widget.onShopTap,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.shopName,
-                        style: AppTypography.caption.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Icon(
-                            LucideIcons.navigation,
-                            size: 10,
-                            color: context.colors.textSecondary,
-                          ),
-                          SizedBox(width: 2),
-                          Text(
-                            widget.distance,
-                            style: AppTypography.label.copyWith(
-                              color: context.colors.textSecondary,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(LucideIcons.moreHorizontal, size: 20),
-                onPressed: () {},
-              ),
-            ],
-          ),
+        _ShopHeader(
+          shopName: widget.shopName,
+          shopLogo: widget.shopLogo,
+          distance: widget.distance,
+          timeAgoText: timeAgo(widget.offer.createdAt),
+          onShopTap: widget.onShopTap,
         ),
 
         // Offer Banner Container with Double Tap to Like
@@ -1016,43 +1160,64 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
                   fallbackIcon: LucideIcons.image,
                 ),
               ),
+              // Bottom gradient overlay
               Positioned(
-                top: AppSpacing.s16,
-                right: AppSpacing.s16,
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 60,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.3),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: AppSpacing.s12,
+                right: AppSpacing.s12,
                 child: OfferBadge(text: widget.offer.discount),
               ),
             ],
           ),
         ),
 
-        // Actions Row
+        // Compact Actions Row
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding, vertical: 6.0),
           child: Row(
             children: [
               ScaleTransition(
                 scale: _likeScale,
-                child: IconButton(
-                  icon: Icon(
-                    _isLiked ? LucideIcons.heart : LucideIcons.heart,
+                child: GestureDetector(
+                  onTap: _triggerLike,
+                  child: Icon(
+                    _isLiked ? Icons.favorite : Icons.favorite_border,
+                    size: 22,
                     color: _isLiked ? context.colors.error : context.colors.primary,
                   ),
-                  onPressed: _triggerLike,
                 ),
               ),
-              IconButton(
-                icon: const Icon(LucideIcons.messageCircle),
-                onPressed: () {
-                  showQueryBottomSheet(
+              const SizedBox(width: 16),
+              GestureDetector(
+                onTap: () {
+                  showCommentsBottomSheet(
                     context,
-                    shopId: widget.offer.shopId,
-                    category: 'OFFERS',
+                    itemId: widget.offer.id,
                   );
                 },
+                child: Icon(LucideIcons.messageCircle, size: 20, color: context.colors.textSecondary),
               ),
-              IconButton(
-                icon: const Icon(LucideIcons.send),
-                onPressed: () {},
+              const SizedBox(width: 16),
+              GestureDetector(
+                onTap: () {},
+                child: Icon(LucideIcons.send, size: 20, color: context.colors.textSecondary),
               ),
             ],
           ),
@@ -1070,63 +1235,47 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
                 widget.offer.title,
                 style: AppTypography.body.copyWith(
                   fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
                 ),
               ),
-              SizedBox(height: AppSpacing.s8),
-              Text(
-                widget.offer.description,
-                style: AppTypography.caption.copyWith(height: 1.4),
-              ),
-              SizedBox(height: AppSpacing.s12),
+              const SizedBox(height: AppSpacing.s4),
+              _ExpandableCaption(text: widget.offer.description),
+              const SizedBox(height: AppSpacing.s12),
 
-              // Sticky actions for claim coupon
+              // Compact CTA actions
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
-                      icon: Icon(
-                        LucideIcons.ticket,
-                        size: 14,
-                        color: context.colors.offerOrange,
-                      ),
-                      label: Text(
-                        'Claim Coupon',
-                        style: TextStyle(color: context.colors.textPrimary),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        side: BorderSide(color: context.colors.border),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSpacing.buttonRadius,
-                          ),
-                        ),
-                      ),
-                      onPressed: () {},
+                    child: _CompactOutlineButton(
+                      icon: LucideIcons.ticket,
+                      label: 'Claim Coupon',
+                      iconColor: context.colors.offerOrange,
+                      onTap: () {},
                     ),
                   ),
-                  SizedBox(width: AppSpacing.s12),
+                  const SizedBox(width: AppSpacing.s8),
+                  if (shop.whatsapp.isNotEmpty && shop.isWhatsappEnabled) ...[
+                    Expanded(
+                      child: _CompactFilledButton(
+                        icon: LucideIcons.messageCircle,
+                        label: 'WhatsApp',
+                        color: const Color(0xFF25D366),
+                        onTap: () {
+                          showWhatsAppInquirySheet(
+                            context,
+                            shop: shop,
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.s8),
+                  ],
                   Expanded(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(
-                        LucideIcons.messageSquare,
-                        size: 14,
-                        color: Colors.white,
-                      ),
-                      label: const Text(
-                        'Message Shop',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green.shade600,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSpacing.buttonRadius,
-                          ),
-                        ),
-                      ),
-                      onPressed: () {
+                    child: _CompactFilledButton(
+                      icon: LucideIcons.messageSquare,
+                      label: 'Enquire',
+                      color: context.colors.primary,
+                      onTap: () {
                         showQueryBottomSheet(
                           context,
                           shopId: widget.offer.shopId,
@@ -1137,21 +1286,113 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
                   ),
                 ],
               ),
-              SizedBox(height: AppSpacing.s12),
-
-              Text(
-                'PROMOTIONAL OFFER',
-                style: AppTypography.label.copyWith(
-                  color: context.colors.textSecondary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              SizedBox(height: AppSpacing.s16),
+              const SizedBox(height: AppSpacing.s16),
             ],
           ),
         ),
       ],
+    );
+  }
+}
+
+// ==========================================
+// --- SHARED COMPACT BUTTON WIDGETS ---
+// ==========================================
+class _CompactOutlineButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? iconColor;
+
+  const _CompactOutlineButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.iconColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+        side: BorderSide(color: context.colors.border),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+        ),
+        minimumSize: const Size(0, 36),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      onPressed: onTap,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 13, color: iconColor ?? context.colors.textPrimary),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              label,
+              style: AppTypography.label.copyWith(
+                color: context.colors.textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactFilledButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _CompactFilledButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+        ),
+        minimumSize: const Size(0, 36),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        elevation: 0,
+      ),
+      onPressed: onTap,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 13, color: Colors.white),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              label,
+              style: AppTypography.label.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

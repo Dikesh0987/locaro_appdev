@@ -63,8 +63,8 @@ class AuthRepository {
   }
 
   // Firestore operations
-  Future<DocumentSnapshot<Map<String, dynamic>>> getUserDoc(String uid) async {
-    return await _firestore.collection('users').doc(uid).get();
+  Future<DocumentSnapshot<Map<String, dynamic>>> getUserDoc(String uid, {GetOptions? options}) async {
+    return await _firestore.collection('users').doc(uid).get(options);
   }
 
   Future<void> setUserDoc(String uid, Map<String, dynamic> data) async {

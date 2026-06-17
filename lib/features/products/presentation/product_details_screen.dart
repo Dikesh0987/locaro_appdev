@@ -11,7 +11,9 @@ import '../../shop/presentation/shop_profile_screen.dart';
 import '../../auth/application/auth_service.dart';
 import '../../../core/widgets/common/skeleton_loaders.dart';
 import '../../../core/widgets/common/animated_action_icon.dart';
-import 'package:url_launcher/url_launcher_string.dart';
+
+import '../../queries/presentation/whatsapp_inquiry_bottom_sheet.dart';
+import '../../queries/presentation/query_bottom_sheet.dart';
 
 class ProductDetailsScreen extends ConsumerStatefulWidget {
   final String productId;
@@ -87,11 +89,18 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                           setState(() => _activeImageIndex = index);
                         },
                         itemBuilder: (context, index) {
-                          return FallbackImage(
+                          final imageWidget = FallbackImage(
                             imageUrl: product.images[index],
                             fit: BoxFit.cover,
                             width: double.infinity,
                           );
+                          if (index == 0) {
+                            return Hero(
+                              tag: 'product_${product.id}_image',
+                              child: imageWidget,
+                            );
+                          }
+                          return imageWidget;
                         },
                       ),
                     ),
@@ -354,8 +363,8 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                       SizedBox(width: AppSpacing.s12),
                       Expanded(
                         child: OutlinedButton.icon(
-                          icon: Icon(LucideIcons.store, size: 16, color: context.colors.textPrimary),
-                          label: Text('Visit Shop', style: TextStyle(color: context.colors.textPrimary)),
+                          icon: Icon(LucideIcons.messageSquare, size: 16, color: context.colors.textPrimary),
+                          label: Text('Ask Shop', style: TextStyle(color: context.colors.textPrimary)),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             side: BorderSide(color: context.colors.border),
@@ -364,18 +373,18 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                             ),
                           ),
                           onPressed: () {
-                            Navigator.push(
+                            showQueryBottomSheet(
                               context,
-                              MaterialPageRoute(
-                                builder: (context) => ShopProfileScreen(shopId: shop.id),
-                              ),
+                              shopId: product.shopId,
+                              productId: product.id,
+                              category: product.category,
                             );
                           },
                         ),
                       ),
                     ],
                   ),
-                  if (shop.isWhatsappVerified && shop.isWhatsappEnabled) ...[
+                  if (shop.whatsapp.isNotEmpty && shop.isWhatsappEnabled) ...[
                     SizedBox(height: AppSpacing.s12),
                     Row(
                       children: [
@@ -390,18 +399,12 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                                 borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
                               ),
                             ),
-                            onPressed: () async {
-                              final text = Uri.encodeComponent('Hello ${shop.shopName}, I am interested in your product "${product.name}" that I saw on Locaro.');
-                              final whatsappUrl = 'https://wa.me/${shop.whatsapp.replaceAll(RegExp(r'[^0-9]'), '')}?text=$text';
-                              if (await canLaunchUrlString(whatsappUrl)) {
-                                await launchUrlString(whatsappUrl);
-                              } else {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Could not launch WhatsApp')),
-                                  );
-                                }
-                              }
+                            onPressed: () {
+                              showWhatsAppInquirySheet(
+                                context,
+                                shop: shop,
+                                product: product,
+                              );
                             },
                           ),
                         ),

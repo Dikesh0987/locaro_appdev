@@ -39,7 +39,8 @@ final homeFeedProvider = Provider<List<MixedFeedItem>>((ref) {
   final offers = state.offers;
   final products = state.products;
 
-  if (shops.isEmpty) {
+  // Early exit: skip expensive computation while data is still loading
+  if (state.isLoading || shops.isEmpty) {
     return [];
   }
 
@@ -90,52 +91,27 @@ final homeFeedProvider = Provider<List<MixedFeedItem>>((ref) {
   }
 
   List<MixedFeedItem> feedItems = [];
+  
+  // Get all items from followed shops
   final followedItems = allItems.where((item) => currentUser.followingShops.contains(item.shopId)).toList();
+  
+  // Get all items from nearby shops within 100km (excluding those already in followedItems)
+  final nearbyItems = allItems.where((item) => 
+    !currentUser.followingShops.contains(item.shopId) && item.distance <= 100.0
+  ).toList();
 
-  if (followedItems.isNotEmpty) {
-    followedItems.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    feedItems = followedItems;
+  // Combine both lists
+  feedItems.addAll(followedItems);
+  feedItems.addAll(nearbyItems);
+
+  // If still empty (no followed and no nearby within 100km), fallback to showing closest shops
+  if (feedItems.isEmpty) {
+    List<MixedFeedItem> remainingItems = List.from(allItems);
+    remainingItems.sort((a, b) => a.distance.compareTo(b.distance));
+    feedItems = remainingItems.take(20).toList();
   } else {
-    List<MixedFeedItem> nearbyItems = allItems.where((item) => item.distance <= 10.0).toList();
-    nearbyItems.sort((a, b) => a.distance.compareTo(b.distance));
-    nearbyItems = nearbyItems.take(10).toList(); 
-
-    List<MixedFeedItem> interestItems = allItems.where((item) {
-      if (item.type == FeedItemType.product) {
-        final product = item.item as ProductModel;
-        return currentUser.interests.contains(product.category);
-      }
-      return false;
-    }).toList();
-    interestItems.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-    int nIdx = 0, iIdx = 0;
-    final Set<String> addedIds = {};
-
-    while (nIdx < nearbyItems.length || iIdx < interestItems.length) {
-      if (nIdx < nearbyItems.length) {
-        final item = nearbyItems[nIdx];
-        if (!addedIds.contains(item.id)) {
-          feedItems.add(item);
-          addedIds.add(item.id);
-        }
-        nIdx++;
-      }
-      if (iIdx < interestItems.length) {
-        final item = interestItems[iIdx];
-        if (!addedIds.contains(item.id)) {
-          feedItems.add(item);
-          addedIds.add(item.id);
-        }
-        iIdx++;
-      }
-    }
-
-    if (feedItems.isEmpty) {
-      List<MixedFeedItem> remainingItems = List.from(allItems);
-      remainingItems.sort((a, b) => a.distance.compareTo(b.distance));
-      feedItems = remainingItems.take(10).toList();
-    }
+    // Sort combined list by creation date, newest first
+    feedItems.sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
   return feedItems;

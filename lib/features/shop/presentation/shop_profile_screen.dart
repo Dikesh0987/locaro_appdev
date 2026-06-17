@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:locaro/models/shop_model.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
@@ -16,7 +17,10 @@ import '../../../models/post_model.dart';
 import '../../auth/application/auth_service.dart';
 import '../../../core/widgets/common/skeleton_loaders.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-
+import '../../../core/widgets/animations/fade_in_slide.dart';
+import '../../../core/widgets/common/animated_action_icon.dart';
+import '../../queries/presentation/whatsapp_inquiry_bottom_sheet.dart';
+import '../../queries/presentation/query_bottom_sheet.dart';
 
 class ShopProfileScreen extends ConsumerStatefulWidget {
   final String shopId;
@@ -27,7 +31,8 @@ class ShopProfileScreen extends ConsumerStatefulWidget {
   ConsumerState<ShopProfileScreen> createState() => _ShopProfileScreenState();
 }
 
-class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with SingleTickerProviderStateMixin {
+class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isLoading = true;
 
@@ -49,7 +54,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
     final state = ref.watch(databaseProvider);
     // Find the active shop
     final shop = state.shops.where((s) => s.id == widget.shopId).firstOrNull;
-    
+
     if (shop == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Shop Not Found')),
@@ -57,26 +62,35 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.store_outlined, size: 64, color: context.colors.textSecondary),
+              Icon(
+                Icons.store_outlined,
+                size: 64,
+                color: context.colors.textSecondary,
+              ),
               SizedBox(height: 16),
               Text('This shop no longer exists.'),
-              TextButton(onPressed: () => Navigator.pop(context), child: Text('Go Back')),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Go Back'),
+              ),
             ],
           ),
         ),
       );
     }
-    final shopProducts = state.products.where((p) => p.shopId == shop.id).toList();
+    final shopProducts = state.products
+        .where((p) => p.shopId == shop.id)
+        .toList();
     final shopOffers = state.offers.where((o) => o.shopId == shop.id).toList();
-    final shopPosts = state.posts.where((post) => post.shopId == shop.id).toList();
+    final shopPosts = state.posts
+        .where((post) => post.shopId == shop.id)
+        .toList();
 
     final isFollowing = state.currentUser.followingShops.contains(shop.id);
 
     if (_isLoading) {
       return const Scaffold(
-        body: SingleChildScrollView(
-          child: ShopProfileSkeleton(),
-        ),
+        body: SingleChildScrollView(child: ShopProfileSkeleton()),
       );
     }
 
@@ -110,21 +124,28 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                         color: context.colors.surface,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(LucideIcons.arrowLeft, size: 20, color: context.colors.primary),
+                      child: Icon(
+                        LucideIcons.arrowLeft,
+                        size: 20,
+                        color: context.colors.primary,
+                      ),
                     ),
                   ),
                 ),
                 // Map Button
                 Positioned(
                   top: 50,
-                  right: (shop.isWhatsappVerified && shop.isWhatsappEnabled) ? AppSpacing.mobilePadding + 44 : AppSpacing.mobilePadding,
+                  right: (shop.whatsapp.isNotEmpty && shop.isWhatsappEnabled)
+                      ? AppSpacing.mobilePadding + 44
+                      : AppSpacing.mobilePadding,
 
                   child: GestureDetector(
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => MapScreen(initialShopId: shop.id),
+                          builder: (context) =>
+                              MapScreen(initialShopId: shop.id),
                         ),
                       );
                     },
@@ -134,25 +155,34 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                         color: context.colors.surface,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(LucideIcons.mapPin, size: 20, color: context.colors.primary),
+                      child: Icon(
+                        LucideIcons.mapPin,
+                        size: 20,
+                        color: context.colors.primary,
+                      ),
                     ),
                   ),
                 ),
                 // WhatsApp Button
-                if (shop.isWhatsappVerified && shop.isWhatsappEnabled)
+                if (shop.whatsapp.isNotEmpty && shop.isWhatsappEnabled)
                   Positioned(
                     top: 50,
                     right: AppSpacing.mobilePadding,
                     child: GestureDetector(
                       onTap: () async {
-                        final text = Uri.encodeComponent('Hello ${shop.shopName}, I found your shop on Locaro and would like to know more!');
-                        final whatsappUrl = 'https://wa.me/${shop.whatsapp.replaceAll(RegExp(r'[^0-9]'), '')}?text=$text';
+                        final text = Uri.encodeComponent(
+                          'Hello ${shop.shopName}, I found your shop on Locaro and would like to know more!',
+                        );
+                        final whatsappUrl =
+                            'https://wa.me/${shop.whatsapp.replaceAll(RegExp(r'[^0-9]'), '')}?text=$text';
                         if (await canLaunchUrlString(whatsappUrl)) {
                           await launchUrlString(whatsappUrl);
                         } else {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Could not launch WhatsApp')),
+                              const SnackBar(
+                                content: Text('Could not launch WhatsApp'),
+                              ),
                             );
                           }
                         }
@@ -163,7 +193,11 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                           color: const Color(0xFF25D366),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(LucideIcons.messageCircle, size: 20, color: Colors.white),
+                        child: const Icon(
+                          LucideIcons.messageCircle,
+                          size: 20,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -192,7 +226,9 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
 
             // Shop Metadata
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.mobilePadding,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -209,12 +245,21 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                                 Flexible(
                                   child: Text(
                                     shop.shopName,
-                                    style: AppTypography.heading.copyWith(fontSize: 26, fontWeight: FontWeight.w800),
+                                    style: AppTypography.heading.copyWith(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 if (shop.isVerified) ...[
                                   const SizedBox(width: 8),
-                                  Icon(LucideIcons.checkCircle, size: 24, color: context.colors.success),
+                                  Icon(
+                                    LucideIcons.checkCircle,
+                                    size: 24,
+                                    color: context.colors.success,
+                                  ),
                                 ],
                               ],
                             ),
@@ -226,16 +271,22 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                                     width: 8,
                                     height: 8,
                                     decoration: BoxDecoration(
-                                      color: shop.isOnline ? context.colors.success : context.colors.textSecondary,
+                                      color: shop.isOnline
+                                          ? context.colors.success
+                                          : context.colors.textSecondary,
                                       shape: BoxShape.circle,
                                     ),
                                   ),
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
-                                      shop.isOnline ? 'Online Now' : 'Currently Offline',
+                                      shop.isOnline
+                                          ? 'Online Now'
+                                          : 'Currently Offline',
                                       style: AppTypography.label.copyWith(
-                                        color: shop.isOnline ? context.colors.success : context.colors.textSecondary,
+                                        color: shop.isOnline
+                                            ? context.colors.success
+                                            : context.colors.textSecondary,
                                         fontWeight: FontWeight.bold,
                                       ),
                                       maxLines: 1,
@@ -244,7 +295,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                                   ),
                                 ],
                               ),
-                            ]
+                            ],
                           ],
                         ),
                       ),
@@ -256,71 +307,116 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                             ? SecondaryButton(
                                 text: 'Following',
                                 onPressed: () {
-                                  ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
-                                    ref.read(databaseProvider.notifier).toggleFollowShop(shop.id);
-                                  });
+                                  ref
+                                      .read(authServiceProvider)
+                                      .checkGuest(
+                                        context,
+                                        onAllowed: () {
+                                          ref
+                                              .read(databaseProvider.notifier)
+                                              .toggleFollowShop(shop.id);
+                                        },
+                                      );
                                 },
                               )
                             : ElevatedButton(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: context.colors.primary,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+                                    borderRadius: BorderRadius.circular(
+                                      AppSpacing.buttonRadius,
+                                    ),
                                   ),
                                   padding: EdgeInsets.zero,
                                 ),
                                 onPressed: () {
-                                  ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
-                                    ref.read(databaseProvider.notifier).toggleFollowShop(shop.id);
-                                  });
+                                  ref
+                                      .read(authServiceProvider)
+                                      .checkGuest(
+                                        context,
+                                        onAllowed: () {
+                                          ref
+                                              .read(databaseProvider.notifier)
+                                              .toggleFollowShop(shop.id);
+                                        },
+                                      );
                                 },
                                 child: Text(
                                   'Follow',
-                                  style: TextStyle(color: context.colors.surface, fontWeight: FontWeight.bold, fontSize: 13),
+                                  style: TextStyle(
+                                    color: context.colors.surface,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
                       ),
                     ],
                   ),
                   SizedBox(height: 6),
-                  
+
                   // Category & Stats Wrap to prevent overflow
                   Wrap(
                     alignment: WrapAlignment.spaceBetween,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
-                        shop.category, 
-                        style: AppTypography.label.copyWith(color: context.colors.textSecondary),
+                        shop.category,
+                        style: AppTypography.label.copyWith(
+                          color: context.colors.textSecondary,
+                        ),
                       ),
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(LucideIcons.star, size: 12, color: Colors.amber),
+                          const Icon(
+                            LucideIcons.star,
+                            size: 12,
+                            color: Colors.amber,
+                          ),
                           const SizedBox(width: 2),
-                          Text('${shop.rating} rating', style: AppTypography.label.copyWith(fontWeight: FontWeight.bold)),
+                          Text(
+                            '${shop.rating.toStringAsFixed(1)} rating',
+                            style: AppTypography.label.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(width: 8),
-                          Text('${shop.followers} followers', style: AppTypography.label.copyWith(color: context.colors.textSecondary)),
+                          Text(
+                            '${shop.followers} followers',
+                            style: AppTypography.label.copyWith(
+                              color: context.colors.textSecondary,
+                            ),
+                          ),
                         ],
                       ),
                     ],
                   ),
                   SizedBox(height: AppSpacing.s12),
-                  
+
                   Text(
                     shop.description,
-                    style: AppTypography.caption.copyWith(color: context.colors.textSecondary, height: 1.4),
+                    style: AppTypography.caption.copyWith(
+                      color: context.colors.textSecondary,
+                      height: 1.4,
+                    ),
                   ),
                   SizedBox(height: AppSpacing.s16),
-                  
+
                   Row(
                     children: [
-                      Icon(LucideIcons.mapPin, size: 14, color: context.colors.textSecondary),
+                      Icon(
+                        LucideIcons.mapPin,
+                        size: 14,
+                        color: context.colors.textSecondary,
+                      ),
                       SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           shop.address,
-                          style: AppTypography.label.copyWith(color: context.colors.textSecondary),
+                          style: AppTypography.label.copyWith(
+                            color: context.colors.textSecondary,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -339,7 +435,9 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
               unselectedLabelColor: context.colors.textSecondary,
               indicatorColor: context.colors.primary,
               indicatorSize: TabBarIndicatorSize.tab,
-              labelStyle: AppTypography.caption.copyWith(fontWeight: FontWeight.bold),
+              labelStyle: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
               tabs: const [
                 Tab(text: 'Products'),
                 Tab(text: 'Offers'),
@@ -354,7 +452,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
               builder: (context, child) {
                 switch (_tabController.index) {
                   case 0:
-                    return _buildProductsTab(context, shopProducts);
+                    return _buildProductsTab(context, shopProducts, shop);
                   case 1:
                     return _buildOffersTab(context, shopOffers);
                   case 2:
@@ -374,9 +472,12 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
 
   // --- TAB SUB-PAGES ---
 
-  Widget _buildProductsTab(BuildContext context, List<ProductModel> products) {
+  Widget _buildProductsTab(BuildContext context, List<ProductModel> products, ShopModel shop) {
     if (products.isEmpty) {
-      return _buildEmptyTab('No active products posted by this merchant.', LucideIcons.packageOpen);
+      return _buildEmptyTab(
+        'No active products posted by this merchant.',
+        LucideIcons.packageOpen,
+      );
     }
     return GridView.builder(
       shrinkWrap: true,
@@ -386,46 +487,105 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
         crossAxisCount: 2,
         mainAxisSpacing: AppSpacing.s16,
         crossAxisSpacing: AppSpacing.s16,
-        childAspectRatio: 0.78,
+        childAspectRatio: 0.68, // Made slightly taller to fit buttons
       ),
       itemCount: products.length,
       itemBuilder: (context, index) {
         final p = products[index];
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ProductDetailsScreen(productId: p.id),
-              ),
-            );
-          },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                  child: FallbackImage(
-                    imageUrl: p.images.isNotEmpty ? p.images.first : '',
-                    fit: BoxFit.cover,
-                    width: double.infinity,
+        return FadeInSlide(
+          index: index,
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProductDetailsScreen(productId: p.id),
+                ),
+              );
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+                    child: Hero(
+                      tag: 'product_${p.id}_image',
+                      child: FallbackImage(
+                        imageUrl: p.images.isNotEmpty ? p.images.first : '',
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                p.name,
-                style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              SizedBox(height: 2),
-              Text(
-                '₹${p.discountPrice?.toStringAsFixed(0) ?? p.price.toStringAsFixed(0)}',
-                style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: context.colors.primary),
-              ),
-            ],
+                SizedBox(height: 8),
+                Text(
+                  p.name,
+                  style: AppTypography.caption.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 2),
+                Text(
+                  '₹${p.discountPrice?.toStringAsFixed(0) ?? p.price.toStringAsFixed(0)}',
+                  style: AppTypography.caption.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: context.colors.primary,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          side: BorderSide(color: context.colors.border),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+                          ),
+                        ),
+                        onPressed: () {
+                          showQueryBottomSheet(
+                            context,
+                            shopId: p.shopId,
+                            productId: p.id,
+                            category: p.category,
+                          );
+                        },
+                        child: Icon(LucideIcons.messageSquare, size: 14, color: context.colors.textPrimary),
+                      ),
+                    ),
+                    if (shop.whatsapp.isNotEmpty && shop.isWhatsappEnabled) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF25D366),
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+                            ),
+                          ),
+                          onPressed: () {
+                            showWhatsAppInquirySheet(
+                              context,
+                              shop: shop,
+                              product: p,
+                            );
+                          },
+                          child: const Icon(LucideIcons.messageCircle, size: 14, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -434,7 +594,10 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
 
   Widget _buildOffersTab(BuildContext context, List<OfferModel> offers) {
     if (offers.isEmpty) {
-      return _buildEmptyTab('No custom discount offers currently running.', LucideIcons.tag);
+      return _buildEmptyTab(
+        'No custom discount offers currently running.',
+        LucideIcons.tag,
+      );
     }
     return ListView.separated(
       shrinkWrap: true,
@@ -444,38 +607,59 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
       separatorBuilder: (context, index) => SizedBox(height: AppSpacing.s12),
       itemBuilder: (context, index) {
         final o = offers[index];
-        return BaseCard(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.s16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: context.colors.offerOrange.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
+        return FadeInSlide(
+          index: index,
+          child: BaseCard(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.s16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: context.colors.offerOrange.withValues(
+                              alpha: 0.1,
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            o.discount,
+                            style: AppTypography.label.copyWith(
+                              color: context.colors.offerOrange,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                        child: Text(
-                          o.discount,
-                          style: AppTypography.label.copyWith(
-                            color: context.colors.offerOrange,
+                        SizedBox(height: 8),
+                        Text(
+                          o.title,
+                          style: AppTypography.body.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(o.title, style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
-                      SizedBox(height: 4),
-                      Text(o.description, style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
-                    ],
+                        SizedBox(height: 4),
+                        Text(
+                          o.description,
+                          style: AppTypography.caption.copyWith(
+                            color: context.colors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Icon(LucideIcons.chevronRight, color: context.colors.textSecondary),
-              ],
+                  Icon(
+                    LucideIcons.chevronRight,
+                    color: context.colors.textSecondary,
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -495,32 +679,50 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
       separatorBuilder: (context, index) => SizedBox(height: AppSpacing.s16),
       itemBuilder: (context, index) {
         final post = posts[index];
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-              child: FallbackImage(
-                imageUrl: post.image,
-                fit: BoxFit.cover, 
-                width: double.infinity, 
-                height: 200,
+        return FadeInSlide(
+          index: index,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+                child: Hero(
+                  tag: 'post_${post.id}_image',
+                  child: FallbackImage(
+                    imageUrl: post.image,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: 200,
+                  ),
+                ),
               ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              post.caption,
-              style: AppTypography.caption.copyWith(height: 1.4),
-            ),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(LucideIcons.heart, size: 14, color: context.colors.textSecondary),
-                SizedBox(width: 4),
-                Text('${post.likes} likes', style: AppTypography.label.copyWith(color: context.colors.textSecondary)),
-              ],
-            ),
-          ],
+              SizedBox(height: 8),
+              Text(
+                post.caption,
+                style: AppTypography.caption.copyWith(height: 1.4),
+              ),
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  AnimatedActionIcon(
+                    icon: Icons.favorite_border,
+                    activeIcon: Icons.favorite,
+                    isActive: false, // You can link this to state later
+                    inactiveColor: context.colors.textSecondary,
+                    activeColor: context.colors.error,
+                    size: 16,
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    '${post.likes} likes',
+                    style: AppTypography.label.copyWith(
+                      color: context.colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         );
       },
     );
@@ -528,7 +730,10 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
 
   Widget _buildReviewsTab(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: AppSpacing.mobilePadding),
+      padding: const EdgeInsets.symmetric(
+        vertical: 40.0,
+        horizontal: AppSpacing.mobilePadding,
+      ),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -553,7 +758,9 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
             SizedBox(height: 4),
             Text(
               'Customers haven\'t left any reviews for this shop yet.',
-              style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
+              style: AppTypography.caption.copyWith(
+                color: context.colors.textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -564,7 +771,10 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
 
   Widget _buildEmptyTab(String msg, [IconData? icon]) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: AppSpacing.mobilePadding),
+      padding: const EdgeInsets.symmetric(
+        vertical: 40.0,
+        horizontal: AppSpacing.mobilePadding,
+      ),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -576,18 +786,16 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> with Sing
                   color: context.colors.border.withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  icon,
-                  size: 40,
-                  color: context.colors.secondary,
-                ),
+                child: Icon(icon, size: 40, color: context.colors.secondary),
               ),
               SizedBox(height: 16),
             ],
             Text(
               msg,
               textAlign: TextAlign.center,
-              style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
+              style: AppTypography.caption.copyWith(
+                color: context.colors.textSecondary,
+              ),
             ),
           ],
         ),

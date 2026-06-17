@@ -51,7 +51,7 @@ class ShellScreen extends ConsumerWidget {
     final shop = dbState.currentShop;
 
     return Scaffold(
-      body: IndexedStack(
+      body: _LazyIndexedStack(
         index: currentIndex,
         children: screens,
       ),
@@ -210,6 +210,52 @@ class ShellScreen extends ConsumerWidget {
   }
 }
 
+/// Lazy IndexedStack — only builds children when they are first visited.
+/// Prevents all tab screens from rendering simultaneously on startup.
+class _LazyIndexedStack extends StatefulWidget {
+  final int index;
+  final List<Widget> children;
+
+  const _LazyIndexedStack({
+    required this.index,
+    required this.children,
+  });
+
+  @override
+  State<_LazyIndexedStack> createState() => _LazyIndexedStackState();
+}
+
+class _LazyIndexedStackState extends State<_LazyIndexedStack> {
+  late final List<bool> _activated;
+
+  @override
+  void initState() {
+    super.initState();
+    _activated = List.generate(widget.children.length, (i) => i == widget.index);
+  }
+
+  @override
+  void didUpdateWidget(covariant _LazyIndexedStack oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_activated[widget.index]) {
+      _activated[widget.index] = true;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IndexedStack(
+      index: widget.index,
+      children: List.generate(widget.children.length, (i) {
+        if (_activated[i]) {
+          return widget.children[i];
+        }
+        return const SizedBox.shrink();
+      }),
+    );
+  }
+}
+
 class _ThemeOptionPill extends StatelessWidget {
   final String label;
   final bool isSelected;
@@ -261,3 +307,4 @@ class _ThemeOptionPill extends StatelessWidget {
     );
   }
 }
+

@@ -89,10 +89,13 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
     );
   }
 
+  bool _deferredStarted = false;
+
   void _listenToFirestore() {
     final firestore = FirebaseFirestore.instance;
 
-    _shopsSub = firestore.collection('shops').limit(100).snapshots().listen((snapshot) {
+    // Phase 1: Load shops first (smallest collection, needed for shell/home)
+    _shopsSub = firestore.collection('shops').limit(50).snapshots().listen((snapshot) {
       final shops = snapshot.docs.map((doc) => ShopModel.fromMap(doc.data())).toList();
       state = state.copyWith(shops: shops, isLoading: false);
       
@@ -104,7 +107,15 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
           state = state.copyWith(currentShop: shops[currentShopIndex]);
         }
       }
+
+      // Phase 2: Start remaining listeners after shops data is ready
+      _startDeferredListeners(firestore);
     });
+  }
+
+  void _startDeferredListeners(FirebaseFirestore firestore) {
+    if (_deferredStarted) return;
+    _deferredStarted = true;
 
     _productsSub = firestore.collection('products').orderBy('createdAt', descending: true).limit(200).snapshots().listen((snapshot) {
       final products = snapshot.docs.map((doc) => ProductModel.fromMap(doc.data())).toList();
@@ -120,8 +131,6 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
       final offers = snapshot.docs.map((doc) => OfferModel.fromMap(doc.data())).toList();
       state = state.copyWith(offers: offers);
     });
-
-
 
     _queriesSub = firestore.collection('queries').orderBy('createdAt', descending: true).limit(100).snapshots().listen((snapshot) {
       final queries = snapshot.docs.map((doc) => QueryModel.fromMap(doc.data())).toList();
@@ -160,6 +169,7 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
       title: state.currentShop.shopName,
       body: 'New Product Added: ${product.name} - Check it out now!',
       category: 'Offers',
+      imageUrl: product.images.isNotEmpty ? product.images.first : null,
     );
   }
 
@@ -220,6 +230,7 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
       title: state.currentShop.shopName,
       body: notifBody,
       category: post.type == PostType.offer ? 'Offers' : 'System',
+      imageUrl: post.image.isNotEmpty ? post.image : null,
     );
   }
 
@@ -228,6 +239,7 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
     required String title,
     required String body,
     required String category,
+    String? imageUrl,
   }) async {
     try {
       final firestore = FirebaseFirestore.instance;
@@ -251,6 +263,7 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
           'referenceId': shopId,
           'isRead': false,
           'createdAt': FieldValue.serverTimestamp(),
+          if (imageUrl != null) 'imageUrl': imageUrl,
         };
         final docRef = firestore.collection('notifications').doc(notificationId);
         batch.set(docRef, newNotification);
