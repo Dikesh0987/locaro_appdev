@@ -735,37 +735,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildAnalyticCard(
-    BuildContext context, 
-    String title, 
-    String value, 
-    IconData icon, 
-    Color color
-  ) {
-    return BaseCard(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 24),
-            SizedBox(height: 8),
-            Text(
-              value,
-              style: AppTypography.heading.copyWith(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            SizedBox(height: 2),
-            Text(
-              title,
-              style: AppTypography.label.copyWith(color: context.colors.textSecondary, fontSize: 10),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildMenuRow(
     BuildContext context, {
