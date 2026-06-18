@@ -263,7 +263,7 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
           'referenceId': shopId,
           'isRead': false,
           'createdAt': FieldValue.serverTimestamp(),
-          if (imageUrl != null) 'imageUrl': imageUrl,
+          'imageUrl': ?imageUrl,
         };
         final docRef = firestore.collection('notifications').doc(notificationId);
         batch.set(docRef, newNotification);
@@ -535,6 +535,26 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
   Future<void> updateCurrentUser(UserModel user) async {
     state = state.copyWith(currentUser: user);
     await FirebaseFirestore.instance.collection('users').doc(user.uid).update(user.toMap());
+  }
+
+  // Add Comment
+  Future<void> addComment(String itemId, String text) async {
+    final user = state.currentUser;
+    if (user.isGuest) return;
+
+    final commentId = 'comment_${DateTime.now().millisecondsSinceEpoch}_${user.uid}';
+    final newComment = {
+      'id': commentId,
+      'itemId': itemId,
+      'userId': user.uid,
+      'userName': user.name,
+      'userImage': user.profileImage,
+      'text': text,
+      'createdAt': Timestamp.now(),
+      'likes': 0,
+    };
+
+    await FirebaseFirestore.instance.collection('comments').doc(commentId).set(newComment);
   }
 
   // Update current shop profile

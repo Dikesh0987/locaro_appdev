@@ -92,7 +92,7 @@ class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
       centerTitle: false,
       leading: leadingWidget,
       actions: [
-        if (actions != null) ...actions!,
+        ...?actions,
         IconButton(
           icon: Badge(
             label: Text('$unreadCount'),

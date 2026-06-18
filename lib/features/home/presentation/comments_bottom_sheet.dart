@@ -5,58 +5,43 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/common/fallback_image.dart';
 
-class CommentsBottomSheet extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../providers/comments_provider.dart';
+import '../../../providers/app_state_providers.dart';
+import '../../../core/utils/time_ago.dart';
+import '../../auth/application/auth_service.dart';
+
+class CommentsBottomSheet extends ConsumerStatefulWidget {
   final String itemId;
   
   const CommentsBottomSheet({super.key, required this.itemId});
 
   @override
-  State<CommentsBottomSheet> createState() => _CommentsBottomSheetState();
+  ConsumerState<CommentsBottomSheet> createState() => _CommentsBottomSheetState();
 }
 
-class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
+class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
   final TextEditingController _commentController = TextEditingController();
-  final List<Map<String, dynamic>> _mockComments = [
-    {
-      'username': 'Rahul Sharma',
-      'userImage': 'https://i.pravatar.cc/150?img=11',
-      'text': 'Wow, that looks amazing! 😍 Is it available in store now?',
-      'time': '2h ago',
-      'likes': 12,
-    },
-    {
-      'username': 'Priya Patel',
-      'userImage': 'https://i.pravatar.cc/150?img=5',
-      'text': 'Great quality as always. Will visit soon.',
-      'time': '5h ago',
-      'likes': 4,
-    },
-    {
-      'username': 'Amit Kumar',
-      'userImage': 'https://i.pravatar.cc/150?img=33',
-      'text': 'Price please?',
-      'time': '1d ago',
-      'likes': 0,
-    },
-  ];
 
   void _addComment() {
     if (_commentController.text.trim().isEmpty) return;
-    setState(() {
-      _mockComments.insert(0, {
-        'username': 'You',
-        'userImage': '',
-        'text': _commentController.text.trim(),
-        'time': 'Just now',
-        'likes': 0,
-      });
-      _commentController.clear();
-    });
-    FocusScope.of(context).unfocus();
+    
+    ref.read(authServiceProvider).checkGuest(
+      context,
+      onAllowed: () {
+        final text = _commentController.text.trim();
+        _commentController.clear();
+        FocusScope.of(context).unfocus();
+        ref.read(databaseProvider.notifier).addComment(widget.itemId, text);
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final commentsAsync = ref.watch(commentsProvider(widget.itemId));
+    final currentUser = ref.watch(databaseProvider).currentUser;
+
     return Container(
       decoration: BoxDecoration(
         color: context.colors.surface,
@@ -107,87 +92,119 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
               
               // Comments List
               Flexible(
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.all(AppSpacing.mobilePadding),
-                  itemCount: _mockComments.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 20),
-                  itemBuilder: (context, index) {
-                    final comment = _mockComments[index];
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        FallbackAvatar(
-                          imageUrl: comment['userImage'],
-                          name: comment['username'],
-                          radius: 18,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    comment['username'],
-                                    style: AppTypography.body.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    comment['time'],
-                                    style: AppTypography.caption.copyWith(
-                                      color: context.colors.textSecondary,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                comment['text'],
-                                style: AppTypography.body.copyWith(
-                                  fontSize: 14,
-                                  height: 1.3,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Text(
-                                    'Reply',
-                                    style: AppTypography.caption.copyWith(
-                                      color: context.colors.textSecondary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                child: commentsAsync.when(
+                  data: (comments) {
+                    if (comments.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.all(AppSpacing.s32),
+                        child: Center(
+                          child: Text(
+                            'No comments yet. Be the first to comment!',
+                            style: AppTypography.body.copyWith(
+                              color: context.colors.textSecondary,
+                            ),
                           ),
                         ),
-                        Column(
+                      );
+                    }
+                    return ListView.separated(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.all(AppSpacing.mobilePadding),
+                      itemCount: comments.length,
+                      separatorBuilder: (context, index) => const SizedBox(height: 20),
+                      itemBuilder: (context, index) {
+                        final comment = comments[index];
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(LucideIcons.heart, size: 16, color: context.colors.textSecondary),
-                            if (comment['likes'] > 0)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4.0),
-                                child: Text(
-                                  '${comment['likes']}',
-                                  style: AppTypography.caption.copyWith(
-                                    color: context.colors.textSecondary,
-                                    fontSize: 10,
+                            FallbackAvatar(
+                              imageUrl: comment.userImage,
+                              name: comment.userName,
+                              radius: 18,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        comment.userName,
+                                        style: AppTypography.body.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        timeAgo(comment.createdAt),
+                                        style: AppTypography.caption.copyWith(
+                                          color: context.colors.textSecondary,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    comment.text,
+                                    style: AppTypography.body.copyWith(
+                                      fontSize: 14,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Reply',
+                                        style: AppTypography.caption.copyWith(
+                                          color: context.colors.textSecondary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
+                            ),
+                            Column(
+                              children: [
+                                Icon(LucideIcons.heart, size: 16, color: context.colors.textSecondary),
+                                if (comment.likes > 0)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4.0),
+                                    child: Text(
+                                      '${comment.likes}',
+                                      style: AppTypography.caption.copyWith(
+                                        color: context.colors.textSecondary,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ],
-                        ),
-                      ],
+                        );
+                      },
                     );
                   },
+                  loading: () => const Padding(
+                    padding: EdgeInsets.all(AppSpacing.s32),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (error, stack) => Padding(
+                    padding: const EdgeInsets.all(AppSpacing.s32),
+                    child: Center(
+                      child: Text(
+                        'Failed to load comments',
+                        style: AppTypography.body.copyWith(
+                          color: context.colors.error,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
               
@@ -205,9 +222,9 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                 ),
                 child: Row(
                   children: [
-                    const FallbackAvatar(
-                      imageUrl: '',
-                      name: 'You',
+                    FallbackAvatar(
+                      imageUrl: currentUser.profileImage,
+                      name: currentUser.name,
                       radius: 18,
                     ),
                     const SizedBox(width: 12),

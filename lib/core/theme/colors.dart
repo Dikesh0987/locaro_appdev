@@ -72,7 +72,7 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
   }
 
   static const light = AppColorsExtension(
-    primary: Color(0xFF0B1736),
+    primary: Color(0xFF132752),
     secondary: Color(0xFF6B7280),
     background: Color(0xFFFAFAFA),
     surface: Color(0xFFFFFFFF),

@@ -195,7 +195,7 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         DropdownButtonFormField<String>(
-                          value: _selectedProductId != null && shopProducts.any((p) => p.id == _selectedProductId) ? _selectedProductId : null,
+                          initialValue: _selectedProductId != null && shopProducts.any((p) => p.id == _selectedProductId) ? _selectedProductId : null,
                           hint: const Text('Select a Product'),
                           decoration: InputDecoration(
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppSpacing.inputRadius)),

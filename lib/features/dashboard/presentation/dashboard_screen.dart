@@ -142,7 +142,7 @@ class DashboardScreen extends ConsumerWidget {
                   style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
                 ),
                 value: shop.isActive,
-                activeColor: context.colors.success,
+                activeThumbColor: context.colors.success,
                 onChanged: (value) async {
                   final updatedShop = shop.copyWith(isActive: value);
                   await ref.read(databaseProvider.notifier).updateCurrentShop(updatedShop);

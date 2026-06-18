@@ -73,12 +73,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       
       final pDocs = await FirebaseFirestore.instance.collection('products')
           .where('name', isGreaterThanOrEqualTo: searchStr)
-          .where('name', isLessThan: searchStr + '\uf8ff')
+          .where('name', isLessThan: '$searchStr\uf8ff')
           .limit(20).get();
       
       final sDocs = await FirebaseFirestore.instance.collection('shops')
           .where('shopName', isGreaterThanOrEqualTo: searchStr)
-          .where('shopName', isLessThan: searchStr + '\uf8ff')
+          .where('shopName', isLessThan: '$searchStr\uf8ff')
           .limit(20).get();
 
       if (mounted) {

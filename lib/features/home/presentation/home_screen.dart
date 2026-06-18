@@ -377,8 +377,7 @@ class _ExpandableCaption extends StatefulWidget {
 
   const _ExpandableCaption({
     required this.text,
-    this.maxLines = 2,
-  });
+  }) : maxLines = 2;
 
   @override
   State<_ExpandableCaption> createState() => _ExpandableCaptionState();

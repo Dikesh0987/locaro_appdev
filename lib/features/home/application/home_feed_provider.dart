@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/app_state_providers.dart';
-import '../../../models/product_model.dart';
 
 enum FeedItemType { post, product, offer }
 

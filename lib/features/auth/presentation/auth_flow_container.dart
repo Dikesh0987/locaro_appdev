@@ -58,7 +58,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
   bool _isOtpSent = false;
   String? _verificationId;
   int? _resendToken;
-  List<String> _selectedCategories = [];
+  final List<String> _selectedCategories = [];
   String? _logoUrl;
   String? _bannerUrl;
 
