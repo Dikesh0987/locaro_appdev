@@ -20,14 +20,18 @@ void main() {
       if (d >= 47.5 && d <= 52.5) {
         if (d < 48.5) {
           alphaScale = d - 47.5;
-        } else if (d > 51.5) alphaScale = 52.5 - d;
+        } else if (d > 51.5) {
+          alphaScale = 52.5 - d;
+        }
         image.setPixelRgba(x, y, 255, 255, 255, (89 * alphaScale).toInt());
       }
       // Middle circle (r=36, stroke=3, opacity=0.6 -> alpha ~ 153)
       else if (d >= 33.5 && d <= 38.5) {
         if (d < 34.5) {
           alphaScale = d - 33.5;
-        } else if (d > 37.5) alphaScale = 38.5 - d;
+        } else if (d > 37.5) {
+          alphaScale = 38.5 - d;
+        }
         // Blend with possible outer circle? They don't overlap.
         image.setPixelRgba(x, y, 255, 255, 255, (153 * alphaScale).toInt());
       }
@@ -59,5 +63,5 @@ void main() {
   
   final file = File('android/app/src/main/res/drawable/ic_notification.png');
   file.writeAsBytesSync(encodePng(resized));
-  print('Saved to \${file.path}');
+  stdout.writeln('Saved to ${file.path}');
 }

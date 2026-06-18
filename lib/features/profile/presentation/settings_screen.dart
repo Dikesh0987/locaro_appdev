@@ -141,31 +141,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: _languages.map((lang) {
-              return RadioListTile<String>(
+              return ListTile(
                 title: Text(lang, style: AppTypography.body),
-                value: lang,
-                groupValue: _selectedLanguage,
-                activeColor: context.colors.primary,
-                onChanged: (val) async {
-                  if (val != null) {
-                    setState(() => _selectedLanguage = val);
-                    Navigator.pop(dialogContext);
+                leading: Icon(
+                  _selectedLanguage == lang ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                  color: _selectedLanguage == lang ? context.colors.primary : Theme.of(context).disabledColor,
+                ),
+                onTap: () async {
+                  final val = lang;
+                  setState(() => _selectedLanguage = val);
+                  Navigator.pop(dialogContext);
 
-                    final user = ref.read(databaseProvider).currentUser;
-                    if (!user.isGuest) {
-                      final updatedUser = user.copyWith(language: val);
-                      await ref
-                          .read(databaseProvider.notifier)
-                          .updateCurrentUser(updatedUser);
-                    }
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Language changed to $val'),
-                          duration: const Duration(seconds: 1),
-                        ),
-                      );
-                    }
+                  final user = ref.read(databaseProvider).currentUser;
+                  if (!user.isGuest) {
+                    final updatedUser = user.copyWith(language: val);
+                    await ref
+                        .read(databaseProvider.notifier)
+                        .updateCurrentUser(updatedUser);
+                  }
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Language changed to $val'),
+                        duration: const Duration(seconds: 1),
+                      ),
+                    );
                   }
                 },
               );
@@ -380,6 +380,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             );
                           } catch (e) {
                             setState(() => isLoading = false);
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Error: $e')),
                             );
@@ -455,6 +456,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             }
                           } catch (e) {
                             setState(() => isLoading = false);
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('Invalid OTP or error: $e'),

@@ -9,59 +9,88 @@ import 'routes/app_routes.dart';
 import 'providers/app_state_providers.dart';
 import 'core/services/fcm_service.dart';
 import 'core/widgets/common/network_overlay_wrapper.dart';
+import 'features/auth/presentation/splash_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
   
   // Set the background messaging handler early on, as a named top-level function
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  // Firestore persistence — synchronous, no await needed
-  FirebaseFirestore.instance.settings = const Settings(
-    persistenceEnabled: true,
-  );
-
   final container = ProviderContainer();
 
-  // Render UI immediately — don't block on FCM/Google init
+  // Render UI immediately — don't block on FCM/Google/Firebase init
   runApp(UncontrolledProviderScope(
     container: container,
-    child: const LocaroApp(),
+    child: LocaroApp(container: container),
   ));
+}
 
-  // Non-blocking: Initialize FCM & Google Sign-In after the first frame renders
-  WidgetsBinding.instance.addPostFrameCallback((_) async {
-    await fcmService.init(navigatorKey, container);
+class LocaroApp extends ConsumerStatefulWidget {
+  final ProviderContainer container;
+  
+  const LocaroApp({super.key, required this.container});
+
+  @override
+  ConsumerState<LocaroApp> createState() => _LocaroAppState();
+}
+
+class _LocaroAppState extends ConsumerState<LocaroApp> {
+  Future<void>? _initFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _initFuture = _initializeServices();
+  }
+
+  Future<void> _initializeServices() async {
+    await Firebase.initializeApp();
+    
+    // Firestore persistence — synchronous, no await needed
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+    );
+
+    await fcmService.init(navigatorKey, widget.container);
     try {
       await GoogleSignIn.instance.initialize();
     } catch (_) {
       // Ignore configuration errors on unsupported desktop/test platforms
     }
-  });
-}
-
-class LocaroApp extends ConsumerWidget {
-  const LocaroApp({super.key});
+  }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(appThemeModeProvider);
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: _initFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          // Show the splash screen while Firebase initializes
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: const SplashScreen(),
+          );
+        }
 
-    return MaterialApp(
-      title: 'Locaro',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode,
-      navigatorKey: navigatorKey,
-      initialRoute: AppRoutes.initial,
-      routes: AppRoutes.routes,
-      builder: (context, child) {
-        return NetworkOverlayWrapper(
-          child: child ?? const SizedBox(),
+        final themeMode = ref.watch(appThemeModeProvider);
+
+        return MaterialApp(
+          title: 'Locaro',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeMode,
+          navigatorKey: navigatorKey,
+          initialRoute: AppRoutes.initial,
+          routes: AppRoutes.routes,
+          builder: (context, child) {
+            return NetworkOverlayWrapper(
+              child: child ?? const SizedBox(),
+            );
+          },
         );
       },
     );

@@ -554,6 +554,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                             );
                           } catch (e) {
                             setSheetState(() => isSheetLoading = false);
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text(FirebaseErrorHandler.handleGenericException(e))),
                             );
@@ -593,6 +594,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                             await handlePhoneSuccess(credential);
                           } on fb.FirebaseAuthException catch (e) {
                             setSheetState(() => isSheetLoading = false);
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(FirebaseErrorHandler.handleAuthException(e)),
@@ -601,6 +603,7 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
                             );
                           } catch (e) {
                             setSheetState(() => isSheetLoading = false);
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(FirebaseErrorHandler.handleGenericException(e)),

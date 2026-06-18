@@ -80,11 +80,11 @@ flutter_launcher_icons:
 flutter_native_splash:
   color: "#132752"
   color_dark: "#0F172A"
-  image: "assets/branding/locaro-icon-512.png"
+  image: "assets/branding/splash-logo-vector.png"
   android_12:
     color: "#132752"
     color_dark: "#0F172A"
-    image: "assets/branding/locaro-icon-512.png"
+    image: "assets/branding/splash-logo-vector.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

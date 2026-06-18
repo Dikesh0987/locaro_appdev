@@ -1415,6 +1415,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             );
                           } catch (e) {
                             setSheetState(() => isSheetLoading = false);
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text(FirebaseErrorHandler.handleGenericException(e))),
                             );
@@ -1469,6 +1470,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             }
                           } on fb.FirebaseAuthException catch (e) {
                             setSheetState(() => isSheetLoading = false);
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(FirebaseErrorHandler.handleAuthException(e)),
@@ -1477,6 +1479,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             );
                           } catch (e) {
                             setSheetState(() => isSheetLoading = false);
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(FirebaseErrorHandler.handleGenericException(e)),
@@ -1844,6 +1847,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 );
               } catch (e) {
                 setSheetState(() => isLoading = false);
+                if (!ctx.mounted) return;
                 ScaffoldMessenger.of(ctx).showSnackBar(
                   SnackBar(content: Text('Failed to send OTP: $e')),
                 );
@@ -1868,6 +1872,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 }
               } catch (e) {
                 setSheetState(() => isLoading = false);
+                if (!ctx.mounted) return;
                 ScaffoldMessenger.of(ctx).showSnackBar(
                   SnackBar(content: Text('Invalid OTP: $e')),
                 );

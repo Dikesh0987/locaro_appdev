@@ -110,6 +110,7 @@ class WelcomeScreen extends ConsumerWidget {
                             );
                           } catch (e) {
                             setState(() => isLoading = false);
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
                           }
                         },
@@ -143,6 +144,7 @@ class WelcomeScreen extends ConsumerWidget {
                             if (context.mounted) Navigator.pop(context);
                           } catch (e) {
                             setState(() => isLoading = false);
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Invalid OTP or error: $e')));
                           }
                         },
