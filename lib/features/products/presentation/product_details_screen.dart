@@ -129,7 +129,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                     ),
                     // Header Actions (Back & Save)
                     Positioned(
-                      top: 50,
+                      top: MediaQuery.of(context).padding.top + 16,
                       left: AppSpacing.mobilePadding,
                       right: AppSpacing.mobilePadding,
                       child: Row(
@@ -319,11 +319,11 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.only(
+              padding: EdgeInsets.only(
                 left: AppSpacing.mobilePadding,
                 right: AppSpacing.mobilePadding,
                 top: AppSpacing.s16,
-                bottom: 24,
+                bottom: MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom + 8 : 24,
               ),
               decoration: BoxDecoration(
                 color: context.colors.surface,
@@ -393,7 +393,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                             icon: const Icon(LucideIcons.messageCircle, color: Colors.white, size: 18),
                             label: const Text('WhatsApp', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF25D366), // WhatsApp Green
+                              backgroundColor: context.colors.primary,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),

@@ -22,6 +22,7 @@ class BottomNavBar extends StatelessWidget {
             _NavItem(icon: LucideIcons.home, label: 'Home'),
             _NavItem(icon: LucideIcons.compass, label: 'Discover'),
             _NavItem(icon: LucideIcons.heart, label: 'Following'),
+            _NavItem(icon: LucideIcons.messageSquare, label: 'Inbox'),
             _NavItem(icon: LucideIcons.user, label: 'Profile'),
           ]
         : const [
@@ -59,27 +60,15 @@ class BottomNavBar extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         AnimatedScale(
-                          scale: isSelected ? 1.15 : 1.0,
+                          scale: isSelected ? 1.2 : 1.0,
                           duration: const Duration(milliseconds: 200),
                           child: Icon(
                             item.icon,
-                            size: 22,
+                            size: 26,
                             color: isSelected
                                 ? context.colors.primary
                                 : context.colors.secondary,
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 200),
-                          style: AppTypography.label.copyWith(
-                            fontSize: 10,
-                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                            color: isSelected
-                                ? context.colors.primary
-                                : context.colors.secondary,
-                          ),
-                          child: Text(item.label),
                         ),
                       ],
                     ),

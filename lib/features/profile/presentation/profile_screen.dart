@@ -302,7 +302,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               icon: LucideIcons.messageSquare,
               label: 'My Queries',
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const SentQueriesScreen()));
+                ref.read(bottomNavIndexProvider.notifier).state = 3;
               },
             ),
 

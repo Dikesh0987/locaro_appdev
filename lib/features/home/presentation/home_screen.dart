@@ -24,6 +24,7 @@ import '../../../core/utils/page_transitions.dart';
 import '../application/home_feed_provider.dart';
 import '../../../core/widgets/animations/fade_in_slide.dart';
 import '../../products/presentation/product_details_screen.dart';
+import 'package:share_plus/share_plus.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -633,7 +634,12 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
               ),
               const SizedBox(width: 16),
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  final text = widget.linkedProduct != null
+                      ? 'Check out ${widget.linkedProduct!.name} from ${widget.shopName} on Locaro!\n\n${widget.post.caption}'
+                      : 'Check out this update from ${widget.shopName} on Locaro!\n\n${widget.post.caption}';
+                  Share.share(text);
+                },
                 child: Icon(LucideIcons.send, size: 20, color: context.colors.textSecondary),
               ),
               const Spacer(),
@@ -953,7 +959,10 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
               ),
               const SizedBox(width: 16),
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  final text = 'Check out ${widget.product.name} at ${widget.shop.shopName} on Locaro!\n\n${widget.product.description}';
+                  Share.share(text);
+                },
                 child: Icon(LucideIcons.send, size: 20, color: context.colors.textSecondary),
               ),
               const Spacer(),
@@ -1215,7 +1224,10 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
               ),
               const SizedBox(width: 16),
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  final text = 'Check out this offer on Locaro!\n\n${widget.offer.title}\n${widget.offer.description}';
+                  Share.share(text);
+                },
                 child: Icon(LucideIcons.send, size: 20, color: context.colors.textSecondary),
               ),
             ],

@@ -80,33 +80,54 @@ class _NetworkOverlayWrapperState extends State<NetworkOverlayWrapper> {
         widget.child,
         if (_showBanner || !_isConnected)
           Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
+            bottom: 24,
+            left: 16,
+            right: 16,
             child: SafeArea(
               child: AnimatedSlide(
-                offset: (_showBanner || !_isConnected) ? Offset.zero : const Offset(0, -1),
+                offset: (_showBanner || !_isConnected) ? Offset.zero : const Offset(0, 1),
                 duration: const Duration(milliseconds: 400),
                 curve: Curves.easeOutBack,
                 child: Material(
-                  elevation: 4,
+                  elevation: 6,
+                  borderRadius: BorderRadius.circular(12),
+                  color: _isConnected ? Colors.green.shade800 : Colors.red.shade800,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    color: _isConnected ? Colors.green.shade600 : Colors.red.shade600,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Icon(
-                          _isConnected ? LucideIcons.wifi : LucideIcons.wifiOff,
+                          _isConnected ? LucideIcons.checkCircle2 : LucideIcons.wifiOff,
                           color: Colors.white,
-                          size: 16,
+                          size: 24,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _isConnected ? 'Back Online' : 'No Internet Connection',
-                          style: AppTypography.body.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _isConnected ? 'Back Online' : 'No Internet Connection',
+                                style: AppTypography.body.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (!_isConnected) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Please check your internet connection.',
+                                  style: AppTypography.caption.copyWith(
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                  ),
+                                ),
+                              ]
+                            ],
                           ),
                         ),
                       ],

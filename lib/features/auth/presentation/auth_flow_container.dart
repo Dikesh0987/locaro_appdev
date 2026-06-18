@@ -779,24 +779,6 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
             text: 'Continue with Google',
             onPressed: _handleGoogleSignIn,
           ),
-          if (!isShop) ...[
-            SizedBox(height: AppSpacing.s16),
-            Center(
-              child: ScaleButtonPressed(
-                onTap: _isLoading ? () {} : _handleGuestSignIn,
-                child: TextButton(
-                  onPressed: null, // Let ScaleButtonPressed handle the tap
-                  child: Text(
-                    'Continue as Guest',
-                    style: AppTypography.body.copyWith(
-                      color: context.colors.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
           SizedBox(height: AppSpacing.s12),
         ],
       ),

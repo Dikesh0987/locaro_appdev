@@ -16,6 +16,7 @@ import '../../posts/presentation/post_management_screen.dart';
 import '../../auth/presentation/splash_screen.dart';
 import '../../auth/application/auth_service.dart';
 import '../../queries/presentation/query_center_screen.dart';
+import '../../queries/presentation/sent_queries_screen.dart';
 
 class ShellScreen extends ConsumerWidget {
   const ShellScreen({super.key});
@@ -37,6 +38,7 @@ class ShellScreen extends ConsumerWidget {
             HomeScreen(),
             DiscoverScreen(),
             FollowingScreen(),
+            SentQueriesScreen(),
             ProfileScreen(),
           ]
         : const [
@@ -113,7 +115,7 @@ class ShellScreen extends ConsumerWidget {
                       },
                     ),
 
-                    if (role == 'user')
+                    if (role == 'user') ...[
                       ListTile(
                         leading: Icon(LucideIcons.heart, color: context.colors.primary),
                         title: Text('Following Updates', style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
@@ -122,12 +124,21 @@ class ShellScreen extends ConsumerWidget {
                           ref.read(bottomNavIndexProvider.notifier).state = 2;
                         },
                       ),
+                      ListTile(
+                        leading: Icon(LucideIcons.messageSquare, color: context.colors.primary),
+                        title: Text('My Queries', style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
+                        onTap: () {
+                          Navigator.pop(context);
+                          ref.read(bottomNavIndexProvider.notifier).state = 3;
+                        },
+                      ),
+                    ],
                     ListTile(
                       leading: Icon(LucideIcons.user, color: context.colors.primary),
                       title: Text('My Profile', style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
                       onTap: () {
                         Navigator.pop(context);
-                        ref.read(bottomNavIndexProvider.notifier).state = 3;
+                        ref.read(bottomNavIndexProvider.notifier).state = 4;
                       },
                     ),
                     const Divider(),

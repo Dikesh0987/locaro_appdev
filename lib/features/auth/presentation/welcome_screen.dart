@@ -256,26 +256,6 @@ class WelcomeScreen extends ConsumerWidget {
                   ref.read(authControllerProvider.notifier).signInWithGoogle('user');
                 },
               ),
-              const SizedBox(height: AppSpacing.s16),
-              Center(
-                child: ScaleButtonPressed(
-                  onTap: isLoading
-                      ? () {}
-                      : () {
-                          ref.read(authControllerProvider.notifier).signInAsGuest();
-                        },
-                  child: TextButton(
-                    onPressed: null, // Let ScaleButtonPressed handle the tap
-                    child: Text(
-                      'Continue as Guest',
-                      style: AppTypography.body.copyWith(
-                        color: context.colors.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
               const SizedBox(height: AppSpacing.s12),
             ],
           ),
