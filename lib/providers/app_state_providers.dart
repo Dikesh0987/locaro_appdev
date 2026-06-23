@@ -559,8 +559,15 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
 
   // Update current shop profile
   Future<void> updateCurrentShop(ShopModel shop) async {
-    state = state.copyWith(currentShop: shop);
-    await FirebaseFirestore.instance.collection('shops').doc(shop.id).set(shop.toMap());
+    final updatedShops = List<ShopModel>.from(state.shops);
+    final index = updatedShops.indexWhere((s) => s.id == shop.id);
+    if (index != -1) {
+      updatedShops[index] = shop;
+    }
+    state = state.copyWith(currentShop: shop, shops: updatedShops);
+    
+    // We use set with merge: true to avoid losing unmapped fields while ensuring all current fields are updated
+    await FirebaseFirestore.instance.collection('shops').doc(shop.id).set(shop.toMap(), SetOptions(merge: true));
   }
 
 

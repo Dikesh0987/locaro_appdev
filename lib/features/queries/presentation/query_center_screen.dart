@@ -7,6 +7,8 @@ import '../../../core/theme/typography.dart';
 import '../../../models/query_model.dart';
 import '../../../providers/app_state_providers.dart';
 
+import '../../../core/widgets/navigation/top_app_bar.dart';
+
 class QueryCenterScreen extends ConsumerStatefulWidget {
   const QueryCenterScreen({super.key});
 
@@ -79,26 +81,38 @@ class _QueryCenterScreenState extends ConsumerState<QueryCenterScreen> {
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Query Center', style: AppTypography.heading.copyWith(fontSize: 20)),
-        backgroundColor: context.colors.surface,
-        elevation: 0,
-        iconTheme: IconThemeData(color: context.colors.primary),
-      ),
+      appBar: const TopAppBar(),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.mobilePadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Query Center', style: AppTypography.heading),
+                const SizedBox(height: 4),
+                Text(
+                  'Manage and reply to customer inquiries.',
+                  style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
+                ),
+              ],
+            ),
+          ),
           // Filter Tabs
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding, vertical: 8),
             decoration: BoxDecoration(
               color: context.colors.surface,
               border: Border(bottom: BorderSide(color: context.colors.border)),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildFilterTab('Pending', 'pending'),
+                const SizedBox(width: 8),
                 _buildFilterTab('Answered', 'answered'),
+                const SizedBox(width: 8),
                 _buildFilterTab('Closed', 'closed'),
               ],
             ),
@@ -228,19 +242,35 @@ class _QueryCenterScreenState extends ConsumerState<QueryCenterScreen> {
 
   Widget _buildFilterTab(String label, String value) {
     final isSelected = _statusFilter == value;
-    return GestureDetector(
-      onTap: () => setState(() => _statusFilter = value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? context.colors.primary.withValues(alpha: 0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? context.colors.primary : context.colors.textSecondary,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _statusFilter = value),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? context.colors.primary : context.colors.surface,
+            borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+            border: Border.all(color: isSelected ? context.colors.primary : context.colors.border),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: context.colors.primary.withValues(alpha: 0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    )
+                  ]
+                : null,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? context.colors.surface : context.colors.textSecondary,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+              fontSize: 13,
+            ),
           ),
         ),
       ),

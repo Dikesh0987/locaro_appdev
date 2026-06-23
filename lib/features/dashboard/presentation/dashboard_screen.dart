@@ -59,13 +59,13 @@ class DashboardScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: context.colors.success.withValues(alpha: 0.1),
+                          color: shop.isOnline ? context.colors.success.withValues(alpha: 0.1) : context.colors.error.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(100),
                         ),
                         child: Text(
-                          'Store Verified & Online',
+                          shop.isVerified ? (shop.isOnline ? 'Store Verified & Online' : 'Store Verified & Offline') : (shop.isOnline ? 'Store Online' : 'Store Offline'),
                           style: AppTypography.label.copyWith(
-                            color: context.colors.success,
+                            color: shop.isOnline ? context.colors.success : context.colors.error,
                             fontWeight: FontWeight.bold,
                             fontSize: 10,
                           ),
