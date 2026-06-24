@@ -20,7 +20,7 @@ import '../../auth/application/auth_service.dart';
 import '../../auth/data/auth_repository.dart';
 import 'settings_screen.dart';
 import '../../../core/widgets/common/skeleton_loaders.dart';
-import '../../queries/presentation/sent_queries_screen.dart';
+
 import 'package:permission_handler/permission_handler.dart';
 import '../../../core/services/permission_service.dart';
 import 'dart:async';

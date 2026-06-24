@@ -158,27 +158,16 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Publish Shop Update', style: AppTypography.heading),
-              SizedBox(height: AppSpacing.s8),
-              Text(
-                'Publish product updates, announcements, or custom limited offers to neighborhood feeds.',
-                style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
-              ),
-              SizedBox(height: AppSpacing.s24),
-
-              // Post Type Selector
-              Text('Select Post Category', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
-              SizedBox(height: AppSpacing.s12),
               Row(
                 children: [
                   _buildTypeTab(PostType.product, 'Product', LucideIcons.shoppingBag),
                   SizedBox(width: AppSpacing.s8),
-                  _buildTypeTab(PostType.offer, 'Offer Coupon', LucideIcons.percent),
+                  _buildTypeTab(PostType.offer, 'Offer', LucideIcons.percent),
                   SizedBox(width: AppSpacing.s8),
-                  _buildTypeTab(PostType.update, 'Status Update', LucideIcons.sparkles),
+                  _buildTypeTab(PostType.update, 'Update', LucideIcons.sparkles),
                 ],
               ),
-              SizedBox(height: AppSpacing.s24),
+              SizedBox(height: AppSpacing.s16),
 
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
@@ -211,7 +200,7 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
                     children: [
                       // --- PRODUCT POST UI ---
                       if (_selectedType == PostType.product) ...[
-                        Text('Feature a Product', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
+                        Text('Feature a Product', style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
                         SizedBox(height: AppSpacing.s12),
                         Consumer(
                           builder: (context, ref, _) {
@@ -224,13 +213,14 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 DropdownButtonFormField<String>(
+                                  isExpanded: true,
                                   initialValue: _selectedProductId != null && shopProducts.any((p) => p.id == _selectedProductId) ? _selectedProductId : null,
                                   hint: const Text('Select a Product'),
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppSpacing.inputRadius)),
                                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                   ),
-                                  items: shopProducts.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name))).toList(),
+                                  items: shopProducts.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name, style: AppTypography.body, maxLines: 1, overflow: TextOverflow.ellipsis))).toList(),
                                   onChanged: (val) => setState(() => _selectedProductId = val),
                                 ),
                                 if (_selectedProductId != null) ...[
@@ -281,7 +271,7 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
                           },
                         ),
                         SizedBox(height: AppSpacing.s24),
-                        Text('Add Custom Caption (Optional)', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
+                        Text('Add Custom Caption (Optional)', style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
                         SizedBox(height: AppSpacing.s12),
                         TextFormField(
                           controller: _captionController,
@@ -295,7 +285,7 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
 
                       // --- OFFER POST UI ---
                       if (_selectedType == PostType.offer) ...[
-                        Text('Offer Details', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
+                        Text('Offer Details', style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
                         SizedBox(height: AppSpacing.s12),
                         TextFormField(
                           controller: _offerTitleController,
@@ -332,11 +322,11 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
                           ],
                         ),
                         SizedBox(height: AppSpacing.s24),
-                        Text('Offer Banner Image', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
+                        Text('Offer Banner Image', style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
                         SizedBox(height: AppSpacing.s12),
                         _buildImagePicker(context),
                         SizedBox(height: AppSpacing.s24),
-                        Text('Caption Text', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
+                        Text('Caption Text', style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
                         SizedBox(height: AppSpacing.s12),
                         TextFormField(
                           controller: _captionController,
@@ -351,11 +341,11 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
 
                       // --- STATUS UPDATE POST UI ---
                       if (_selectedType == PostType.update) ...[
-                        Text('Status Image', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
+                        Text('Status Image', style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
                         SizedBox(height: AppSpacing.s12),
                         _buildImagePicker(context),
                         SizedBox(height: AppSpacing.s24),
-                        Text('Status Update Text', style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold)),
+                        Text('Status Update Text', style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
                         SizedBox(height: AppSpacing.s12),
                         TextFormField(
                           controller: _captionController,
@@ -423,7 +413,7 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
                 label,
                 style: AppTypography.label.copyWith(
                   color: isSelected ? context.colors.surface : context.colors.textPrimary,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
                 maxLines: 1,

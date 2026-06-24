@@ -171,36 +171,8 @@ class _AuthFlowContainerState extends ConsumerState<AuthFlowContainer> {
     }
   }
 
-  Future<void> _handleGuestSignIn() async {
-    if (_isLoading) return;
-    setState(() => _isLoading = true);
-    try {
-      await ref.read(authControllerProvider.notifier).signInAsGuest();
 
-      final authState = ref.read(authControllerProvider);
-      if (authState is AuthFailure) {
-        throw Exception(authState.errorMessage);
-      }
 
-      if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: context.colors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
 
   Future<void> _completeAuth() async {
     if (_isLoading) return;

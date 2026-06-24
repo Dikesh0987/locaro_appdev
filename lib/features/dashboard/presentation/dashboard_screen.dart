@@ -56,18 +56,44 @@ class DashboardScreen extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: shop.isOnline ? context.colors.success.withValues(alpha: 0.1) : context.colors.error.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                        child: Text(
-                          shop.isVerified ? (shop.isOnline ? 'Store Verified & Online' : 'Store Verified & Offline') : (shop.isOnline ? 'Store Online' : 'Store Offline'),
-                          style: AppTypography.label.copyWith(
-                            color: shop.isOnline ? context.colors.success : context.colors.error,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10,
+                      GestureDetector(
+                        onTap: () async {
+                          final updatedShop = shop.copyWith(showOnlineStatus: !shop.showOnlineStatus);
+                          await ref.read(databaseProvider.notifier).updateCurrentShop(updatedShop);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: shop.showOnlineStatus ? context.colors.success.withValues(alpha: 0.1) : context.colors.error.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: shop.showOnlineStatus ? context.colors.success : context.colors.error,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                shop.isVerified ? (shop.showOnlineStatus ? 'Verified & Online' : 'Verified & Offline') : (shop.showOnlineStatus ? 'Online' : 'Offline'),
+                                style: AppTypography.label.copyWith(
+                                  color: shop.showOnlineStatus ? context.colors.success : context.colors.error,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                LucideIcons.chevronDown,
+                                size: 12,
+                                color: shop.showOnlineStatus ? context.colors.success : context.colors.error,
+                              ),
+                            ],
                           ),
                         ),
                       ),

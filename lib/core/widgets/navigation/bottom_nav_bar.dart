@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/colors.dart';
-import '../../theme/typography.dart';
+
 import 'package:lucide_flutter/lucide_flutter.dart';
 
 class BottomNavBar extends StatelessWidget {

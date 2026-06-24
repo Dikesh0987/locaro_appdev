@@ -638,7 +638,7 @@ class _FeedCardState extends ConsumerState<_FeedCard> {
                   final text = widget.linkedProduct != null
                       ? 'Check out ${widget.linkedProduct!.name} from ${widget.shopName} on Locaro!\n\n${widget.post.caption}'
                       : 'Check out this update from ${widget.shopName} on Locaro!\n\n${widget.post.caption}';
-                  Share.share(text);
+                  SharePlus.instance.share(ShareParams(text: text));
                 },
                 child: Icon(LucideIcons.send, size: 20, color: context.colors.textSecondary),
               ),
@@ -961,7 +961,7 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
               GestureDetector(
                 onTap: () {
                   final text = 'Check out ${widget.product.name} at ${widget.shop.shopName} on Locaro!\n\n${widget.product.description}';
-                  Share.share(text);
+                  SharePlus.instance.share(ShareParams(text: text));
                 },
                 child: Icon(LucideIcons.send, size: 20, color: context.colors.textSecondary),
               ),
@@ -1226,7 +1226,7 @@ class _OfferFeedCardState extends ConsumerState<_OfferFeedCard>
               GestureDetector(
                 onTap: () {
                   final text = 'Check out this offer on Locaro!\n\n${widget.offer.title}\n${widget.offer.description}';
-                  Share.share(text);
+                  SharePlus.instance.share(ShareParams(text: text));
                 },
                 child: Icon(LucideIcons.send, size: 20, color: context.colors.textSecondary),
               ),

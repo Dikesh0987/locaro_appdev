@@ -350,7 +350,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                     const SizedBox(height: AppSpacing.s12),
                 itemBuilder: (context, index) {
                   final o = offers[index];
-                  final shop = shops.firstWhere((s) => s.id == o.shopId);
+                  final shop = shops.where((s) => s.id == o.shopId).firstOrNull;
+                  if (shop == null) return const SizedBox.shrink();
 
                   return FadeInSlide(
                     index: index,

@@ -6,6 +6,8 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../providers/app_state_providers.dart';
 
+import '../../../core/widgets/navigation/top_app_bar.dart';
+
 class SentQueriesScreen extends ConsumerWidget {
   const SentQueriesScreen({super.key});
 
@@ -21,12 +23,7 @@ class SentQueriesScreen extends ConsumerWidget {
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('My Queries', style: AppTypography.heading.copyWith(fontSize: 20)),
-        backgroundColor: context.colors.surface,
-        elevation: 0,
-        iconTheme: IconThemeData(color: context.colors.primary),
-      ),
+      appBar: const TopAppBar(),
       body: queries.isEmpty
           ? Center(
               child: Column(
@@ -44,7 +41,25 @@ class SentQueriesScreen extends ConsumerWidget {
                 ],
               ),
             )
-          : ListView.separated(
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.mobilePadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('My Queries', style: AppTypography.heading),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Track and manage your questions to shops.',
+                        style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView.separated(
               padding: const EdgeInsets.all(AppSpacing.mobilePadding),
               itemCount: queries.length,
               separatorBuilder: (context, index) => const SizedBox(height: 12),
@@ -154,6 +169,9 @@ class SentQueriesScreen extends ConsumerWidget {
                   ),
                 );
               },
+            ),
+                ),
+              ],
             ),
     );
   }

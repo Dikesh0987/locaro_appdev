@@ -85,20 +85,6 @@ class _QueryCenterScreenState extends ConsumerState<QueryCenterScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.mobilePadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Query Center', style: AppTypography.heading),
-                const SizedBox(height: 4),
-                Text(
-                  'Manage and reply to customer inquiries.',
-                  style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
-                ),
-              ],
-            ),
-          ),
           // Filter Tabs
           Container(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mobilePadding, vertical: 8),

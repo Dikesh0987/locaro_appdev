@@ -127,7 +127,8 @@ class FollowingScreen extends ConsumerWidget {
                           separatorBuilder: (context, index) => SizedBox(width: AppSpacing.s16),
                           itemBuilder: (context, index) {
                             final offer = offers[index];
-                            final shop = followedShops.firstWhere((s) => s.id == offer.shopId);
+                            final shop = followedShops.where((s) => s.id == offer.shopId).firstOrNull;
+                            if (shop == null) return const SizedBox.shrink();
                             return _OfferCard(offer: offer, shop: shop);
                           },
                         ),
@@ -151,7 +152,8 @@ class FollowingScreen extends ConsumerWidget {
                             separatorBuilder: (context, index) => SizedBox(height: AppSpacing.s16),
                             itemBuilder: (context, index) {
                               final post = posts[index];
-                              final shop = followedShops.firstWhere((s) => s.id == post.shopId);
+                              final shop = followedShops.where((s) => s.id == post.shopId).firstOrNull;
+                              if (shop == null) return const SizedBox.shrink();
                               return _PostCard(post: post, shop: shop);
                             },
                           ),

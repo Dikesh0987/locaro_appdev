@@ -6,7 +6,7 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/buttons/secondary_button.dart';
-import '../../../core/widgets/common/scale_button.dart';
+
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'auth_controller.dart';
 import 'auth_state.dart';
