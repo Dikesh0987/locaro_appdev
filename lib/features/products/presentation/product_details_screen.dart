@@ -11,6 +11,7 @@ import '../../shop/presentation/shop_profile_screen.dart';
 import '../../auth/application/auth_service.dart';
 import '../../../core/widgets/common/skeleton_loaders.dart';
 import '../../../core/widgets/common/animated_action_icon.dart';
+import '../../../core/widgets/navigation/top_app_bar.dart';
 
 import '../../queries/presentation/whatsapp_inquiry_bottom_sheet.dart';
 import '../../queries/presentation/query_bottom_sheet.dart';
@@ -71,11 +72,30 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
     }
 
     return Scaffold(
-      body: SafeArea(
-        top: true,
-        bottom: false,
-        child: Stack(
-          children: [
+      appBar: TopAppBar(
+        title: product.name,
+        showDefaultActions: false,
+        actions: [
+          IconButton(
+            icon: AnimatedActionIcon(
+              icon: LucideIcons.bookmark,
+              activeIcon: LucideIcons.bookmark,
+              isActive: isSaved,
+              inactiveColor: context.colors.textSecondary,
+              activeColor: context.colors.primary,
+              size: 24,
+            ),
+            onPressed: () {
+              ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
+                ref.read(databaseProvider.notifier).toggleSaveProduct(product.id);
+              });
+            },
+          ),
+          const SizedBox(width: AppSpacing.s8),
+        ],
+      ),
+      body: Stack(
+        children: [
           SingleChildScrollView(
             padding: const EdgeInsets.only(bottom: 120),
             child: Column(
@@ -130,50 +150,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                         ),
                       ),
                     ),
-                    // Header Actions (Back & Save)
-                    Positioned(
-                      top: 16,
-                      left: AppSpacing.mobilePadding,
-                      right: AppSpacing.mobilePadding,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: context.colors.surface,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(LucideIcons.arrowLeft, size: 20, color: context.colors.primary),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              ref.read(authServiceProvider).checkGuest(context, onAllowed: () {
-                                ref.read(databaseProvider.notifier).toggleSaveProduct(product.id);
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: context.colors.surface,
-                                shape: BoxShape.circle,
-                              ),
-                              child: AnimatedActionIcon(
-                                icon: LucideIcons.bookmark,
-                                activeIcon: LucideIcons.bookmark, // Or another icon if available
-                                isActive: isSaved,
-                                inactiveColor: context.colors.textSecondary,
-                                activeColor: context.colors.primary,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+
                   ],
                 ),
                 SizedBox(height: AppSpacing.s24),
@@ -419,7 +396,6 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
             ),
           ),
         ],
-      ),
       ),
     );
   }

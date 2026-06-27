@@ -16,6 +16,7 @@ class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final Widget? leading;
   final List<Widget>? actions;
   final PreferredSizeWidget? bottom;
+  final bool showDefaultActions;
 
   const TopAppBar({
     super.key,
@@ -23,6 +24,7 @@ class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
     this.leading,
     this.actions,
     this.bottom,
+    this.showDefaultActions = true,
   });
 
   @override
@@ -93,30 +95,32 @@ class TopAppBar extends ConsumerWidget implements PreferredSizeWidget {
       leading: leadingWidget,
       actions: [
         ...?actions,
-        IconButton(
-          icon: Badge(
-            label: Text('$unreadCount'),
-            isLabelVisible: unreadCount > 0,
-            backgroundColor: context.colors.error,
-            textColor: Colors.white,
-            child: Icon(LucideIcons.bell, color: context.colors.primary),
+        if (showDefaultActions) ...[
+          IconButton(
+            icon: Badge(
+              label: Text('$unreadCount'),
+              isLabelVisible: unreadCount > 0,
+              backgroundColor: context.colors.error,
+              textColor: Colors.white,
+              child: Icon(LucideIcons.bell, color: context.colors.primary),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                SlidePageRoute(page: const NotificationsScreen()),
+              );
+            },
           ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              SlidePageRoute(page: const NotificationsScreen()),
-            );
-          },
-        ),
-        IconButton(
-          icon: Icon(LucideIcons.search, color: context.colors.primary),
-          onPressed: () {
-            Navigator.push(
-              context,
-              SlidePageRoute(page: const SearchScreen()),
-            );
-          },
-        ),
+          IconButton(
+            icon: Icon(LucideIcons.search, color: context.colors.primary),
+            onPressed: () {
+              Navigator.push(
+                context,
+                SlidePageRoute(page: const SearchScreen()),
+              );
+            },
+          ),
+        ],
         const SizedBox(width: AppSpacing.s8),
       ],
       bottom: bottom,

@@ -19,6 +19,7 @@ import '../../../core/widgets/common/skeleton_loaders.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import '../../../core/widgets/animations/fade_in_slide.dart';
 import '../../../core/widgets/common/animated_action_icon.dart';
+import '../../../core/widgets/navigation/top_app_bar.dart';
 import '../../queries/presentation/whatsapp_inquiry_bottom_sheet.dart';
 import '../../queries/presentation/query_bottom_sheet.dart';
 
@@ -95,12 +96,47 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen>
     }
 
     return Scaffold(
-      body: SafeArea(
-        top: true,
-        bottom: false,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      appBar: TopAppBar(
+        title: shop.shopName,
+        showDefaultActions: false,
+        actions: [
+          IconButton(
+            icon: Icon(LucideIcons.mapPin, color: context.colors.primary),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MapScreen(initialShopId: shop.id),
+                ),
+              );
+            },
+          ),
+          if (shop.whatsapp.isNotEmpty && shop.isWhatsappEnabled)
+            IconButton(
+              icon: const Icon(LucideIcons.messageCircle, color: Color(0xFF25D366)),
+              onPressed: () async {
+                final text = Uri.encodeComponent(
+                  'Hello ${shop.shopName}, I found your shop on Locaro and would like to know more!',
+                );
+                final whatsappUrl =
+                    'https://wa.me/${shop.whatsapp.replaceAll(RegExp(r'[^0-9]'), '')}?text=$text';
+                if (await canLaunchUrlString(whatsappUrl)) {
+                  await launchUrlString(whatsappUrl);
+                } else {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Could not launch WhatsApp')),
+                    );
+                  }
+                }
+              },
+            ),
+          const SizedBox(width: AppSpacing.s8),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Banner & Header Stack
             Stack(
@@ -115,95 +151,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen>
                     fit: BoxFit.cover,
                   ),
                 ),
-                // Back Button
-                Positioned(
-                  top: 16,
-                  left: AppSpacing.mobilePadding,
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: context.colors.surface,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        LucideIcons.arrowLeft,
-                        size: 20,
-                        color: context.colors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-                // Map Button
-                Positioned(
-                  top: 16,
-                  right: (shop.whatsapp.isNotEmpty && shop.isWhatsappEnabled)
-                      ? AppSpacing.mobilePadding + 44
-                      : AppSpacing.mobilePadding,
 
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              MapScreen(initialShopId: shop.id),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: context.colors.surface,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        LucideIcons.mapPin,
-                        size: 20,
-                        color: context.colors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-                // WhatsApp Button
-                if (shop.whatsapp.isNotEmpty && shop.isWhatsappEnabled)
-                  Positioned(
-                    top: 16,
-                    right: AppSpacing.mobilePadding,
-                    child: GestureDetector(
-                      onTap: () async {
-                        final text = Uri.encodeComponent(
-                          'Hello ${shop.shopName}, I found your shop on Locaro and would like to know more!',
-                        );
-                        final whatsappUrl =
-                            'https://wa.me/${shop.whatsapp.replaceAll(RegExp(r'[^0-9]'), '')}?text=$text';
-                        if (await canLaunchUrlString(whatsappUrl)) {
-                          await launchUrlString(whatsappUrl);
-                        } else {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Could not launch WhatsApp'),
-                              ),
-                            );
-                          }
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF25D366),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          LucideIcons.messageCircle,
-                          size: 20,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
 
                 // Logo Positioned overlapping the banner bottom
                 Positioned(
@@ -469,7 +417,6 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen>
             ),
           ],
         ),
-      ),
       ),
     );
   }
