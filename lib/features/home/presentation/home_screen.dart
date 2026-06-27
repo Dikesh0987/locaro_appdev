@@ -775,6 +775,7 @@ class _ProductFeedCard extends ConsumerStatefulWidget {
 class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
   bool? _localIsLiked;
   bool? _localIsSaved;
+  int _currentImageIndex = 0;
 
   bool get _isLiked {
     final dbState = ref.read(databaseProvider);
@@ -847,13 +848,62 @@ class _ProductFeedCardState extends ConsumerState<_ProductFeedCard> {
             children: [
               AspectRatio(
                 aspectRatio: 1.1,
-                child: Hero(
-                  tag: 'product_${widget.product.id}_image',
-                  child: FallbackImage(
-                    imageUrl: widget.product.images.isNotEmpty ? widget.product.images.first : '',
-                    fit: BoxFit.cover,
-                    fallbackIcon: LucideIcons.image,
-                  ),
+                child: Stack(
+                  children: [
+                    PageView.builder(
+                      itemCount: widget.product.images.isEmpty ? 1 : widget.product.images.length,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentImageIndex = index;
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        final imageUrl = widget.product.images.isNotEmpty ? widget.product.images[index] : '';
+                        final imageWidget = FallbackImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          fallbackIcon: LucideIcons.image,
+                        );
+                        
+                        if (index == 0) {
+                          return Hero(
+                            tag: 'product_${widget.product.id}_image',
+                            child: imageWidget,
+                          );
+                        }
+                        return imageWidget;
+                      },
+                    ),
+                    if (widget.product.images.length > 1)
+                      Positioned(
+                        bottom: 12,
+                        left: 0,
+                        right: 0,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            widget.product.images.length,
+                            (index) => Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              height: 6,
+                              width: 6,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: _currentImageIndex == index
+                                    ? Colors.white
+                                    : Colors.white.withValues(alpha: 0.5),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.2),
+                                    blurRadius: 2,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
               // Bottom gradient overlay

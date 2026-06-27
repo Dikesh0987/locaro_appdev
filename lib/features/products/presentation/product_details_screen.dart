@@ -71,8 +71,11 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
     }
 
     return Scaffold(
-      body: Stack(
-        children: [
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: Stack(
+          children: [
           SingleChildScrollView(
             padding: const EdgeInsets.only(bottom: 120),
             child: Column(
@@ -129,7 +132,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                     ),
                     // Header Actions (Back & Save)
                     Positioned(
-                      top: MediaQuery.of(context).padding.top + 16,
+                      top: 16,
                       left: AppSpacing.mobilePadding,
                       right: AppSpacing.mobilePadding,
                       child: Row(
@@ -416,6 +419,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

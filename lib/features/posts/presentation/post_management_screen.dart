@@ -27,7 +27,7 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
   final TextEditingController _offerDiscountController = TextEditingController();
   final TextEditingController _offerValidityController = TextEditingController();
   
-  PostType _selectedType = PostType.product;
+  PostType _selectedType = PostType.offer;
   String? _imageUrl;
   String? _selectedProductId;
 
@@ -127,7 +127,7 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
           _imageUrl = null;
           _selectedImageFile = null;
           _selectedProductId = null;
-          _selectedType = PostType.product;
+          _selectedType = PostType.offer;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -160,8 +160,6 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
             children: [
               Row(
                 children: [
-                  _buildTypeTab(PostType.product, 'Product', LucideIcons.shoppingBag),
-                  SizedBox(width: AppSpacing.s8),
                   _buildTypeTab(PostType.offer, 'Offer', LucideIcons.percent),
                   SizedBox(width: AppSpacing.s8),
                   _buildTypeTab(PostType.update, 'Update', LucideIcons.sparkles),
@@ -198,90 +196,7 @@ class _PostManagementScreenState extends ConsumerState<PostManagementScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // --- PRODUCT POST UI ---
-                      if (_selectedType == PostType.product) ...[
-                        Text('Feature a Product', style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
-                        SizedBox(height: AppSpacing.s12),
-                        Consumer(
-                          builder: (context, ref, _) {
-                            final shop = ref.watch(databaseProvider).currentShop;
-                            final shopProducts = ref.watch(databaseProvider).products.where((p) => p.shopId == shop.id).toList();
-                            if (shopProducts.isEmpty) {
-                              return Text('No products available. Please create a product first.', style: TextStyle(color: context.colors.error));
-                            }
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                DropdownButtonFormField<String>(
-                                  isExpanded: true,
-                                  initialValue: _selectedProductId != null && shopProducts.any((p) => p.id == _selectedProductId) ? _selectedProductId : null,
-                                  hint: const Text('Select a Product'),
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppSpacing.inputRadius)),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  ),
-                                  items: shopProducts.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name, style: AppTypography.body, maxLines: 1, overflow: TextOverflow.ellipsis))).toList(),
-                                  onChanged: (val) => setState(() => _selectedProductId = val),
-                                ),
-                                if (_selectedProductId != null) ...[
-                                  SizedBox(height: AppSpacing.s16),
-                                  Builder(builder: (ctx) {
-                                    final p = shopProducts.firstWhere(
-                                      (x) => x.id == _selectedProductId,
-                                      orElse: () => shopProducts.first,
-                                    );
-                                    return Container(
-                                      padding: const EdgeInsets.all(AppSpacing.s12),
-                                      decoration: BoxDecoration(
-                                        color: context.colors.background,
-                                        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                                        border: Border.all(color: context.colors.border),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          ClipRRect(
-                                            borderRadius: BorderRadius.circular(8),
-                                            child: Container(
-                                              width: 60,
-                                              height: 60,
-                                              color: context.colors.border,
-                                              child: p.images.isNotEmpty
-                                                  ? FallbackImage(imageUrl: p.images.first, fit: BoxFit.cover)
-                                                  : Icon(LucideIcons.image, color: context.colors.textSecondary),
-                                            ),
-                                          ),
-                                          SizedBox(width: AppSpacing.s12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(p.name, style: AppTypography.body.copyWith(fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-                                                SizedBox(height: 4),
-                                                Text('₹${p.discountPrice?.toStringAsFixed(0) ?? p.price.toStringAsFixed(0)}', style: AppTypography.caption.copyWith(color: context.colors.primary, fontWeight: FontWeight.bold)),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }),
-                                ],
-                              ],
-                            );
-                          },
-                        ),
-                        SizedBox(height: AppSpacing.s24),
-                        Text('Add Custom Caption (Optional)', style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
-                        SizedBox(height: AppSpacing.s12),
-                        TextFormField(
-                          controller: _captionController,
-                          maxLines: 3,
-                          decoration: InputDecoration(
-                            hintText: 'Say something about this product...',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppSpacing.inputRadius)),
-                          ),
-                        ),
-                      ],
+
 
                       // --- OFFER POST UI ---
                       if (_selectedType == PostType.offer) ...[

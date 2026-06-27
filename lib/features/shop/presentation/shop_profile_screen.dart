@@ -95,9 +95,12 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen>
     }
 
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Banner & Header Stack
             Stack(
@@ -114,7 +117,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen>
                 ),
                 // Back Button
                 Positioned(
-                  top: 50,
+                  top: 16,
                   left: AppSpacing.mobilePadding,
                   child: GestureDetector(
                     onTap: () => Navigator.pop(context),
@@ -134,7 +137,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen>
                 ),
                 // Map Button
                 Positioned(
-                  top: 50,
+                  top: 16,
                   right: (shop.whatsapp.isNotEmpty && shop.isWhatsappEnabled)
                       ? AppSpacing.mobilePadding + 44
                       : AppSpacing.mobilePadding,
@@ -166,7 +169,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen>
                 // WhatsApp Button
                 if (shop.whatsapp.isNotEmpty && shop.isWhatsappEnabled)
                   Positioned(
-                    top: 50,
+                    top: 16,
                     right: AppSpacing.mobilePadding,
                     child: GestureDetector(
                       onTap: () async {
@@ -466,6 +469,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen>
             ),
           ],
         ),
+      ),
       ),
     );
   }
