@@ -117,27 +117,71 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
     if (_deferredStarted) return;
     _deferredStarted = true;
 
-    _productsSub = firestore.collection('products').orderBy('createdAt', descending: true).limit(200).snapshots().listen((snapshot) {
+    _productsSub = firestore.collection('products').orderBy('createdAt', descending: true).limit(20).snapshots().listen((snapshot) {
       final products = snapshot.docs.map((doc) => ProductModel.fromMap(doc.data())).toList();
       state = state.copyWith(products: products);
     });
 
-    _postsSub = firestore.collection('posts').orderBy('createdAt', descending: true).limit(200).snapshots().listen((snapshot) {
+    _postsSub = firestore.collection('posts').orderBy('createdAt', descending: true).limit(20).snapshots().listen((snapshot) {
       final posts = snapshot.docs.map((doc) => PostModel.fromMap(doc.data())).toList();
       state = state.copyWith(posts: posts);
     });
 
-    _offersSub = firestore.collection('offers').orderBy('createdAt', descending: true).limit(100).snapshots().listen((snapshot) {
+    _offersSub = firestore.collection('offers').orderBy('createdAt', descending: true).limit(20).snapshots().listen((snapshot) {
       final offers = snapshot.docs.map((doc) => OfferModel.fromMap(doc.data())).toList();
       state = state.copyWith(offers: offers);
     });
 
-    _queriesSub = firestore.collection('queries').orderBy('createdAt', descending: true).limit(100).snapshots().listen((snapshot) {
+    _queriesSub = firestore.collection('queries').orderBy('createdAt', descending: true).limit(20).snapshots().listen((snapshot) {
       final queries = snapshot.docs.map((doc) => QueryModel.fromMap(doc.data())).toList();
       state = state.copyWith(queries: queries);
     });
   }
 
+
+  bool _isLoadingMoreProducts = false;
+  Future<void> loadMoreProducts() async {
+    if (_isLoadingMoreProducts || state.products.isEmpty) return;
+    _isLoadingMoreProducts = true;
+    try {
+      final lastProduct = state.products.last;
+      final snapshot = await FirebaseFirestore.instance
+          .collection('products')
+          .orderBy('createdAt', descending: true)
+          .startAfter([Timestamp.fromDate(lastProduct.createdAt)])
+          .limit(20)
+          .get(const GetOptions(source: Source.serverAndCache));
+      
+      if (snapshot.docs.isNotEmpty) {
+        final newProducts = snapshot.docs.map((doc) => ProductModel.fromMap(doc.data())).toList();
+        state = state.copyWith(products: [...state.products, ...newProducts]);
+      }
+    } finally {
+      _isLoadingMoreProducts = false;
+    }
+  }
+
+  bool _isLoadingMorePosts = false;
+  Future<void> loadMorePosts() async {
+    if (_isLoadingMorePosts || state.posts.isEmpty) return;
+    _isLoadingMorePosts = true;
+    try {
+      final lastPost = state.posts.last;
+      final snapshot = await FirebaseFirestore.instance
+          .collection('posts')
+          .orderBy('createdAt', descending: true)
+          .startAfter([Timestamp.fromDate(lastPost.createdAt)])
+          .limit(20)
+          .get(const GetOptions(source: Source.serverAndCache));
+      
+      if (snapshot.docs.isNotEmpty) {
+        final newPosts = snapshot.docs.map((doc) => PostModel.fromMap(doc.data())).toList();
+        state = state.copyWith(posts: [...state.posts, ...newPosts]);
+      }
+    } finally {
+      _isLoadingMorePosts = false;
+    }
+  }
 
   // Update current user locally
   void setCurrentUser(UserModel user) {
@@ -364,9 +408,8 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
     final shopIndex = state.shops.indexWhere((s) => s.id == shopId);
     if (shopIndex != -1) {
       final shop = state.shops[shopIndex];
-      final newFollowers = shop.followers + (following.contains(shopId) ? 1 : -1);
       await FirebaseFirestore.instance.collection('shops').doc(shopId).update({
-        'followers': newFollowers,
+        'followers': FieldValue.increment(following.contains(shopId) ? 1 : -1),
       });
 
       // Notify owner if they started following
@@ -410,6 +453,13 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
     await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
       'savedProducts': saved,
     });
+
+    // Update product saves counter atomically
+    try {
+      await FirebaseFirestore.instance.collection('products').doc(productId).update({
+        'saves': FieldValue.increment(saved.contains(productId) ? 1 : -1),
+      });
+    } catch (_) {}
 
     // Notify owner if saved
     if (saved.contains(productId)) {
@@ -469,10 +519,9 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
     final productIndex = state.products.indexWhere((p) => p.id == productId);
     if (productIndex != -1) {
       final product = state.products[productIndex];
-      final newLikes = isLiking ? product.likes + 1 : (product.likes > 0 ? product.likes - 1 : 0);
       
       await FirebaseFirestore.instance.collection('products').doc(productId).update({
-        'likes': newLikes,
+        'likes': FieldValue.increment(isLiking ? 1 : -1),
       });
 
       // Notify owner of the product like
@@ -522,11 +571,8 @@ class LocaroDatabaseNotifier extends Notifier<LocaroDataState> {
 
     final postIndex = state.posts.indexWhere((p) => p.id == postId);
     if (postIndex != -1) {
-      final post = state.posts[postIndex];
-      final newLikes = isLiking ? post.likes + 1 : (post.likes > 0 ? post.likes - 1 : 0);
-      
       await FirebaseFirestore.instance.collection('posts').doc(postId).update({
-        'likes': newLikes,
+        'likes': FieldValue.increment(isLiking ? 1 : -1),
       });
     }
   }

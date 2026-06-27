@@ -11,6 +11,11 @@ class NotificationModel {
   final bool isRead;
   final DateTime createdAt;
 
+  // --- NEW OPTIONAL FIELDS ---
+  final String? status;
+  final DateTime? updatedAt;
+  final bool? isDeleted;
+
   NotificationModel({
     required this.id,
     required this.userId,
@@ -21,6 +26,9 @@ class NotificationModel {
     this.imageUrl,
     required this.isRead,
     required this.createdAt,
+    this.status,
+    this.updatedAt,
+    this.isDeleted,
   });
 
   NotificationModel copyWith({
@@ -33,6 +41,9 @@ class NotificationModel {
     String? imageUrl,
     bool? isRead,
     DateTime? createdAt,
+    String? status,
+    DateTime? updatedAt,
+    bool? isDeleted,
   }) {
     return NotificationModel(
       id: id ?? this.id,
@@ -44,6 +55,9 @@ class NotificationModel {
       imageUrl: imageUrl ?? this.imageUrl,
       isRead: isRead ?? this.isRead,
       createdAt: createdAt ?? this.createdAt,
+      status: status ?? this.status,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 
@@ -68,6 +82,9 @@ class NotificationModel {
       imageUrl: map['imageUrl'],
       isRead: map['isRead'] ?? false,
       createdAt: parseDateTime(map['createdAt']),
+      status: map['status'] as String?,
+      updatedAt: map['updatedAt'] != null ? parseDateTime(map['updatedAt']) : null,
+      isDeleted: map['isDeleted'] as bool?,
     );
   }
 
@@ -82,6 +99,9 @@ class NotificationModel {
       'imageUrl': imageUrl,
       'isRead': isRead,
       'createdAt': Timestamp.fromDate(createdAt),
+      if (status != null) 'status': status,
+      if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+      if (isDeleted != null) 'isDeleted': isDeleted,
     };
   }
 }

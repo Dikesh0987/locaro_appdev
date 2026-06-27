@@ -12,6 +12,11 @@ class QueryModel {
   final DateTime createdAt;
   final DateTime? answeredAt;
 
+  // --- NEW OPTIONAL FIELDS ---
+  final DateTime? updatedAt;
+  final List<String>? searchKeywords;
+  final bool? isDeleted;
+
   QueryModel({
     required this.id,
     required this.userId,
@@ -23,6 +28,9 @@ class QueryModel {
     required this.status,
     required this.createdAt,
     this.answeredAt,
+    this.updatedAt,
+    this.searchKeywords,
+    this.isDeleted,
   });
 
   QueryModel copyWith({
@@ -36,6 +44,9 @@ class QueryModel {
     String? status,
     DateTime? createdAt,
     DateTime? answeredAt,
+    DateTime? updatedAt,
+    List<String>? searchKeywords,
+    bool? isDeleted,
   }) {
     return QueryModel(
       id: id ?? this.id,
@@ -48,6 +59,9 @@ class QueryModel {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       answeredAt: answeredAt ?? this.answeredAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      searchKeywords: searchKeywords ?? this.searchKeywords,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 
@@ -63,6 +77,9 @@ class QueryModel {
       'status': status,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'answeredAt': answeredAt?.millisecondsSinceEpoch,
+      if (updatedAt != null) 'updatedAt': updatedAt!.millisecondsSinceEpoch,
+      if (searchKeywords != null) 'searchKeywords': searchKeywords,
+      if (isDeleted != null) 'isDeleted': isDeleted,
     };
   }
 
@@ -84,6 +101,13 @@ class QueryModel {
               ? (map['answeredAt'] as Timestamp).toDate() 
               : DateTime.fromMillisecondsSinceEpoch(map['answeredAt']))
           : null,
+      updatedAt: map['updatedAt'] != null 
+          ? (map['updatedAt'] is Timestamp 
+              ? (map['updatedAt'] as Timestamp).toDate() 
+              : DateTime.fromMillisecondsSinceEpoch(map['updatedAt']))
+          : null,
+      searchKeywords: map['searchKeywords'] != null ? List<String>.from(map['searchKeywords']) : null,
+      isDeleted: map['isDeleted'] as bool?,
     );
   }
 }

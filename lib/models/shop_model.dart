@@ -26,6 +26,25 @@ class ShopModel {
   final bool isVerified;
   final bool isActive;
 
+  // --- NEW OPTIONAL FIELDS ---
+  final String? slug;
+  final String? status;
+  final List<String>? searchKeywords;
+  final String? categoryId;
+  final String? categoryName;
+  final int? views;
+  final int? shares;
+  final int? saves;
+  final int? reviewCount;
+  final String? city;
+  final String? state;
+  final String? country;
+  final String? pincode;
+  final bool? isFeatured;
+  final bool? isDeleted;
+  final bool? isVisible;
+  final DateTime? lastSeen;
+
 
   ShopModel({
     required this.id,
@@ -52,6 +71,23 @@ class ShopModel {
     required this.updatedAt,
     this.isVerified = false,
     this.isActive = true,
+    this.slug,
+    this.status,
+    this.searchKeywords,
+    this.categoryId,
+    this.categoryName,
+    this.views,
+    this.shares,
+    this.saves,
+    this.reviewCount,
+    this.city,
+    this.state,
+    this.country,
+    this.pincode,
+    this.isFeatured,
+    this.isDeleted,
+    this.isVisible,
+    this.lastSeen,
   });
 
   factory ShopModel.empty() {
@@ -80,6 +116,23 @@ class ShopModel {
       updatedAt: DateTime.now(),
       isVerified: false,
       isActive: true,
+      slug: null,
+      status: null,
+      searchKeywords: null,
+      categoryId: null,
+      categoryName: null,
+      views: 0,
+      shares: 0,
+      saves: 0,
+      reviewCount: 0,
+      city: null,
+      state: null,
+      country: null,
+      pincode: null,
+      isFeatured: false,
+      isDeleted: false,
+      isVisible: true,
+      lastSeen: null,
     );
   }
 
@@ -134,6 +187,23 @@ class ShopModel {
     DateTime? updatedAt,
     bool? isVerified,
     bool? isActive,
+    String? slug,
+    String? status,
+    List<String>? searchKeywords,
+    String? categoryId,
+    String? categoryName,
+    int? views,
+    int? shares,
+    int? saves,
+    int? reviewCount,
+    String? city,
+    String? state,
+    String? country,
+    String? pincode,
+    bool? isFeatured,
+    bool? isDeleted,
+    bool? isVisible,
+    DateTime? lastSeen,
   }) {
     return ShopModel(
       id: id ?? this.id,
@@ -160,6 +230,23 @@ class ShopModel {
       updatedAt: updatedAt ?? this.updatedAt,
       isVerified: isVerified ?? this.isVerified,
       isActive: isActive ?? this.isActive,
+      slug: slug ?? this.slug,
+      status: status ?? this.status,
+      searchKeywords: searchKeywords ?? this.searchKeywords,
+      categoryId: categoryId ?? this.categoryId,
+      categoryName: categoryName ?? this.categoryName,
+      views: views ?? this.views,
+      shares: shares ?? this.shares,
+      saves: saves ?? this.saves,
+      reviewCount: reviewCount ?? this.reviewCount,
+      city: city ?? this.city,
+      state: state ?? this.state,
+      country: country ?? this.country,
+      pincode: pincode ?? this.pincode,
+      isFeatured: isFeatured ?? this.isFeatured,
+      isDeleted: isDeleted ?? this.isDeleted,
+      isVisible: isVisible ?? this.isVisible,
+      lastSeen: lastSeen ?? this.lastSeen,
     );
   }
 
@@ -199,6 +286,23 @@ class ShopModel {
       isActive: map['isActive'] ?? true,
       createdAt: parseDateTime(map['createdAt']),
       updatedAt: parseDateTime(map['updatedAt']),
+      slug: map['slug'] as String?,
+      status: map['status'] as String?,
+      searchKeywords: map['searchKeywords'] != null ? List<String>.from(map['searchKeywords']) : null,
+      categoryId: map['categoryId'] as String?,
+      categoryName: map['categoryName'] as String?,
+      views: map['views'] as int?,
+      shares: map['shares'] as int?,
+      saves: map['saves'] as int?,
+      reviewCount: map['reviewCount'] as int?,
+      city: map['city'] as String?,
+      state: map['state'] as String?,
+      country: map['country'] as String?,
+      pincode: map['pincode'] as String?,
+      isFeatured: map['isFeatured'] as bool?,
+      isDeleted: map['isDeleted'] as bool?,
+      isVisible: map['isVisible'] as bool?,
+      lastSeen: map['lastSeen'] != null ? parseDateTime(map['lastSeen']) : null,
     );
   }
 
@@ -227,6 +331,23 @@ class ShopModel {
       'isWhatsappEnabled': isWhatsappEnabled,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
+      if (slug != null) 'slug': slug,
+      if (status != null) 'status': status,
+      if (searchKeywords != null) 'searchKeywords': searchKeywords,
+      if (categoryId != null) 'categoryId': categoryId,
+      if (categoryName != null) 'categoryName': categoryName,
+      if (views != null) 'views': views,
+      if (shares != null) 'shares': shares,
+      if (saves != null) 'saves': saves,
+      if (reviewCount != null) 'reviewCount': reviewCount,
+      if (city != null) 'city': city,
+      if (state != null) 'state': state,
+      if (country != null) 'country': country,
+      if (pincode != null) 'pincode': pincode,
+      if (isFeatured != null) 'isFeatured': isFeatured,
+      if (isDeleted != null) 'isDeleted': isDeleted,
+      if (isVisible != null) 'isVisible': isVisible,
+      if (lastSeen != null) 'lastSeen': Timestamp.fromDate(lastSeen!),
     };
   }
 }

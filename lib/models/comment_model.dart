@@ -9,6 +9,11 @@ class CommentModel {
   final String text;
   final DateTime createdAt;
   final int likes;
+  
+  // --- NEW OPTIONAL FIELDS ---
+  final DateTime? updatedAt;
+  final String? status;
+  final bool? isDeleted;
 
   CommentModel({
     required this.id,
@@ -19,6 +24,9 @@ class CommentModel {
     required this.text,
     required this.createdAt,
     this.likes = 0,
+    this.updatedAt,
+    this.status,
+    this.isDeleted,
   });
 
   Map<String, dynamic> toMap() {
@@ -31,6 +39,9 @@ class CommentModel {
       'text': text,
       'createdAt': Timestamp.fromDate(createdAt),
       'likes': likes,
+      if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+      if (status != null) 'status': status,
+      if (isDeleted != null) 'isDeleted': isDeleted,
     };
   }
 
@@ -44,6 +55,9 @@ class CommentModel {
       text: map['text'] ?? '',
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       likes: map['likes']?.toInt() ?? 0,
+      updatedAt: map['updatedAt'] != null ? (map['updatedAt'] as Timestamp).toDate() : null,
+      status: map['status'] as String?,
+      isDeleted: map['isDeleted'] as bool?,
     );
   }
 
@@ -56,6 +70,9 @@ class CommentModel {
     String? text,
     DateTime? createdAt,
     int? likes,
+    DateTime? updatedAt,
+    String? status,
+    bool? isDeleted,
   }) {
     return CommentModel(
       id: id ?? this.id,
@@ -66,6 +83,9 @@ class CommentModel {
       text: text ?? this.text,
       createdAt: createdAt ?? this.createdAt,
       likes: likes ?? this.likes,
+      updatedAt: updatedAt ?? this.updatedAt,
+      status: status ?? this.status,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 }

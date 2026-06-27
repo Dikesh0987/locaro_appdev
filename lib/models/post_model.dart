@@ -13,6 +13,20 @@ class PostModel {
   final int comments;
   final DateTime createdAt;
 
+  // --- NEW OPTIONAL FIELDS ---
+  final String? slug;
+  final String? status;
+  final DateTime? updatedAt;
+  final List<String>? searchKeywords;
+  final String? categoryId;
+  final String? categoryName;
+  final int? views;
+  final int? shares;
+  final int? saves;
+  final bool? isFeatured;
+  final bool? isDeleted;
+  final bool? isVisible;
+
   PostModel({
     required this.id,
     required this.shopId,
@@ -23,6 +37,18 @@ class PostModel {
     required this.likes,
     required this.comments,
     required this.createdAt,
+    this.slug,
+    this.status,
+    this.updatedAt,
+    this.searchKeywords,
+    this.categoryId,
+    this.categoryName,
+    this.views,
+    this.shares,
+    this.saves,
+    this.isFeatured,
+    this.isDeleted,
+    this.isVisible,
   });
 
   PostModel copyWith({
@@ -35,6 +61,18 @@ class PostModel {
     int? likes,
     int? comments,
     DateTime? createdAt,
+    String? slug,
+    String? status,
+    DateTime? updatedAt,
+    List<String>? searchKeywords,
+    String? categoryId,
+    String? categoryName,
+    int? views,
+    int? shares,
+    int? saves,
+    bool? isFeatured,
+    bool? isDeleted,
+    bool? isVisible,
   }) {
     return PostModel(
       id: id ?? this.id,
@@ -46,6 +84,18 @@ class PostModel {
       likes: likes ?? this.likes,
       comments: comments ?? this.comments,
       createdAt: createdAt ?? this.createdAt,
+      slug: slug ?? this.slug,
+      status: status ?? this.status,
+      updatedAt: updatedAt ?? this.updatedAt,
+      searchKeywords: searchKeywords ?? this.searchKeywords,
+      categoryId: categoryId ?? this.categoryId,
+      categoryName: categoryName ?? this.categoryName,
+      views: views ?? this.views,
+      shares: shares ?? this.shares,
+      saves: saves ?? this.saves,
+      isFeatured: isFeatured ?? this.isFeatured,
+      isDeleted: isDeleted ?? this.isDeleted,
+      isVisible: isVisible ?? this.isVisible,
     );
   }
 
@@ -82,6 +132,18 @@ class PostModel {
       likes: map['likes'] ?? 0,
       comments: map['comments'] ?? 0,
       createdAt: parseDateTime(map['createdAt']),
+      slug: map['slug'] as String?,
+      status: map['status'] as String?,
+      updatedAt: map['updatedAt'] != null ? parseDateTime(map['updatedAt']) : null,
+      searchKeywords: map['searchKeywords'] != null ? List<String>.from(map['searchKeywords']) : null,
+      categoryId: map['categoryId'] as String?,
+      categoryName: map['categoryName'] as String?,
+      views: map['views'] as int?,
+      shares: map['shares'] as int?,
+      saves: map['saves'] as int?,
+      isFeatured: map['isFeatured'] as bool?,
+      isDeleted: map['isDeleted'] as bool?,
+      isVisible: map['isVisible'] as bool?,
     );
   }
 
@@ -96,6 +158,18 @@ class PostModel {
       'likes': likes,
       'comments': comments,
       'createdAt': Timestamp.fromDate(createdAt),
+      if (slug != null) 'slug': slug,
+      if (status != null) 'status': status,
+      if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+      if (searchKeywords != null) 'searchKeywords': searchKeywords,
+      if (categoryId != null) 'categoryId': categoryId,
+      if (categoryName != null) 'categoryName': categoryName,
+      if (views != null) 'views': views,
+      if (shares != null) 'shares': shares,
+      if (saves != null) 'saves': saves,
+      if (isFeatured != null) 'isFeatured': isFeatured,
+      if (isDeleted != null) 'isDeleted': isDeleted,
+      if (isVisible != null) 'isVisible': isVisible,
     };
   }
 }

@@ -33,6 +33,19 @@ class UserModel {
   // Granular notification settings (Offers, Nearby Deals, Comments, Followers, Announcements, Marketing)
   final Map<String, bool> notificationSettings;
 
+  // --- NEW OPTIONAL FIELDS ---
+  final String? slug;
+  final String? status;
+  final List<String>? searchKeywords;
+  final String? city;
+  final String? state;
+  final String? country;
+  final String? pincode;
+  final bool? isDeleted;
+  final bool? isVisible;
+  final DateTime? lastSeen;
+  final bool? online;
+
   UserModel({
     required this.uid,
     required this.name,
@@ -61,6 +74,17 @@ class UserModel {
     this.fcmToken,
     this.phoneVerified = false,
     this.verifiedAt,
+    this.slug,
+    this.status,
+    this.searchKeywords,
+    this.city,
+    this.state,
+    this.country,
+    this.pincode,
+    this.isDeleted,
+    this.isVisible,
+    this.lastSeen,
+    this.online,
   });
 
   factory UserModel.empty() {
@@ -92,6 +116,17 @@ class UserModel {
       fcmToken: null,
       phoneVerified: false,
       verifiedAt: null,
+      slug: null,
+      status: null,
+      searchKeywords: null,
+      city: null,
+      state: null,
+      country: null,
+      pincode: null,
+      isDeleted: false,
+      isVisible: true,
+      lastSeen: null,
+      online: false,
     );
   }
 
@@ -127,6 +162,17 @@ class UserModel {
     String? fcmToken,
     bool? phoneVerified,
     DateTime? verifiedAt,
+    String? slug,
+    String? status,
+    List<String>? searchKeywords,
+    String? city,
+    String? state,
+    String? country,
+    String? pincode,
+    bool? isDeleted,
+    bool? isVisible,
+    DateTime? lastSeen,
+    bool? online,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -156,6 +202,17 @@ class UserModel {
       fcmToken: fcmToken ?? this.fcmToken,
       phoneVerified: phoneVerified ?? this.phoneVerified,
       verifiedAt: verifiedAt ?? this.verifiedAt,
+      slug: slug ?? this.slug,
+      status: status ?? this.status,
+      searchKeywords: searchKeywords ?? this.searchKeywords,
+      city: city ?? this.city,
+      state: state ?? this.state,
+      country: country ?? this.country,
+      pincode: pincode ?? this.pincode,
+      isDeleted: isDeleted ?? this.isDeleted,
+      isVisible: isVisible ?? this.isVisible,
+      lastSeen: lastSeen ?? this.lastSeen,
+      online: online ?? this.online,
     );
   }
 
@@ -205,6 +262,17 @@ class UserModel {
       fcmToken: map['fcmToken'] as String?,
       phoneVerified: map['phoneVerified'] ?? false,
       verifiedAt: map['verifiedAt'] != null ? parseDateTime(map['verifiedAt']) : null,
+      slug: map['slug'] as String?,
+      status: map['status'] as String?,
+      searchKeywords: map['searchKeywords'] != null ? List<String>.from(map['searchKeywords']) : null,
+      city: map['city'] as String?,
+      state: map['state'] as String?,
+      country: map['country'] as String?,
+      pincode: map['pincode'] as String?,
+      isDeleted: map['isDeleted'] as bool?,
+      isVisible: map['isVisible'] as bool?,
+      lastSeen: map['lastSeen'] != null ? parseDateTime(map['lastSeen']) : null,
+      online: map['online'] as bool?,
     );
   }
 
@@ -237,6 +305,17 @@ class UserModel {
       'fcmToken': fcmToken,
       'phoneVerified': phoneVerified,
       'verifiedAt': verifiedAt != null ? Timestamp.fromDate(verifiedAt!) : null,
+      if (slug != null) 'slug': slug,
+      if (status != null) 'status': status,
+      if (searchKeywords != null) 'searchKeywords': searchKeywords,
+      if (city != null) 'city': city,
+      if (state != null) 'state': state,
+      if (country != null) 'country': country,
+      if (pincode != null) 'pincode': pincode,
+      if (isDeleted != null) 'isDeleted': isDeleted,
+      if (isVisible != null) 'isVisible': isVisible,
+      if (lastSeen != null) 'lastSeen': Timestamp.fromDate(lastSeen!),
+      if (online != null) 'online': online,
     };
   }
 }

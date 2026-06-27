@@ -35,9 +35,12 @@ class AuthService {
       final data = doc.data()!;
       final existingUser = UserModel.fromMap(data);
 
-      bool roleChangedToShopOwner = existingUser.role == 'user' && selectedRole == 'shop_owner';
-      bool newIsOnboardingCompleted = roleChangedToShopOwner ? false : existingUser.isOnboardingCompleted;
-      String newRole = roleChangedToShopOwner ? 'shop_owner' : existingUser.role;
+      if (existingUser.role != selectedRole) {
+        await _repository.signOut();
+        final existingRoleName = existingUser.role == 'shop_owner' ? 'Shop Owner' : 'Normal User';
+        final selectedRoleName = selectedRole == 'shop_owner' ? 'Shop Owner' : 'Normal User';
+        throw Exception('This account is already registered as a $existingRoleName. You cannot log in as a $selectedRoleName.');
+      }
 
       // Update analytics fields in Firestore
       final int currentLoginCount = data['loginCount'] ?? 0;
@@ -45,20 +48,16 @@ class AuthService {
         'lastLoginAt': Timestamp.fromDate(DateTime.now()),
         'loginCount': currentLoginCount + 1,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
-        if (roleChangedToShopOwner) 'role': newRole,
-        if (roleChangedToShopOwner) 'isOnboardingCompleted': newIsOnboardingCompleted,
       });
 
       final updatedUser = existingUser.copyWith(
         lastLoginAt: DateTime.now(),
         updatedAt: DateTime.now(),
-        role: newRole,
-        isOnboardingCompleted: newIsOnboardingCompleted,
       );
 
       // Sync with Riverpod state
       _ref.read(databaseProvider.notifier).setCurrentUser(updatedUser);
-      _ref.read(appRoleProvider.notifier).state = newIsOnboardingCompleted ? updatedUser.role : null;
+      _ref.read(appRoleProvider.notifier).state = existingUser.isOnboardingCompleted ? updatedUser.role : null;
 
       // Update local theme state
       _setThemeFromStr(updatedUser.themeMode);
@@ -176,28 +175,27 @@ class AuthService {
       final data = doc.data()!;
       final existingUser = UserModel.fromMap(data);
 
-      bool roleChangedToShopOwner = existingUser.role == 'user' && selectedRole == 'shop_owner';
-      bool newIsOnboardingCompleted = roleChangedToShopOwner ? false : existingUser.isOnboardingCompleted;
-      String newRole = roleChangedToShopOwner ? 'shop_owner' : existingUser.role;
+      if (existingUser.role != selectedRole) {
+        await _repository.signOut();
+        final existingRoleName = existingUser.role == 'shop_owner' ? 'Shop Owner' : 'Normal User';
+        final selectedRoleName = selectedRole == 'shop_owner' ? 'Shop Owner' : 'Normal User';
+        throw Exception('This account is already registered as a $existingRoleName. You cannot log in as a $selectedRoleName.');
+      }
 
       final int currentLoginCount = data['loginCount'] ?? 0;
       await _repository.updateUserDoc(fbUser.uid, {
         'lastLoginAt': Timestamp.fromDate(DateTime.now()),
         'loginCount': currentLoginCount + 1,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
-        if (roleChangedToShopOwner) 'role': newRole,
-        if (roleChangedToShopOwner) 'isOnboardingCompleted': newIsOnboardingCompleted,
       });
 
       final updatedUser = existingUser.copyWith(
         lastLoginAt: DateTime.now(),
         updatedAt: DateTime.now(),
-        role: newRole,
-        isOnboardingCompleted: newIsOnboardingCompleted,
       );
 
       _ref.read(databaseProvider.notifier).setCurrentUser(updatedUser);
-      _ref.read(appRoleProvider.notifier).state = newIsOnboardingCompleted ? updatedUser.role : null;
+      _ref.read(appRoleProvider.notifier).state = existingUser.isOnboardingCompleted ? updatedUser.role : null;
 
       _setThemeFromStr(updatedUser.themeMode);
 
